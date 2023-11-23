@@ -17,7 +17,6 @@
 
 Setup:
 - 1Password
-  - Show 1 Password shortcut: Shift-Meta-X
 - Google Drive Stream
 - Slack
 - Google Chrome
