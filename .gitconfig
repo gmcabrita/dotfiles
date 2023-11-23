@@ -1,0 +1,141 @@
+[user]
+	email = goncalo@mendescabrita.com
+	name = Gonçalo Cabrita
+	signingkey = ~/.ssh/id_ed25519
+[commit]
+	gpgsign = true
+[gpg]
+	format = ssh
+[credential]
+	helper = manager
+[core]
+	fscache = true
+	autocrlf = false
+	editor = "subl -n -w"
+	symlinks = true
+	fsmonitor = false
+[color]
+	ui = auto
+[color "branch"]
+	current = yellow reverse
+	local = yellow
+	remote = green
+[color "diff"]
+	meta = yellow bold
+	frag = magenta bold # line info
+	old = red # deletions
+	new = green # additions
+	whitespace = red reverse
+[color "status"]
+	added = yellow
+	changed = green
+	untracked = cyan
+[gist]
+	private = yes
+[alias]
+	# New
+	new = !git init && git symbolic-ref HEAD refs/heads/main
+
+	# Quick commit
+	c = commit
+
+	# Quick branch
+	b = branch
+
+	# Quick add
+	a = add
+	aa = add .
+
+	# Quick add hunks
+	ap = add --patch
+
+	# Quick checkout
+	co = checkout
+
+	# Quick push
+	p = push
+
+	# Quick status
+	s = status
+
+	# Quick log
+	l = log
+
+	# Quick log with patch
+	lp = log --patch
+
+	# Quick diff
+	d = diff
+	ds = diff --staged
+
+	# Word-based diff
+	wd = diff --color-words
+
+	# Modified files
+	modified = diff --name-only --diff-filter=M
+
+	# View history graph
+	graph = log --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
+
+	# View abbreviated SHA, description, and history graph of the latest 20 commits
+	ll = log --pretty=oneline -n 20 --graph --abbrev-commit
+
+	# Show verbose output about tags, branches or remotes
+	tags = tag -l
+	branches = branch -a
+	remotes = remote -v
+
+	# Quick commit ammend
+	amend = commit --amend
+
+	publish = !git commit -am \"Publish updates\"; git push
+	puxaforte = !git reset --hard "@{upstream}"; git clean -d -f; git pull
+	rip = !git reset --hard HEAD; git clean -d -f
+
+	delete = branch -D
+	unstage = reset HEAD --
+	uncommit = reset --soft HEAD^
+	undo = reset HEAD~
+
+	cleanup = "!f() { git remote prune origin; git for-each-ref --format '%(refname:short)' 'refs/heads' | grep -v \"master\\|main\\|develop\" | xargs git branch -D; }; f"
+
+	cleantags = !git tag -l | xargs git tag -d && git fetch -t
+
+	# Find branches containing commit
+	fb = "!f() { git branch -a --contains $1; }; f"
+
+	# Find tags containing commit
+	ft = "!f() { git describe --always --contains $1; }; f"
+
+	# Find commits by commit message
+	fm = "!f() { git log --pretty=format:'%C(yellow)%h  %Cblue%ad  %Creset%s%Cgreen  [%cn] %Cred%d' --decorate --date=short --grep=$1; }; f"
+
+	# List contributors with number of commits
+	contributors = shortlog --summary --numbered
+[apply]
+	# Detect whitespace errors when applying a patch
+	whitespace = fix
+[push]
+	default = simple
+	followTags = true
+	autoSetupRemote = true
+[pull]
+	rebase = false
+
+# URL shorthands
+[url "git@github.com:"]
+	insteadOf = "gh:"
+	pushInsteadOf = "github:"
+	pushInsteadOf = "git://github.com/"
+[url "git://github.com/"]
+	insteadOf = "github:"
+[url "git@gist.github.com:"]
+	insteadOf = "gst:"
+	pushInsteadOf = "gist:"
+	pushInsteadOf = "git://gist.github.com/"
+[url "git://gist.github.com/"]
+	insteadOf = "gist:"
+[init]
+	defaultBranch = main
+[credential "helperselector"]
+	selected = manager-core

@@ -1,0 +1,65 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run the `open default settings` command
+// from the command palette or from `Zed` application menu.
+{
+  "base_keymap": "VSCode",
+  "theme": "One Light",
+  "buffer_font_size": 17,
+  "vim_mode": false,
+  "project_panel": {
+    "dock": "right",
+    "git_status": true,
+  },
+  "format_on_save": "on",
+  "formatter": "language_server",
+  "ensure_final_newline_on_save": true,
+  "autosave": "off",
+  "auto_update": true,
+  "buffer_font_family": "JetBrains Mono",
+  "buffer_font_features": {
+    "calt": false
+  },
+  "cursor_blink": true,
+  "git": {
+    "git_gutter": "tracked_files"
+  },
+  "hard_tabs": false,
+  "tab_size": 2,
+  "hover_popover_enabled": true,
+  "preferred_line_length": 120,
+  "remove_trailing_whitespace_on_save": true,
+  "semantic_index": {
+    "enabled": true
+  },
+  "show_copilot_suggestions": true,
+  "show_completions_on_input": true,
+  "show_completion_documentation": true,
+  "soft_wrap": "preferred_line_length",
+  "inlay_hints": {
+    "enabled": false,
+    "show_type_hints": true,
+    "show_parameter_hints": true,
+    "show_other_hints": true
+  },
+  "language_overrides": {
+    "TypeScript": {
+      "formatter": "prettier"
+    },
+    "JavaScript": {
+      "formatter": "prettier"
+    }
+  },
+  "lsp": {
+    "solargraph": {
+      "initialization_options": {
+        "diagnostics": false,
+        "formatting": true
+      }
+    }
+  }
+}

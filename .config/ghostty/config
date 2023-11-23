@@ -1,0 +1,36 @@
+font-size = 17
+font-family = JetBrains Mono
+background-opacity = 0.95
+background-blur-radius = 20
+macos-non-native-fullscreen = visible-menu
+# macos-option-as-alt = left
+mouse-hide-while-typing = true
+cursor-style = block
+
+# One Light theme
+# Taken from https://github.com/mbadolato/iTerm2-Color-Schemes/blob/d58e107fc18955fd199166f3f3cc6b3d36bc2beb/ghostty/AtomOneLight
+palette = 0=#000000
+palette = 1=#de3e35
+palette = 2=#3f953a
+palette = 3=#d2b67c
+palette = 4=#2f5af3
+palette = 5=#950095
+palette = 6=#3f953a
+palette = 7=#bbbbbb
+palette = 8=#000000
+palette = 9=#de3e35
+palette = 10=#3f953a
+palette = 11=#d2b67c
+palette = 12=#2f5af3
+palette = 13=#a00095
+palette = 14=#3f953a
+palette = 15=#ffffff
+background = f9f9f9
+foreground = 2a2c33
+cursor-color = bbbbbb
+selection-background = ededed
+selection-foreground = 2a2c33
+
+# default window size
+window-width = 100
+window-height = 25
