@@ -6,6 +6,10 @@
 - Disable "Automatically adjust brightness"
 - Disable caps lock
 - Change DNS
+  - 8.8.8.8
+  - 8.8.4.4.
+  - 2001:4860:4860::8888
+  - 2001:4860:4860::8844
 - Wallpaper color: #425265
 - `./install.zsh`
 
