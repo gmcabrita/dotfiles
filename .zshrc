@@ -56,12 +56,14 @@ alias rmtmp='rm -rf /tmp/$$'
 alias tree='tree -C'
 alias pager='less -cRS'
 
-alias dcleanup='docker system prune --all --volumes'
-
 # Functions
 
 function g() {
   git "$@"
+}
+
+function dcleanup() {
+  docker system prune --all --volumes --force "$@"
 }
 
 function dc() {
