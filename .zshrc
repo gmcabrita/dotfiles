@@ -70,6 +70,10 @@ function dc() {
   docker compose "$@"
 }
 
+function egm() {
+  git modified | xargs zed
+}
+
 function todo() {
   grep \
     --exclude-dir=public \
