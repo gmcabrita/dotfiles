@@ -7,13 +7,16 @@
 // custom settings, run the `open default settings` command
 // from the command palette or from `Zed` application menu.
 {
+  "terminal": {
+    "dock": "bottom"
+  },
   "base_keymap": "VSCode",
   "theme": "One Light",
   "buffer_font_size": 17,
   "vim_mode": false,
   "project_panel": {
     "dock": "right",
-    "git_status": true,
+    "git_status": true
   },
   "format_on_save": "on",
   "formatter": "language_server",
