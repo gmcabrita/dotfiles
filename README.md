@@ -51,3 +51,7 @@ Setup:
 - Zoom
 - Cleanshot
 - BetterDisplay
+
+## Extras
+
+- https://nuphy.com/pages/via-usage-guide-for-nuphy-keyboards
