@@ -12,7 +12,7 @@
   },
   "base_keymap": "VSCode",
   "theme": "One Light",
-  "buffer_font_size": 17,
+  "buffer_font_size": 16.4,
   "vim_mode": false,
   "project_panel": {
     "dock": "right",
