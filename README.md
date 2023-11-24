@@ -2,16 +2,22 @@
 
 ## Before
 
-- Enable full disk access for Terminal
-- Disable "Automatically adjust brightness"
-- Disable caps lock
-- Swap fn and ctrl
+- Privacy & Security:
+  - Enable full disk access for Terminal
+- Display:
+  - Disable "Automatically adjust brightness"
+- Battery:
+  - Disable "Slightly dim the display while on battery power"
+- Keyboard:
+  - Disable caps lock
+  - Swap fn and ctrl
 - Change DNS
   - 8.8.8.8
   - 8.8.4.4.
   - 2001:4860:4860::8888
   - 2001:4860:4860::8844
-- Wallpaper color: #425265
+- Wallpaper:
+  - Custom color: #425265
 - `./install.zsh`
 
 ## After

@@ -97,6 +97,12 @@ defaults write com.apple.dock persistent-apps -array
 # Set Dock icon size to 36 pixels
 defaults write com.apple.dock tilesize -int 36
 
+# Dock on the right
+defaults write com.apple.dock orientation -string "right"
+
+# Set Dock minimize effect to scale
+defaults write com.apple.dock mineffect -string "scale"
+
 # Auto-hide the Dock
 defaults write com.apple.dock autohide -bool true
 
