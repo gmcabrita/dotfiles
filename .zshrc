@@ -1,4 +1,5 @@
 PATH="/opt/homebrew/opt/libpq/bin:/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH"
+export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export EDITOR=zed
 export HISTFILE=$HOME/.zsh_history
 export HISTSIZE=10000
