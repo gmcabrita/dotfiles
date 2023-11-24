@@ -5,6 +5,7 @@
 - Enable full disk access for Terminal
 - Disable "Automatically adjust brightness"
 - Disable caps lock
+- Swap fn and ctrl
 - Change DNS
   - 8.8.8.8
   - 8.8.4.4.
@@ -42,10 +43,12 @@ Setup:
   - Disable spotlight
   - Disable calendar extension in raycast
 - Cron
+- Muzzle
 - AltTab
   - cmd + tab
   - Disable shortcuts 2 through 5
     - Click "and press" and then click the X
+  - "Visible Spaces" only
 - Zed
 - Zoom
 - Cleanshot
