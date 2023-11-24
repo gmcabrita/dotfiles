@@ -13,6 +13,9 @@ cp .config/zed/settings.json ~/.config/zed/settings.json
 # Brew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
+# Rosetta
+/usr/sbin/softwareupdate --install-rosetta --agree-to-license
+
 # Set hostname
 vared -p "Computer name: " -c name
 sudo scutil --set ComputerName $name
