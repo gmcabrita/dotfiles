@@ -4,6 +4,8 @@
 
 - Privacy & Security:
   - Enable full disk access for Terminal
+- Accessibility:
+  - Increase Text size to 16pt for supported apps
 - Display:
   - Disable "Automatically adjust brightness"
 - Battery:
