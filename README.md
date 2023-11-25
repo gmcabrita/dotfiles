@@ -46,10 +46,11 @@ Setup:
 - WhatsApp
 - Telegram
 - Rectangle
+  - Import config from iCloud Drive
 - Monodraw
 - Raycast
   - Disable spotlight
-  - Import backup from Google Drive
+  - Import config from iCloud Drive
 - Cron
 - Muzzle
 - AltTab
