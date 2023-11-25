@@ -117,7 +117,7 @@ sudo defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
 sudo sysctl kern.maxfiles=64000 kern.maxfilesperproc=28000
 
 brew install --cask 1password alacritty orbstack alt-tab betterdisplay google-chrome linearmouse rectangle zed httpiee cleanshot monodraw google-chrome karabiner-elements db-browser-for-sqlite google-cloud-sdk google-drive spotify slack whatsapp telegram zoom raycast cron cleanshot shureplus-motiv muzzle
-brew install --formula git gh sqlite fzf dos2unix colordiff bash asdf git-extras git-delta gnu-time jq fq less moreutils ncdu ripgrep grep rlwrap scc asciinema tree libpq cloud-sql-proxy glow gum vhs google-cloud-sdk gnu-tar gpg htop elixir-ls tailspin
+brew install --formula git gh sqlite fzf dos2unix colordiff bash asdf git-extras git-delta gnu-time jq fq less moreutils ncdu ripgrep grep rlwrap scc asciinema tree libpq cloud-sql-proxy glow gum vhs google-cloud-sdk gnu-tar gpg htop elixir-ls tailspin 1password-cli
 brew tap homebrew/cask-fonts
 brew install --cask font-jetbrains-mono
 
