@@ -10,6 +10,9 @@ cp .config/ghostty/config ~/.config/ghostty/config
 mkdir -p ~/.config/zed
 cp .config/zed/settings.json ~/.config/zed/settings.json
 
+# iCloud Drive symlink
+ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/iCloud Drive"
+
 # Brew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
