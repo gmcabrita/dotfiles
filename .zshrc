@@ -87,3 +87,9 @@ function todo() {
     --color \
     -nRo 'TODO.*:.*\|FIXME.*:.*\|HACK.*:.*\|OPTIMIZE.*:.*' .
 }
+
+function convert_mp4_to_mov() {
+  rm "$1.mov"
+  touch -r "$1.mp4" "$1.mov"
+  ffmpeg -i "$1.mp4" -movflags use_metadata_tags -map_metadata 0 -f mov "$1.mov"
+}
