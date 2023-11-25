@@ -49,7 +49,7 @@ Setup:
 - Monodraw
 - Raycast
   - Disable spotlight
-  - Disable calendar extension in raycast
+  - Import backup from Google Drive
 - Cron
 - Muzzle
 - AltTab
