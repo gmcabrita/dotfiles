@@ -11,7 +11,7 @@
 [core]
 	fscache = true
 	autocrlf = false
-	editor = "subl -n -w"
+	editor = zed
 	symlinks = true
 	fsmonitor = false
 [color]
