@@ -55,6 +55,17 @@
     },
     "JavaScript": {
       "formatter": "prettier"
+    },
+    "Ruby": {
+      "format_on_save": "off",
+      "formatter": {
+        "external": {
+          "command": "standardrb",
+          "arguments": [
+            "--fix"
+          ]
+        }
+      }
     }
   },
   "lsp": {
