@@ -55,16 +55,6 @@
     },
     "JavaScript": {
       "formatter": "prettier"
-    },
-    "Ruby": {
-      "formatter": {
-        "external": {
-          "command": "standardrb",
-          "arguments": [
-            "--fix"
-          ]
-        }
-      }
     }
   },
   "lsp": {
