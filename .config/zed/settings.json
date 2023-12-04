@@ -57,15 +57,7 @@
       "formatter": "prettier"
     },
     "Ruby": {
-      "format_on_save": "off",
-      "formatter": {
-        "external": {
-          "command": "standardrb",
-          "arguments": [
-            "--fix"
-          ]
-        }
-      }
+      "format_on_save": "off"
     }
   },
   "lsp": {
