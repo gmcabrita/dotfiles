@@ -3,6 +3,7 @@
 cp .gitconfig ~/
 cp .zshrc ~/
 cp .default-gems ~/
+cp .psqlrc ~/
 
 mkdir -p ~/.config/ghostty
 cp .config/ghostty/config ~/.config/ghostty
