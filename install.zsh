@@ -5,6 +5,9 @@ cp .zshrc $HOME/
 cp .default-gems $HOME/
 cp .psqlrc $HOME/
 
+mkdir -p $HOME/.psql/queries
+cp .psql/queries/* $HOME/.psql/queries
+
 mkdir -p $HOME/.bin
 cp .bin/* $HOME/.bin
 
