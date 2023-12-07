@@ -1,18 +1,21 @@
 #!/usr/bin/env zsh
 
-cp .gitconfig ~/
-cp .zshrc ~/
-cp .default-gems ~/
-cp .psqlrc ~/
+cp .gitconfig $HOME/
+cp .zshrc $HOME/
+cp .default-gems $HOME/
+cp .psqlrc $HOME/
 
-mkdir -p ~/.bin
-cp .bin/* ~/.bin
+mkdir -p $HOME/.bin
+cp .bin/* $HOME/.bin
 
-mkdir -p ~/.config/ghostty
-cp .config/ghostty/* ~/.config/ghostty
+mkdir -p $HOME/.config/ghostty
+cp .config/ghostty/* $HOME/.config/ghostty
 
-mkdir -p ~/.config/zed
-cp .config/zed/* ~/.config/zed
+mkdir -p $HOME/.config/zed
+cp .config/zed/* $HOME/.config/zed
+
+mkdir -p $HOME/Library/Application\ Support/mods
+cp Library/Application\ Support/mods/* $HOME/Library/Application\ Support/mods
 
 # iCloud Drive symlink
 ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/iCloud Drive"
