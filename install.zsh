@@ -5,12 +5,14 @@ cp .zshrc ~/
 cp .default-gems ~/
 cp .psqlrc ~/
 
+mkdir -p ~/.bin
+cp .bin/* ~/.bin
+
 mkdir -p ~/.config/ghostty
-cp .config/ghostty/config ~/.config/ghostty
+cp .config/ghostty/* ~/.config/ghostty
 
 mkdir -p ~/.config/zed
-cp .config/zed/settings.json ~/.config/zed
-cp .config/zed/keymap.json ~/.config/zed
+cp .config/zed/* ~/.config/zed
 
 # iCloud Drive symlink
 ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/iCloud Drive"

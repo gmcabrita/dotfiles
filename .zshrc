@@ -1,4 +1,4 @@
-PATH="/opt/homebrew/opt/libpq/bin:/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH"
+PATH="$HOME/.bin:/opt/homebrew/opt/libpq/bin:/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH"
 # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export PGGSSENCMODE=disable
 export EDITOR=zed
