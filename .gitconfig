@@ -33,6 +33,9 @@
 [gist]
 	private = yes
 [alias]
+  # Push and open PR
+  ppr = git push origin HEAD && gh pr create -w
+
 	# New
 	new = !git init && git symbolic-ref HEAD refs/heads/main
 
