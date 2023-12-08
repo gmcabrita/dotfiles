@@ -45,8 +45,7 @@ Setup:
 - Discord
 - WhatsApp
 - Telegram
-- Rectangle
-  - Import config from iCloud Drive
+- Signal
 - Monodraw
 - Raycast
   - Disable spotlight
