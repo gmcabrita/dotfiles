@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+quality=24
+input=
+output=
+overwrite=
+overwrite2=
+ffmpeg=ffmpeg
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -q)
+      quality="$2"
+      shift
+      ;;
+    -y)
+      overwrite="-y"
+      ;;
+    *)
+      if [ -z "$input" ]; then
+        input="$1"
+      elif [ -z "$output" ]; then
+        output="$1"
+      fi
+      ;;
+  esac
+  shift
+done
+
+if [ -z "$input" ]; then
+  echo "Usage: $0 [-q quality] input output"
+  exit 1
+fi
+
+if [ -z "$output" ]; then
+  output="${input%.*}.mp4"
+fi
+
+if [ "$input" = "$output" ]; then
+  echo "Input and output files must be different"
+  read -p "Overwrite $(basename $input)? [y/N] " i
+  if [ "$i" != "y" ]; then
+    exit 1
+  fi
+  overwrite2="$input"
+  output="/tmp/$(date +%s).mp4"
+fi
+
+echo "Encoding $input to $output"
+$ffmpeg -i "$input" -r 30 -crf 18 -b:a 192k -ac 1 -c:v libx264 -vf "scale=1920:1080" $overwrite "$output"
+
+if [ -n "$overwrite2" ]; then
+  mv "$output" "$overwrite2"
+fi
