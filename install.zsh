@@ -42,6 +42,9 @@ defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
 # Press-and-hold should repeat the key, not pop a dialog for special keys.
 defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
 
+# Disable minimizing windows with cmd+m
+defaults write -g NSUserKeyEquivalents -dict-add 'Minimize' '\0'
+
 # Fast keyboard repeat rate
 defaults write NSGlobalDomain KeyRepeat -int 1
 defaults write NSGlobalDomain InitialKeyRepeat -int 10
