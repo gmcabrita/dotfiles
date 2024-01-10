@@ -45,6 +45,9 @@ defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
 # Disable minimizing windows with cmd+m
 defaults write -g NSUserKeyEquivalents -dict-add 'Minimize' '\0'
 
+# Enable moving window with ctrl+cmd+click
+defaults write -g NSWindowShouldDragOnGesture -bool true
+
 # Fast keyboard repeat rate
 defaults write NSGlobalDomain KeyRepeat -int 1
 defaults write NSGlobalDomain InitialKeyRepeat -int 10

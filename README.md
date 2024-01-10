@@ -44,3 +44,4 @@ Setup:
 - Zed
 - Zoom
 - Setapp + apps
+- https://twitter.com/thorstenball/status/1736679960784310775
