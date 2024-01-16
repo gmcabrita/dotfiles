@@ -25,6 +25,12 @@
 ## After
 
 Setup:
+- Chrome
+  - chrome://flags/#allow-insecure-localhost
+  - Configure 1password
+    - Show autofill menu on field focus: no
+  - uBlacklist import from Google Drive
+  - uBlock Origin
 - 1Password
 - Google Drive Stream
 - Slack
