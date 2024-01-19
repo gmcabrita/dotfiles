@@ -27,7 +27,7 @@
   "buffer_font_features": {
     "calt": false
   },
-  "cursor_blink": true,
+  "cursor_blink": false,
   "git": {
     "git_gutter": "tracked_files"
   },
