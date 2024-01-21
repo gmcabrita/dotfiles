@@ -2,12 +2,46 @@ PATH="$HOME/.bin:/opt/homebrew/opt/libpq/bin:/opt/homebrew/opt/gnu-tar/libexec/g
 # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export PGGSSENCMODE=disable
 export EDITOR=zed
+export FZF_DEFAULT_OPTS="--color=light"
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+#### History
+
 export HISTFILE=$HOME/.zsh_history
-export HISTSIZE=10000
-export SAVEHIST=10000
+export HISTSIZE=50000
+export SAVEHIST=5000
+
+# Immediately append to history file:
+setopt INC_APPEND_HISTORY
+
+# Record timestamp in history:
+setopt EXTENDED_HISTORY
+
+# Expire duplicate entries first when trimming history:
+setopt HIST_EXPIRE_DUPS_FIRST
+
+# Dont record an entry that was just recorded again:
+setopt HIST_IGNORE_DUPS
+
+# Delete old recorded entry if new entry is a duplicate:
+setopt HIST_IGNORE_ALL_DUPS
+
+# Do not display a line previously found:
+setopt HIST_FIND_NO_DUPS
+
+# Dont record an entry starting with a space:
+setopt HIST_IGNORE_SPACE
+
+# Dont write duplicate entries in the history file:
+setopt HIST_SAVE_NO_DUPS
+
+# Share history between all sessions:
 setopt SHARE_HISTORY
 
-# Completions
+# Execute commands using history (e.g.: using !$) immediatel:
+unsetopt HIST_VERIFY
+
+#### Completions
 
 autoload -Uz compinit && compinit
 zmodload zsh/complist
@@ -19,7 +53,7 @@ source /opt/homebrew/opt/git-extras/share/git-extras/git-extras-completion.zsh
 source "$(brew --prefix)/share/google-cloud-sdk/path.zsh.inc"
 source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
 
-# Keybinds
+#### Keybinds
 
 bindkey '^[3~' backward-kill-word # option-backspace
 bindkey '^[[3;3~' kill-word # option-fn-backspace
@@ -29,7 +63,7 @@ bindkey '^[[1;9D' beginning-of-line # cmd-left
 bindkey '^[[1;9C' end-of-line # cmd-right
 bindkey -M menuselect '^[[Z' reverse-menu-complete
 
-# Prompt
+#### Prompt
 
 autoload -Uz vcs_info
 function precmd() { vcs_info; }
@@ -37,7 +71,7 @@ zstyle ':vcs_info:git:*' formats '(%b) '
 setopt PROMPT_SUBST
 PS1='%F{green}%~%f ${vcs_info_msg_0_}%# '
 
-# Aliases
+#### Aliases
 
 alias ls='ls --color=auto'
 alias ll='ls -lh'
@@ -58,7 +92,7 @@ alias rmtmp='rm -rf /tmp/$$'
 alias tree='tree -C'
 alias pager='less -cRS'
 
-# Functions
+#### Functions
 
 function g() {
   git "$@"

@@ -140,6 +140,8 @@ brew install --formula git gh sqlite fzf dos2unix colordiff bash asdf git-extras
 brew tap homebrew/cask-fonts
 brew install --cask font-jetbrains-mono
 
+$(brew --prefix)/opt/fzf/install
+
 # Setup brew autoupdate (every 12 hours)
 brew autoupdate start 43200
 
