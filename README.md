@@ -51,3 +51,5 @@ Setup:
 - Zoom
 - Setapp + apps
 - https://twitter.com/thorstenball/status/1736679960784310775
+- Copy zsh history from icloud
+  - `cp ~/iCloud\ Drive/Software/.zsh_history ~/.zsh_history`
