@@ -23,6 +23,10 @@
   "ensure_final_newline_on_save": true,
   "autosave": "off",
   "auto_update": true,
+  "ui_font_family": "JetBrains Mono",
+  "ui_font_features": {
+    "calt": false
+  },
   "buffer_font_family": "JetBrains Mono",
   "buffer_font_features": {
     "calt": false
