@@ -55,10 +55,26 @@
   },
   "language_overrides": {
     "TypeScript": {
-      "formatter": "prettier"
+      "format_on_save": {
+        "external": {
+          "command": "prettier",
+          "arguments": [
+            "--stdin-filepath",
+            "{buffer_path}"
+          ]
+        }
+      }
     },
     "JavaScript": {
-      "formatter": "prettier"
+      "format_on_save": {
+        "external": {
+          "command": "prettier",
+          "arguments": [
+            "--stdin-filepath",
+            "{buffer_path}"
+          ]
+        }
+      }
     },
     "Ruby": {
       "format_on_save": "off"
