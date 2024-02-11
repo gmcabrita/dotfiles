@@ -154,7 +154,7 @@ asdf plugin-add python
 asdf plugin-add yarn
 asdf plugin-add pnpm
 asdf plugin-add zig
-adsf plugin-add golang
+asdf plugin-add golang
 asdf install nodejs $(asdf nodejs resolve lts --latest-available)
 asdf install bun latest
 asdf install ruby latest
