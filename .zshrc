@@ -94,6 +94,10 @@ alias pager='less -cRS'
 
 #### Functions
 
+function tailscale() {
+ /Applications/Tailscale.app/Contents/MacOS/Tailscale "$@"
+}
+
 function g() {
   git "$@"
 }
