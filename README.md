@@ -10,6 +10,9 @@
   - Disable "Automatically adjust brightness"
 - Battery:
   - Disable "Slightly dim the display while on battery power"
+  - Wake for network access: "Never"
+- Notifications:
+  - Allow notifications when the display is sleeping: No
 - Keyboard:
   - Disable caps lock
   - Swap fn and ctrl
