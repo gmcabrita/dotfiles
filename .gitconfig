@@ -15,11 +15,11 @@
 	symlinks = true
 	fsmonitor = false
 [diff]
-  algorithm = histogram
+	algorithm = histogram
 [branch]
-  sort = -committerdate
+	sort = -committerdate
 [merge]
-  conflictstyle = zdiff3
+	conflictstyle = zdiff3
 [color]
 	ui = auto
 [color "branch"]
@@ -39,8 +39,8 @@
 [gist]
 	private = yes
 [alias]
-  # Push and open PR
-  ppr = !git push origin HEAD && gh pr create -w
+	# Push and open PR
+	ppr = !git push origin HEAD && gh pr create -w
 
 	# New
 	new = !git init && git symbolic-ref HEAD refs/heads/main
