@@ -79,6 +79,9 @@
     "Ruby": {
       "hard_tabs": false,
       "format_on_save": "off"
+    },
+    "YAML": {
+      "hard_tabs": false,
     }
   },
   "lsp": {
