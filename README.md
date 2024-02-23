@@ -56,5 +56,6 @@ Setup:
 - Setapp + apps
 - Install Tailscale from App Store
 - https://twitter.com/thorstenball/status/1736679960784310775
+- https://www.pronotes.app/
 - Copy zsh history from icloud
   - `cp ~/iCloud\ Drive/Software/.zsh_history ~/.zsh_history`
