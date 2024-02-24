@@ -147,6 +147,9 @@ $(brew --prefix)/opt/fzf/install
 # Setup brew autoupdate (every 12 hours)
 brew autoupdate start 43200
 
+# Services
+brew services start ollama
+
 # asdf stuff
 
 asdf plugin-add nodejs
