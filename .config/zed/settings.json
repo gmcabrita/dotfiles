@@ -35,7 +35,7 @@
   "git": {
     "git_gutter": "tracked_files"
   },
-  "hard_tabs": true,
+  "hard_tabs": false,
   "tab_size": 2,
   "hover_popover_enabled": true,
   "preferred_line_length": 120,
@@ -77,11 +77,10 @@
       }
     },
     "Ruby": {
-      "hard_tabs": false,
       "format_on_save": "off"
     },
-    "YAML": {
-      "hard_tabs": false,
+    "Go": {
+      "hard_tabs": true
     }
   },
   "lsp": {
