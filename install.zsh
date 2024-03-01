@@ -137,7 +137,7 @@ sudo defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
 # Increase file limits
 sudo sysctl kern.maxfiles=64000 kern.maxfilesperproc=28000
 
-brew install --cask 1password orbstack betterdisplay google-chrome linearmouse zed httpiee monodraw karabiner-elements db-browser-for-sqlite google-cloud-sdk spotify slack whatsapp telegram signal zoom raycast shureplus-motiv plex-media-server setapp macrorecorder notion-calendar modern-csv
+brew install --cask 1password orbstack betterdisplay google-chrome linearmouse zed httpiee monodraw karabiner-elements db-browser-for-sqlite google-cloud-sdk slack whatsapp telegram signal zoom raycast shureplus-motiv plex-media-server setapp macrorecorder notion-calendar modern-csv
 brew install --formula git gh sqlite fzf dos2unix colordiff bash asdf git-extras git-delta gnu-time jq fq less moreutils ncdu ripgrep grep rlwrap scc asciinema tree libpq cloud-sql-proxy glow gum mods vhs google-cloud-sdk gnu-tar gpg htop tailspin 1password-cli yt-dlp pgcli litecli hyperfine k9s rbspy vegeta ugrep btop neofetch fswatch ollama
 brew tap homebrew/cask-fonts
 brew install --cask font-jetbrains-mono
