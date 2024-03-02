@@ -137,8 +137,8 @@ sudo defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
 # Increase file limits
 sudo sysctl kern.maxfiles=64000 kern.maxfilesperproc=28000
 
-brew install --cask 1password orbstack betterdisplay google-chrome linearmouse zed httpiee monodraw karabiner-elements db-browser-for-sqlite google-cloud-sdk slack whatsapp telegram signal zoom raycast shureplus-motiv plex-media-server setapp macrorecorder notion-calendar modern-csv
-brew install --formula git gh sqlite fzf dos2unix colordiff bash asdf git-extras git-delta gnu-time jq fq less moreutils ncdu ripgrep grep rlwrap scc asciinema tree libpq cloud-sql-proxy glow gum mods vhs google-cloud-sdk gnu-tar gpg htop tailspin 1password-cli yt-dlp pgcli litecli hyperfine k9s rbspy vegeta ugrep btop neofetch fswatch ollama
+brew install --cask 1password orbstack betterdisplay google-chrome linearmouse zed httpiee monodraw karabiner-elements db-browser-for-sqlite google-cloud-sdk slack whatsapp telegram signal zoom raycast shureplus-motiv plex-media-server setapp macrorecorder notion-calendar modern-csv livebook
+brew install --formula git gh sqlite fzf dos2unix colordiff bash asdf git-extras git-delta gnu-time jq fq less moreutils ncdu ripgrep grep rlwrap scc asciinema tree libpq cloud-sql-proxy glow gum mods vhs google-cloud-sdk gnu-tar gpg htop tailspin 1password-cli yt-dlp pgcli litecli hyperfine k9s rbspy vegeta ugrep btop neofetch fswatch ollama elixir-ls
 brew tap homebrew/cask-fonts
 brew install --cask font-jetbrains-mono
 
@@ -160,6 +160,8 @@ asdf plugin-add yarn
 asdf plugin-add pnpm
 asdf plugin-add zig
 asdf plugin-add golang
+asdf plugin-add erlang
+asdf plugin-add elixir
 asdf install nodejs $(asdf nodejs resolve lts --latest-available)
 asdf install bun latest
 asdf install ruby latest
@@ -168,6 +170,8 @@ asdf install yarn 1.22.19
 asdf install pnpm latest
 asdf install zig latest
 asdf install golang latest
+asdf install erlang latest
+asdf install elixir latest
 asdf global nodejs $(asdf nodejs resolve lts --latest-available)
 asdf global bun latest
 asdf global ruby latest
@@ -175,3 +179,5 @@ asdf global yarn 1.22.19
 asdf global pnpm latest
 asdf global zig latest
 asdf global golang latest
+asdf global erlang latest
+asdf global elixir latest
