@@ -10,6 +10,9 @@
   "terminal": {
     "dock": "bottom"
   },
+  "journal": {
+    "path": "/Users/gmcabrita/Library/Mobile Documents/com~apple~CloudDocs/Journal"
+  },
   "base_keymap": "VSCode",
   "theme": "One Light",
   "buffer_font_size": 16.4,
