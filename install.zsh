@@ -162,6 +162,7 @@ asdf plugin-add zig
 asdf plugin-add golang
 asdf plugin-add erlang
 asdf plugin-add elixir
+asdf plugin-add gleam
 asdf install nodejs $(asdf nodejs resolve lts --latest-available)
 asdf install bun latest
 asdf install ruby latest
@@ -172,6 +173,7 @@ asdf install zig latest
 asdf install golang latest
 asdf install erlang latest
 asdf install elixir latest
+asdf install gleam latest
 asdf global nodejs $(asdf nodejs resolve lts --latest-available)
 asdf global bun latest
 asdf global ruby latest
@@ -181,3 +183,4 @@ asdf global zig latest
 asdf global golang latest
 asdf global erlang latest
 asdf global elixir latest
+asdf global gleam latest
