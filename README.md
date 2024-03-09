@@ -52,6 +52,8 @@ Setup:
   - Disable spotlight
   - Import config from iCloud Drive
 - Zed
+  - dockerfile
+  - git-firefly
 - Zoom
 - Setapp + apps
 - Install Tailscale from App Store
