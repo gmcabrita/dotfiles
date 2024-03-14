@@ -4,6 +4,7 @@ cp .gitconfig $HOME/
 cp .zshrc $HOME/
 cp .default-gems $HOME/
 cp .psqlrc $HOME/
+cp .sqliterc $HOME/
 
 mkdir -p $HOME/.psql/queries
 cp .psql/queries/* $HOME/.psql/queries
