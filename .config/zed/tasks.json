@@ -1,0 +1,36 @@
+[
+  {
+    "label": "elixir: test suite",
+    "command": "mix",
+    "args": [
+      "test"
+    ]
+  },
+  {
+    "label": "elixir: test file",
+    "command": "mix",
+    "args": [
+      "test",
+      "$ZED_FILE"
+    ]
+  },
+  {
+    "label": "elixir: test one",
+    "command": "mix",
+    "args": [
+      "test",
+      "$ZED_FILE:$ZED_ROW"
+    ]
+  },
+  {
+    "label": "elixir: break one",
+    "command": "iex",
+    "args": [
+      "-S",
+      "mix",
+      "test",
+      "-b",
+      "$ZED_FILE:$ZED_ROW"
+    ]
+  }
+]
