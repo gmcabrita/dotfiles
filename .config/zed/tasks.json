@@ -32,5 +32,31 @@
       "-b",
       "$ZED_FILE:$ZED_ROW"
     ]
+  },
+  {
+    "label": "ruby: test suite",
+    "command": "bin/rspec",
+  },
+  {
+    "label": "ruby: test file",
+    "command": "bin/rspec",
+    "args": [
+      "$ZED_FILE"
+    ]
+  },
+  {
+    "label": "ruby: test one",
+    "command": "bin/rspec",
+    "args": [
+      "$ZED_FILE:$ZED_ROW"
+    ]
+  },
+  {
+    "label": "ruby: test file, fail fast",
+    "command": "bin/rspec",
+    "args": [
+      "--fail-fast",
+      "$ZED_FILE"
+    ]
   }
 ]
