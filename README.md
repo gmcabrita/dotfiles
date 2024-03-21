@@ -48,6 +48,7 @@ Setup:
 - Telegram
 - Signal
 - Monodraw
+- Bear Notes
 - Raycast
   - Disable spotlight
   - Import config from iCloud Drive
