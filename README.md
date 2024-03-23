@@ -23,7 +23,7 @@
   - 2001:4860:4860::8888
   - 2001:4860:4860::8844
 - Wallpaper:
-  - Custom color: #506578
+  - Custom color: #000000
 - `./install.zsh`
 
 ## After
