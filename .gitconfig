@@ -1,6 +1,6 @@
 [user]
 	email = goncalo@mendescabrita.com
-	name = Gonçalo Cabrita
+	name = Gonçalo Mendes Cabrita
 	signingkey = ~/.ssh/id_ed25519
 [commit]
 	gpgsign = true
