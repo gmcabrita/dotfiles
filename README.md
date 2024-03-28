@@ -55,6 +55,7 @@ Setup:
 - Zed
   - dockerfile
   - git-firefly
+  - sql
 - Zoom
 - Setapp + apps
 - Install Tailscale from App Store

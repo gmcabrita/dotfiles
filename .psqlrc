@@ -42,5 +42,7 @@
 \set connection_counts_by_state `cat ~/.psql/queries/connection_counts_by_state.sql`
 \set index_monitoring `cat ~/.psql/queries/index_monitoring.sql`
 \set analyze_vacuum_stats `cat ~/.psql/queries/analyze_vacuum_stats.sql`
+\set cache_hit_ratio_tables `cat ~/.psql/queries/cache_hit_ratio_tables.sql`
+\set cache_hit_ratio_indices `cat ~/.psql/queries/cache_hit_ratio_indices.sql`
 
 \unset QUIET
