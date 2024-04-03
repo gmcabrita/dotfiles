@@ -20,6 +20,7 @@
 
 \set long_running `cat ~/.psql/queries/long_running.sql`
 \set databases `cat ~/.psql/queries/databases.sql`
+\set hot_update_ratio `cat ~/.psql/queries/hot_update_ratio.sql`
 \set tables `cat ~/.psql/queries/tables.sql`
 \set activity `cat ~/.psql/queries/activity.sql`
 \set table_bloat_estimation `cat ~/.psql/queries/table_bloat_estimation.sql`
