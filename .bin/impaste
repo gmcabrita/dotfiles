@@ -1,0 +1,19 @@
+#!/usr/bin/env zsh
+
+# Generate a unique temporary filename
+tempfile=$(mktemp -t clipboard.XXXXXXXXXX.png) || { echo "ERROR: Failed to create temp file."; exit 1; }
+
+# Ensure the temporary file is removed on exit or interruption
+trap 'rm -f "$tempfile"' EXIT INT
+
+# Save the clipboard image to the temporary file
+if ! osascript -e 'set theImage to the clipboard as «class PNGf»' \
+                -e "set theFile to open for access POSIX file \"$tempfile\" with write permission" \
+                -e 'write theImage to theFile' \
+                -e 'close access theFile'; then
+    echo "ERROR: Failed to save clipboard to file."
+    exit 1
+fi
+
+# Output the image data to stdout
+cat "$tempfile"
