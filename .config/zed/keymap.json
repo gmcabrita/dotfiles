@@ -3,7 +3,7 @@
     "bindings": {
       "ctrl-shift-tab": "pane::ActivatePrevItem",
       "ctrl-tab": "pane::ActivateNextItem",
-      "cmd-m": null,
+      "cmd-m": null
     }
   }
 ]
