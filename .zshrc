@@ -2,6 +2,7 @@ PATH="$HOME/.bin:/opt/homebrew/opt/sqlite/bin:/opt/homebrew/opt/libpq/bin:/opt/h
 # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export PGGSSENCMODE=disable
 export EDITOR=zed
+export ERL_AFLAGS="-kernel shell_history enabled"
 export FZF_DEFAULT_OPTS="--color=light"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
