@@ -1,6 +1,10 @@
 # dotfiles
 
-## Before
+## On previous machine
+
+- `cp ~/.zsh_history ~/iCloud\ Drive/Software/.zsh_history`
+
+## Pre-install script setup
 
 - Privacy & Security:
   - Enable full disk access for Terminal
@@ -26,9 +30,8 @@
   - Custom color: #000000
 - `./install.zsh`
 
-## After
+## Post-install script setup
 
-Setup:
 - Chrome
   - chrome://flags/#allow-insecure-localhost
   - Configure 1password
