@@ -9,8 +9,9 @@ export FZF_DEFAULT_OPTS="--color=light"
 #### History
 
 export HISTFILE=$HOME/.zsh_history
-export HISTSIZE=50000
-export SAVEHIST=5000
+export HISTSIZE=10000000
+export SAVEHIST=10000000
+export HISTORY_IGNORE="(ls|cd|pwd|exit|cd)*"
 
 # Immediately append to history file:
 setopt INC_APPEND_HISTORY
