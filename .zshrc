@@ -133,3 +133,26 @@ function convert_mp4_to_mov() {
   touch -r "$1.mp4" "$1.mov"
   ffmpeg -i "$1.mp4" -movflags use_metadata_tags -map_metadata 0 -f mov "$1.mov"
 }
+
+function asdf-update-tools-to-latest() {
+  asdf plugin update --all
+  asdf install nodejs $(asdf nodejs resolve lts --latest-available)
+  asdf install bun latest
+  asdf install ruby latest
+  asdf install python latest
+  asdf install pnpm latest
+  asdf install zig latest
+  asdf install golang latest
+  asdf install erlang latest
+  asdf install elixir latest
+  asdf install gleam latest
+  asdf global nodejs $(asdf nodejs resolve lts --latest-available)
+  asdf global bun latest
+  asdf global ruby latest
+  asdf global pnpm latest
+  asdf global zig latest
+  asdf global golang latest
+  asdf global erlang latest
+  asdf global elixir latest
+  asdf global gleam latest
+}
