@@ -59,6 +59,9 @@
     "show_parameter_hints": true,
     "show_other_hints": true
   },
+  "tab_bar": {
+    "show_nav_history_buttons": false
+  },
   "language_overrides": {
     "HTML": {
       "format_on_save": {
