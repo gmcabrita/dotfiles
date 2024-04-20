@@ -57,9 +57,11 @@
   - Import config from iCloud Drive
 - Zed
   - Dockerfile
+  - Docker Compose
   - Git Firefly
   - SQL
   - Make
+  - HTML
 - Zoom
 - Setapp + apps
 - Install Tailscale from App Store
