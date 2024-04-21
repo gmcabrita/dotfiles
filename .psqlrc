@@ -47,5 +47,6 @@
 \set cache_hit_ratio_indices `cat ~/.psql/queries/cache_hit_ratio_indices.sql`
 \set io_client_fsync_impact `cat ~/.psql/queries/io_client_fsync_impact.sql`
 \set io_vacuum_impact `cat ~/.psql/queries/io_vacuum_impact.sql`
+\set io_cache_hit_ratio `cat ~/.psql/queries/io_cache_hit_ratio.sql`
 
 \unset QUIET
