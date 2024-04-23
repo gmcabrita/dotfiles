@@ -62,6 +62,7 @@
   - SQL
   - Make
   - HTML
+  - Templ
 - Zoom
 - Setapp + apps
 - Install Tailscale from App Store
