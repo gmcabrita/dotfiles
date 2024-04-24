@@ -11,7 +11,7 @@
 [core]
 	fscache = true
 	autocrlf = false
-	editor = zed
+	editor = "zed -n -w"
 	symlinks = true
 	fsmonitor = false
 [diff]
