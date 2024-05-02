@@ -63,6 +63,7 @@
   - Make
   - HTML
   - Templ
+  - Rainbow CSV
 - Zoom
 - Setapp + apps
 - Install Tailscale from App Store
