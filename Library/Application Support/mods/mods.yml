@@ -36,7 +36,7 @@ apis:
     api-key:
     api-key-env: OPENAI_API_KEY
     models:
-      gpt-4-1106-preview:
+      gpt-4o:
         aliases: ["4t"]
         max-input-chars: 350000
         fallback: gpt-4
