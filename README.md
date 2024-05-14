@@ -21,6 +21,9 @@
   - Disable caps lock
   - Swap fn and ctrl
   - Press globe key to: "Do nothing"
+  - App Shortcuts
+    - Bear
+      - Copy Code = `⌘ ⇧ C`
 - Change DNS
   - 8.8.8.8
   - 8.8.4.4
