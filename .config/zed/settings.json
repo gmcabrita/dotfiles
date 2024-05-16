@@ -105,6 +105,9 @@
     "Make": {
       "hard_tabs": true
     },
+    "Just": {
+      "hard_tabs": true
+    },
     "Elixir": {
       "language_servers": [
         "next-ls",
