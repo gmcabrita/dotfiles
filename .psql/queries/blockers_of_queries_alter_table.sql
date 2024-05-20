@@ -4,7 +4,7 @@ inner join
     (
         select pg_blocking_pids(pid) blocking_pids
         from pg_stat_activity
-        where pid != pg_backend_pid() and query like 'ALTER TABLE%'
+        where pid != pg_backend_pid() and query ilike 'alter table%'
     ) my_query
     on blockers.pid = any (my_query.blocking_pids)
 ;
