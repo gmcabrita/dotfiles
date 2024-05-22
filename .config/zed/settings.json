@@ -60,7 +60,8 @@
     "show_other_hints": true
   },
   "tab_bar": {
-    "show_nav_history_buttons": false
+    "show_nav_history_buttons": false,
+    "show": true
   },
   "language_overrides": {
     "HTML": {
@@ -97,7 +98,11 @@
       }
     },
     "Ruby": {
-      "format_on_save": "off"
+      "format_on_save": "off",
+      "language_servers": [
+        "ruby-lsp",
+        "!solargraph"
+      ]
     },
     "Go": {
       "hard_tabs": true
@@ -130,6 +135,13 @@
       "initialization_options": {
         "diagnostics": false,
         "formatting": false
+      }
+    },
+    "ruby-lsp": {
+      "initialization_options": {
+        "enabledFeatures": {
+          "diagnostics": false
+        }
       }
     }
   }
