@@ -13,9 +13,6 @@
   "terminal": {
     "dock": "bottom"
   },
-  "journal": {
-    "path": "/Users/gmcabrita/Library/Mobile Documents/com~apple~CloudDocs"
-  },
   "base_keymap": "VSCode",
   "theme": "Gruvbox Dark Hard",
   "buffer_font_size": 16.4,
