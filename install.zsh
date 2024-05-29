@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 
 cp .gitconfig $HOME/
+cp .gitignore $HOME/
 cp .zshrc $HOME/
 cp .default-gems $HOME/
 cp .psqlrc $HOME/

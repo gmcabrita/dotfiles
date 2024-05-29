@@ -14,6 +14,7 @@
 	editor = "zed -n -w"
 	symlinks = true
 	fsmonitor = false
+	excludesfile = ~/.gitignore
 [diff]
 	algorithm = histogram
 [branch]
