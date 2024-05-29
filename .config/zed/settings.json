@@ -118,6 +118,11 @@
       ]
     }
   },
+  "file_types": {
+    "Just": [
+      "Justfile"
+    ]
+  },
   "lsp": {
     "next-ls": {
       "initialization_options": {
@@ -137,7 +142,8 @@
     "ruby-lsp": {
       "initialization_options": {
         "enabledFeatures": {
-          "diagnostics": false
+          "diagnostics": false,
+          "formatting": false
         }
       }
     }
