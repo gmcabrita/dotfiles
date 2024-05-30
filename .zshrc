@@ -135,6 +135,11 @@ function convert_mp4_to_mov() {
   ffmpeg -i "$1.mp4" -movflags use_metadata_tags -map_metadata 0 -f mov "$1.mov"
 }
 
+function livebook-install() {
+  mix do local.rebar --force, local.hex --force
+  mix escript.install hex livebook
+}
+
 function asdf-update-tools-to-latest() {
   asdf plugin update --all
   asdf install nodejs $(asdf nodejs resolve lts --latest-available)
