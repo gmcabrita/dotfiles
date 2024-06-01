@@ -95,6 +95,8 @@ alias rmtmp='rm -rf /tmp/$$'
 alias tree='tree -C'
 alias pager='less -cRS'
 
+alias marked="open -a Marked"
+
 #### Functions
 
 function tailscale() {
