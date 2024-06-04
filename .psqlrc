@@ -48,5 +48,6 @@
 \set io_client_fsync_impact `cat ~/.psql/queries/io_client_fsync_impact.sql`
 \set io_vacuum_impact `cat ~/.psql/queries/io_vacuum_impact.sql`
 \set io_cache_hit_ratio `cat ~/.psql/queries/io_cache_hit_ratio.sql`
+\set tables_missing_pk `cat ~/.psql/queries/tables_missing_pk.sql`
 
 \unset QUIET
