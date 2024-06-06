@@ -77,6 +77,7 @@
   - iStat Menus
   - Proxyman
   - Marked
+  - Bartender
 - Install Tailscale from App Store
 - https://twitter.com/thorstenball/status/1736679960784310775
 - https://www.pronotes.app/
