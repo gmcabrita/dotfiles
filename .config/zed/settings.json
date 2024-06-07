@@ -8,7 +8,7 @@
 // from the command palette or from `Zed` application menu.
 {
   "features": {
-    "copilot": false
+    "copilot": true
   },
   "terminal": {
     "dock": "bottom"
@@ -47,6 +47,7 @@
     "enabled": true
   },
   "show_copilot_suggestions": true,
+  "show_inline_completions": true,
   "show_completions_on_input": true,
   "show_completion_documentation": true,
   "soft_wrap": "preferred_line_length",
@@ -65,10 +66,7 @@
       "format_on_save": {
         "external": {
           "command": "prettier",
-          "arguments": [
-            "--stdin-filepath",
-            "{buffer_path}"
-          ]
+          "arguments": ["--stdin-filepath", "{buffer_path}"]
         }
       }
     },
@@ -76,10 +74,7 @@
       "format_on_save": {
         "external": {
           "command": "prettier",
-          "arguments": [
-            "--stdin-filepath",
-            "{buffer_path}"
-          ]
+          "arguments": ["--stdin-filepath", "{buffer_path}"]
         }
       }
     },
@@ -87,19 +82,13 @@
       "format_on_save": {
         "external": {
           "command": "prettier",
-          "arguments": [
-            "--stdin-filepath",
-            "{buffer_path}"
-          ]
+          "arguments": ["--stdin-filepath", "{buffer_path}"]
         }
       }
     },
     "Ruby": {
       "format_on_save": "off",
-      "language_servers": [
-        "ruby-lsp",
-        "!solargraph"
-      ]
+      "language_servers": ["ruby-lsp", "!solargraph"]
     },
     "Go": {
       "hard_tabs": true
@@ -111,17 +100,11 @@
       "hard_tabs": true
     },
     "Elixir": {
-      "language_servers": [
-        "next-ls",
-        "!elixir-ls",
-        "!lexical"
-      ]
+      "language_servers": ["next-ls", "!elixir-ls", "!lexical"]
     }
   },
   "file_types": {
-    "Just": [
-      "Justfile"
-    ]
+    "Just": ["Justfile"]
   },
   "lsp": {
     "next-ls": {
