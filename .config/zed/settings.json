@@ -62,6 +62,22 @@
     "show": true
   },
   "language_overrides": {
+    "Ruby": {
+      "format_on_save": "off",
+      "language_servers": ["ruby-lsp", "!solargraph", "..."]
+    },
+    "Go": {
+      "hard_tabs": true
+    },
+    "Make": {
+      "hard_tabs": true
+    },
+    "Just": {
+      "hard_tabs": true
+    },
+    "Elixir": {
+      "language_servers": ["next-ls", "!elixir-ls", "!lexical", "..."]
+    },
     "HTML": {
       "format_on_save": {
         "external": {
@@ -85,23 +101,33 @@
           "arguments": ["--stdin-filepath", "{buffer_path}"]
         }
       }
-    },
-    "Ruby": {
-      "format_on_save": "off",
-      "language_servers": ["ruby-lsp", "!solargraph"]
-    },
-    "Go": {
-      "hard_tabs": true
-    },
-    "Make": {
-      "hard_tabs": true
-    },
-    "Just": {
-      "hard_tabs": true
-    },
-    "Elixir": {
-      "language_servers": ["next-ls", "!elixir-ls", "!lexical"]
     }
+  },
+  "auto_install_extensions": {
+    "cue": true,
+    "docker-compose": true,
+    "dockerfile": true,
+    "earthfile": true,
+    "elixir": true,
+    "erlang": true,
+    "git-firefly": true,
+    "gleam": true,
+    "html": true,
+    "justfile": true,
+    "log": true,
+    "lua": true,
+    "make": true,
+    "nginx": true,
+    "rainbow-csv": true,
+    "ruby": true,
+    "scss": true,
+    "sql": true,
+    "templ": true,
+    "terraform": true,
+    "toml": true,
+    "typst": true,
+    "xml": true,
+    "zig": true
   },
   "file_types": {
     "Just": ["Justfile"]
@@ -114,12 +140,6 @@
             "enable": true
           }
         }
-      }
-    },
-    "solargraph": {
-      "initialization_options": {
-        "diagnostics": false,
-        "formatting": false
       }
     },
     "ruby-lsp": {
