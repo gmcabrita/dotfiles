@@ -70,7 +70,7 @@
     "git-firefly": true,
     "gleam": true,
     "html": true,
-    "justfile": true,
+    "just": true,
     "log": true,
     "lua": true,
     "make": true,
