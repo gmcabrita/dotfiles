@@ -46,7 +46,6 @@
   "semantic_index": {
     "enabled": true
   },
-  "show_copilot_suggestions": true,
   "show_inline_completions": true,
   "show_completions_on_input": true,
   "show_completion_documentation": true,
@@ -88,7 +87,9 @@
     "zig": true
   },
   "file_types": {
-    "Just": ["Justfile"]
+    "Just": [
+      "Justfile"
+    ]
   },
   "lsp": {
     "next-ls": {
@@ -112,7 +113,11 @@
   "language_overrides": {
     "Ruby": {
       "format_on_save": "off",
-      "language_servers": ["ruby-lsp", "!solargraph", "..."]
+      "language_servers": [
+        "ruby-lsp",
+        "!solargraph",
+        "..."
+      ]
     },
     "Go": {
       "hard_tabs": true
@@ -124,13 +129,21 @@
       "hard_tabs": true
     },
     "Elixir": {
-      "language_servers": ["next-ls", "!elixir-ls", "!lexical", "..."]
+      "language_servers": [
+        "next-ls",
+        "!elixir-ls",
+        "!lexical",
+        "..."
+      ]
     },
     "HTML": {
       "format_on_save": {
         "external": {
           "command": "prettier",
-          "arguments": ["--stdin-filepath", "{buffer_path}"]
+          "arguments": [
+            "--stdin-filepath",
+            "{buffer_path}"
+          ]
         }
       }
     },
@@ -138,7 +151,10 @@
       "format_on_save": {
         "external": {
           "command": "prettier",
-          "arguments": ["--stdin-filepath", "{buffer_path}"]
+          "arguments": [
+            "--stdin-filepath",
+            "{buffer_path}"
+          ]
         }
       }
     },
@@ -146,7 +162,10 @@
       "format_on_save": {
         "external": {
           "command": "prettier",
-          "arguments": ["--stdin-filepath", "{buffer_path}"]
+          "arguments": [
+            "--stdin-filepath",
+            "{buffer_path}"
+          ]
         }
       }
     }
