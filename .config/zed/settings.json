@@ -61,48 +61,6 @@
     "show_nav_history_buttons": false,
     "show": true
   },
-  "language_overrides": {
-    "Ruby": {
-      "format_on_save": "off",
-      "language_servers": ["ruby-lsp", "!solargraph", "..."]
-    },
-    "Go": {
-      "hard_tabs": true
-    },
-    "Make": {
-      "hard_tabs": true
-    },
-    "Just": {
-      "hard_tabs": true
-    },
-    "Elixir": {
-      "language_servers": ["next-ls", "!elixir-ls", "!lexical", "..."]
-    },
-    "HTML": {
-      "format_on_save": {
-        "external": {
-          "command": "prettier",
-          "arguments": ["--stdin-filepath", "{buffer_path}"]
-        }
-      }
-    },
-    "TypeScript": {
-      "format_on_save": {
-        "external": {
-          "command": "prettier",
-          "arguments": ["--stdin-filepath", "{buffer_path}"]
-        }
-      }
-    },
-    "JavaScript": {
-      "format_on_save": {
-        "external": {
-          "command": "prettier",
-          "arguments": ["--stdin-filepath", "{buffer_path}"]
-        }
-      }
-    }
-  },
   "auto_install_extensions": {
     "cue": true,
     "docker-compose": true,
@@ -147,6 +105,48 @@
         "enabledFeatures": {
           "diagnostics": false,
           "formatting": false
+        }
+      }
+    }
+  },
+  "language_overrides": {
+    "Ruby": {
+      "format_on_save": "off",
+      "language_servers": ["ruby-lsp", "!solargraph", "..."]
+    },
+    "Go": {
+      "hard_tabs": true
+    },
+    "Make": {
+      "hard_tabs": true
+    },
+    "Just": {
+      "hard_tabs": true
+    },
+    "Elixir": {
+      "language_servers": ["next-ls", "!elixir-ls", "!lexical", "..."]
+    },
+    "HTML": {
+      "format_on_save": {
+        "external": {
+          "command": "prettier",
+          "arguments": ["--stdin-filepath", "{buffer_path}"]
+        }
+      }
+    },
+    "TypeScript": {
+      "format_on_save": {
+        "external": {
+          "command": "prettier",
+          "arguments": ["--stdin-filepath", "{buffer_path}"]
+        }
+      }
+    },
+    "JavaScript": {
+      "format_on_save": {
+        "external": {
+          "command": "prettier",
+          "arguments": ["--stdin-filepath", "{buffer_path}"]
         }
       }
     }
