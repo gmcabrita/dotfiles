@@ -110,7 +110,7 @@
       }
     }
   },
-  "language_overrides": {
+  "languages": {
     "Ruby": {
       "format_on_save": "off",
       "language_servers": [
