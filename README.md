@@ -69,8 +69,6 @@
   - Proxyman
   - Marked
   - Bartender
-- AltTab
-  - [Config](https://github.com/gmcabrita/dotfiles/assets/957820/f500ad83-d5ae-420e-b9a6-f95bef3bb240)
 - Install Tailscale from App Store
 - https://twitter.com/thorstenball/status/1736679960784310775
 - https://www.pronotes.app/
