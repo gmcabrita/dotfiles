@@ -148,6 +148,11 @@
       }
     },
     "TypeScript": {
+      "language_servers": [
+        "!typescript-language-server",
+        "vtsls",
+        "..."
+      ],
       "format_on_save": {
         "external": {
           "command": "prettier",
