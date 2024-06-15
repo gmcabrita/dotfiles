@@ -22,6 +22,8 @@ cp .config/zed/* $HOME/.config/zed
 mkdir -p $HOME/Library/Application\ Support/mods
 cp Library/Application\ Support/mods/* $HOME/Library/Application\ Support/mods
 
+mkdir ~/.zfunc
+
 # iCloud Drive symlink
 ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/iCloud Drive"
 
@@ -140,7 +142,7 @@ sudo defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
 sudo sysctl kern.maxfiles=64000 kern.maxfilesperproc=28000
 
 brew install --cask 1password orbstack betterdisplay google-chrome linearmouse zed httpiee monodraw karabiner-elements db-browser-for-sqlite google-cloud-sdk slack whatsapp signal zoom raycast shureplus-motiv plex-media-server setapp macrorecorder modern-csv macs-fan-control
-brew install --formula git gh sqlite duckdb fzf dos2unix colordiff bash asdf git-extras git-delta gnu-time jq fq less moreutils ncdu ripgrep grep rlwrap scc asciinema tree libpq cloud-sql-proxy glow gum mods vhs google-cloud-sdk gnu-tar gpg htop tailspin 1password-cli yt-dlp pgcli litecli hyperfine k9s rbspy vegeta ugrep btop neofetch fswatch ollama elixir-ls just typst zola sqlc terraform
+brew install --formula git gh sqlite duckdb fzf dos2unix colordiff bash asdf git-extras git-delta gnu-time jq fq less moreutils ncdu ripgrep grep rlwrap scc asciinema tree libpq cloud-sql-proxy glow gum mods vhs google-cloud-sdk gnu-tar gpg htop tailspin 1password-cli yt-dlp pgcli litecli hyperfine k9s rbspy vegeta ugrep btop neofetch fswatch ollama elixir-ls just typst zola sqlc terraform rustup
 brew tap homebrew/cask-fonts
 brew install --cask font-jetbrains-mono
 
@@ -152,8 +154,7 @@ brew autoupdate start 43200
 # Services
 brew services start ollama
 
-# asdf stuff
-
+# Programming language stuff
 asdf plugin-add nodejs
 asdf plugin-add bun
 asdf plugin-add ruby
@@ -186,3 +187,12 @@ asdf global golang latest
 asdf global erlang latest
 asdf global elixir latest
 asdf global gleam latest
+rustup-init \
+  --default-host "aarch64-apple-darwin" \
+  --default-toolchain "stable" \
+  --profile "complete" \
+  --no-modify-path \
+  -y
+
+rustup completions zsh rustup > ~/.zfunc/_rustup
+rustup completions zsh cargo > ~/.zfunc/_cargo

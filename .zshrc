@@ -1,4 +1,5 @@
 PATH="$HOME/.bin:/opt/homebrew/opt/sqlite/bin:/opt/homebrew/opt/libpq/bin:/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH"
+. "$HOME/.cargo/env"
 # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export PGGSSENCMODE=disable
 export EDITOR=zed
@@ -46,6 +47,8 @@ unsetopt HIST_VERIFY
 
 #### Completions
 
+fpath+="$(brew --prefix)/share/zsh/site-functions"
+fpath+="$HOME/.zfunc"
 autoload -Uz compinit && compinit
 zmodload zsh/complist
 zstyle ':completion:*' menu select
@@ -142,7 +145,7 @@ function livebook-install() {
   mix escript.install hex livebook
 }
 
-function asdf-update-tools-to-latest() {
+function update-programming-languages() {
   asdf plugin update --all
   asdf install nodejs $(asdf nodejs resolve lts --latest-available)
   asdf install bun latest
@@ -163,4 +166,5 @@ function asdf-update-tools-to-latest() {
   asdf global erlang latest
   asdf global elixir latest
   asdf global gleam latest
+  rustup update
 }
