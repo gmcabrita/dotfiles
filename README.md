@@ -22,8 +22,8 @@
   - Swap fn and ctrl
   - Press globe key to: "Do nothing"
   - App Shortcuts
-    - Bear
-      - Copy Code = `⌘ ⇧ C`
+    - Apple Notes
+      - Note List Search... = `⌘ P`
 - Change DNS
   - 8.8.8.8
   - 8.8.4.4
