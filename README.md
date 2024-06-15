@@ -54,7 +54,7 @@
 - Telegram
 - Signal
 - Monodraw
-- Bear Notes
+- [Pro Notes](https://pronotes.app/direct-download)
 - Raycast
   - Disable spotlight
   - Import config from iCloud Drive
