@@ -49,5 +49,6 @@
 \set io_vacuum_impact `cat ~/.psql/queries/io_vacuum_impact.sql`
 \set io_cache_hit_ratio `cat ~/.psql/queries/io_cache_hit_ratio.sql`
 \set tables_missing_pk `cat ~/.psql/queries/tables_missing_pk.sql`
+\set buffer_cache_usage `cat ~/.psql/queries/buffer_cache_usage.sql`
 
 \unset QUIET
