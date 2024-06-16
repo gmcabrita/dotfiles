@@ -1,3 +1,4 @@
+-- ideal is buffer at 100% utilization and having a sufficient subset of tables/indexes in the buffer
 with state as (
   select count(*) filter (where relfilenode is not null) as used,
          count(*) filter (where relfilenode is null) as empty,
