@@ -6,7 +6,6 @@ export EDITOR=zed
 export KUBE_EDITOR="zed -n -w"
 export ERL_AFLAGS="-kernel shell_history enabled"
 export FZF_DEFAULT_OPTS="--color=light"
-export GIT_PAGER="delta"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 #### History
