@@ -15,8 +15,14 @@
 	symlinks = true
 	fsmonitor = false
 	excludesfile = ~/.gitignore
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+  navigate = true
 [diff]
 	algorithm = histogram
+	colorMoved = default
 [branch]
 	sort = -committerdate
 [merge]
