@@ -1,6 +1,7 @@
-SELECT (hits/(reads+hits)::float) *100
-FROM pg_stat_io
-WHERE
-	backend_type ='client backend' AND
-	io_object = 'relation' AND
-	io_context = 'normal';
+select (hits/(reads+hits)::float) *100 as hit_ratio,
+  reads, writes
+from pg_stat_io
+where
+  backend_type ='client backend' and
+  io_object = 'relation' and
+  io_context = 'normal';
