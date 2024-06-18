@@ -81,6 +81,7 @@
 
 	# Word-based diff
 	wd = diff --color-words
+	wds = diff --staged --color-words
 
 	# Modified files
 	modified = diff --name-only --diff-filter=M
