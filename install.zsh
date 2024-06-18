@@ -13,6 +13,9 @@ cp .psql/queries/* $HOME/.psql/queries
 mkdir -p $HOME/.bin
 cp .bin/* $HOME/.bin
 
+mkdir -p $HOME/.raycast-scripts
+cp .raycast-scripts/* $HOME/.raycast-scripts
+
 mkdir -p $HOME/.config/ghostty
 cp .config/ghostty/* $HOME/.config/ghostty
 

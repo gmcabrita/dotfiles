@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+sqlite3 -readonly -batch "$HOME/Library/Messages/chat.db" "select text from message order by date desc limit 1" | rg -o '\b\d{4,6}\b' | tr -d '[:space:]' | pbcopy
