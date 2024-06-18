@@ -149,6 +149,12 @@ function livebook-install() {
   mix escript.install hex livebook
 }
 
+function git-fetch-all-repos() {
+  find . -type d -depth 1 -exec git --git-dir={}/.git --work-tree=$PWD/{} pull --all \;
+  find . -type d -depth 1 -exec git --git-dir={}/.git --work-tree=$PWD/{} fetch origin master:master \;
+  find . -type d -depth 1 -exec git --git-dir={}/.git --work-tree=$PWD/{} fetch origin main:main \;
+}
+
 function update-programming-languages() {
   asdf plugin update --all
   asdf install nodejs $(asdf nodejs resolve lts --latest-available)
