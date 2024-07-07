@@ -41,6 +41,7 @@
     - Show autofill menu on field focus: no
   - uBlacklist import from Google Drive
   - uBlock Origin
+  - https://github.com/bpc-clone/bypass-paywalls-chrome-clean/blob/master/allowlist/README.md
 - 1Password
 - Google Drive Stream
 - Slack
