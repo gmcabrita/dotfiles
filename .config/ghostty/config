@@ -7,6 +7,7 @@ macos-non-native-fullscreen = visible-menu
 # macos-option-as-alt = left
 mouse-hide-while-typing = true
 cursor-style = block
+macos-titlebar-style = tabs
 
 # One Light theme
 # Taken from https://github.com/mbadolato/iTerm2-Color-Schemes/blob/d58e107fc18955fd199166f3f3cc6b3d36bc2beb/ghostty/AtomOneLight
