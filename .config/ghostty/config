@@ -7,6 +7,8 @@ macos-non-native-fullscreen = visible-menu
 # macos-option-as-alt = left
 mouse-hide-while-typing = true
 cursor-style = block
+cursor-style-blink = false
+shell-integration-features = no-cursor
 macos-titlebar-style = tabs
 
 # One Light theme
