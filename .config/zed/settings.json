@@ -7,6 +7,12 @@
 // custom settings, run the `open default settings` command
 // from the command palette or from `Zed` application menu.
 {
+  "assistant": {
+    "version": "1",
+    "provider": {
+      "name": "anthropic"
+    }
+  },
   "features": {
     "copilot": true
   },
