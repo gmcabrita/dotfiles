@@ -110,9 +110,13 @@
     "ruby-lsp": {
       "initialization_options": {
         "enabledFeatures": {
-          "diagnostics": false,
-          "formatting": false
-        }
+          "diagnostics": true,
+          "formatting": true
+        },
+        "formatter": "standard",
+        "linters": [
+          "standard"
+        ]
       }
     }
   },
@@ -122,6 +126,7 @@
       "language_servers": [
         "ruby-lsp",
         "!solargraph",
+        "!rubocop",
         "..."
       ]
     },
