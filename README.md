@@ -75,3 +75,25 @@
 - https://www.pronotes.app/
 - Copy zsh history from icloud
   - `cp ~/iCloud\ Drive/Software/.zsh_history ~/.zsh_history`
+- Finder settings:
+  - Remove favorites:
+    - Pictures
+    - Tags
+    - Music
+    - AirDrop
+  - Date modified, simple date
+  - Display as List
+  - Show Path Bar
+  - Show Status Bar
+  - Configure Tool Bar:
+    - Remove tags
+    - Remove groups
+    - Remove get info
+    - Add AirDrop
+    - Customize Share button
+  - Finder settings > Advanced
+    - Show all filename extensions
+    - Show warning before emptying the Trash
+    - Remove items from the Trash after 30 days
+    - Keep folders on top when sorting by name
+    - When performing a search: Search the Current Folder
