@@ -7,11 +7,18 @@
 // custom settings, run the `open default settings` command
 // from the command palette or from `Zed` application menu.
 {
-  "assistant": {
-    "version": "1",
-    "provider": {
-      "name": "anthropic"
+  "language_models": {
+    "anthropic": {
+      "version": "1"
     }
+  },
+  "assistant": {
+    "default_model": {
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20240620"
+    },
+    "version": "2",
+    "provider": null
   },
   "features": {
     "copilot": true
@@ -110,14 +117,14 @@
     "ruby-lsp": {
       "initialization_options": {
         "enabledFeatures": {
-          "diagnostics": true,
-          "formatting": true
+          "diagnostics": false,
+          "formatting": false
         },
         "indexing": {
-          "excluded_patterns": [
+          "excludedPatterns": [
             "**/spec/**/*.rb"
           ],
-          "excluded_gems": [
+          "excludedGems": [
             "English",
             "abbrev",
             "actioncable",
@@ -565,14 +572,8 @@
             "yajl-ruby",
             "yaml",
             "zeitwerk"
-          ],
-          "included_patterns": [],
-          "excluded_magic_comments": []
-        },
-        "formatter": "standard",
-        "linters": [
-          "standard"
-        ]
+          ]
+        }
       }
     }
   },
