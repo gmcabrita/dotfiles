@@ -162,7 +162,8 @@ function update-programming-languages() {
   asdf install ruby latest
   asdf install python latest
   asdf install pnpm latest
-  asdf install zig latest
+  asdf uninstall zig master
+  asdf install zig master
   asdf install golang latest
   asdf install erlang latest
   asdf install elixir latest
@@ -171,7 +172,7 @@ function update-programming-languages() {
   asdf global bun latest
   asdf global ruby latest
   asdf global pnpm latest
-  asdf global zig latest
+  asdf global zig master
   asdf global golang latest
   asdf global erlang latest
   asdf global elixir latest
