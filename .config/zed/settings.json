@@ -104,6 +104,10 @@
       "Justfile"
     ]
   },
+  "language_servers": [
+    "!eslint",
+    "..."
+  ],
   "lsp": {
     "next-ls": {
       "initialization_options": {
@@ -618,6 +622,7 @@
     "TypeScript": {
       "language_servers": [
         "!typescript-language-server",
+        "!eslint",
         "vtsls",
         "..."
       ],
@@ -632,6 +637,12 @@
       }
     },
     "JavaScript": {
+      "language_servers": [
+        "!typescript-language-server",
+        "!eslint",
+        "vtsls",
+        "..."
+      ],
       "format_on_save": {
         "external": {
           "command": "prettier",
