@@ -26,6 +26,14 @@
   "terminal": {
     "dock": "bottom"
   },
+  "scrollbar": {
+    "show": "always"
+  },
+  "toolbar": {
+    "breadcrumbs": true,
+    "quick_actions": true
+  },
+  "vertical_scroll_margin": 0,
   "base_keymap": "VSCode",
   "theme": "Gruvbox Dark Hard",
   "buffer_font_size": 16.4,
