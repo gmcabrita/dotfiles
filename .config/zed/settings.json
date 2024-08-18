@@ -33,6 +33,7 @@
     "breadcrumbs": true,
     "quick_actions": true
   },
+  "use_autoclose": false,
   "vertical_scroll_margin": 0,
   "base_keymap": "VSCode",
   "theme": "Gruvbox Dark Hard",
