@@ -43,6 +43,10 @@ sudo scutil --set HostName $name
 sudo scutil --set LocalHostName $name
 sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName -string $name
 
+# Show advanced printing settings by default
+defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
+defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
+
 # Disable the all finder animations
 defaults write com.apple.finder DisableAllAnimations -bool true
 
