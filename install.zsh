@@ -43,6 +43,9 @@ sudo scutil --set HostName $name
 sudo scutil --set LocalHostName $name
 sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName -string $name
 
+# Disable the all finder animations
+defaults write com.apple.finder DisableAllAnimations -bool true
+
 # Enable full keyboard access for all controls (Accessibility pane)
 defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
 
@@ -133,6 +136,10 @@ defaults write com.apple.dock mineffect -string "scale"
 defaults write com.apple.dock autohide -bool true
 defaults write com.apple.dock autohide-delay -int 0
 defaults write com.apple.dock autohide-time-modifier -float 0.4
+
+# Speedup dock animations
+defaults write com.apple.dock springboard-show-duration -float .1
+defaults write com.apple.dock springboard-page-duration -float .2
 
 # In Safari, don't send search queries to Apple
 sudo defaults write com.apple.Safari UniversalSearchEnabled -bool false
