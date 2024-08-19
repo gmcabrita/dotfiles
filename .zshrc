@@ -58,6 +58,7 @@ zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 source /opt/homebrew/opt/git-extras/share/git-extras/git-extras-completion.zsh
 source "$(brew --prefix)/share/google-cloud-sdk/path.zsh.inc"
 source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
+source <(jj util completion zsh)
 
 #### Keybinds
 
