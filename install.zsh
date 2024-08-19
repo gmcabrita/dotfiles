@@ -25,6 +25,9 @@ cp .config/zed/* $HOME/.config/zed
 mkdir -p $HOME/Library/Application\ Support/mods
 cp Library/Application\ Support/mods/* $HOME/Library/Application\ Support/mods
 
+mkdir -p $HOME/Library/Application\ Support/jj
+cp Library/Application\ Support/jj/* $HOME/Library/Application\ Support/jj
+
 mkdir ~/.zfunc
 
 # iCloud Drive symlink
