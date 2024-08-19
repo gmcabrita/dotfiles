@@ -205,3 +205,5 @@ rustup-init \
 
 rustup completions zsh rustup > ~/.zfunc/_rustup
 rustup completions zsh cargo > ~/.zfunc/_cargo
+
+pip install "reladiff[all]"

@@ -178,4 +178,5 @@ function update-programming-languages() {
   asdf global elixir latest
   asdf global gleam latest
   rustup update
+  pip install "reladiff[all]"
 }
