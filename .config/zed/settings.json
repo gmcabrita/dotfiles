@@ -21,7 +21,8 @@
     "provider": null
   },
   "features": {
-    "copilot": true
+    "copilot": false,
+    "inline_completion_provider": "none"
   },
   "terminal": {
     "dock": "bottom"
