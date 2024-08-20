@@ -17,8 +17,7 @@
       "provider": "anthropic",
       "model": "claude-3-5-sonnet-20240620"
     },
-    "version": "2",
-    "provider": null
+    "version": "2"
   },
   "features": {
     "copilot": false,
