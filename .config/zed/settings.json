@@ -615,7 +615,33 @@
         "!elixir-ls",
         "!lexical",
         "..."
-      ]
+      ],
+      "external": {
+        "command": "mix",
+        "arguments": [
+          "format",
+          "--stdin-filename",
+          "{buffer_path}",
+          "-"
+        ]
+      }
+    },
+    "HEEX": {
+      "language_servers": [
+        "next-ls",
+        "!elixir-ls",
+        "!lexical",
+        "..."
+      ],
+      "external": {
+        "command": "mix",
+        "arguments": [
+          "format",
+          "--stdin-filename",
+          "{buffer_path}",
+          "-"
+        ]
+      }
     },
     "HTML": {
       "format_on_save": {
