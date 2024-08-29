@@ -4,6 +4,15 @@
       "ctrl-shift-tab": "pane::ActivatePrevItem",
       "ctrl-tab": "pane::ActivateNextItem",
       "cmd-m": null
+    },
+  },
+  {
+    "context": "Editor && mode == full",
+    "bindings": {
+      "cmd-ctrl-enter": [
+        "workspace::SendKeystrokes",
+        "cmd-alt-e ctrl-enter"
+      ]
     }
   }
 ]
