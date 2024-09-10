@@ -75,6 +75,9 @@
 	# Quick log with patch
 	lp = log --patch
 
+	# Find when some piece of code was initially introduced
+	when = log --reverse -S
+
 	# Quick diff
 	d = diff
 	ds = diff --staged
