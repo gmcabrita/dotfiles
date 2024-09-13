@@ -56,6 +56,7 @@
 - Signal
 - Monodraw
 - [Pro Notes](https://pronotes.app/direct-download)
+- [Apple Notes Exporter](https://apps.apple.com/us/app/exporter/id1099120373?mt=12)
 - Raycast
   - Disable spotlight
   - Import config from iCloud Drive
