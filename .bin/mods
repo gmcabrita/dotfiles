@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-ANTHROPIC_API_KEY="op://Personal/ebpfp27lruzgaf57gwcxs7s4ka/password" OPENAI_API_KEY="op://Private/ewuflivynutk2orpeprbz3chpq/password" op run --no-masking -- /opt/homebrew/bin/mods "$@"
+ANTHROPIC_API_KEY="op://Personal/ebpfp27lruzgaf57gwcxs7s4ka/password" OPENAI_API_KEY="op://Personal/ewuflivynutk2orpeprbz3chpq/password" op run --no-masking -- /opt/homebrew/bin/mods "$@"
