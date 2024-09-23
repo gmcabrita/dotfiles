@@ -44,7 +44,7 @@
     "git_status": true
   },
   "format_on_save": "on",
-  "formatter": "language_server",
+  "formatter": "auto",
   "ensure_final_newline_on_save": true,
   "autosave": "off",
   "auto_update": true,
@@ -110,14 +110,9 @@
     "zig": true
   },
   "file_types": {
-    "Just": [
-      "Justfile"
-    ]
+    "Just": ["Justfile"]
   },
-  "language_servers": [
-    "!eslint",
-    "..."
-  ],
+  "language_servers": ["!eslint", "..."],
   "lsp": {
     "next-ls": {
       "initialization_options": {
@@ -135,9 +130,7 @@
           "formatting": false
         },
         "indexing": {
-          "excludedPatterns": [
-            "**/spec/**/*.rb"
-          ],
+          "excludedPatterns": ["**/spec/**/*.rb"],
           "excludedGems": [
             "English",
             "abbrev",
@@ -594,12 +587,7 @@
   "languages": {
     "Ruby": {
       "format_on_save": "off",
-      "language_servers": [
-        "ruby-lsp",
-        "!solargraph",
-        "!rubocop",
-        "..."
-      ]
+      "language_servers": ["ruby-lsp", "!solargraph", "!rubocop", "..."]
     },
     "Go": {
       "hard_tabs": true
@@ -611,83 +599,27 @@
       "hard_tabs": true
     },
     "Elixir": {
-      "language_servers": [
-        "next-ls",
-        "!elixir-ls",
-        "!lexical",
-        "..."
-      ],
+      "language_servers": ["next-ls", "!elixir-ls", "!lexical", "..."],
       "external": {
         "command": "mix",
-        "arguments": [
-          "format",
-          "--stdin-filename",
-          "{buffer_path}",
-          "-"
-        ]
+        "arguments": ["format", "--stdin-filename", "{buffer_path}", "-"]
       }
     },
     "HEEX": {
-      "language_servers": [
-        "next-ls",
-        "!elixir-ls",
-        "!lexical",
-        "..."
-      ],
+      "language_servers": ["next-ls", "!elixir-ls", "!lexical", "..."],
       "external": {
         "command": "mix",
-        "arguments": [
-          "format",
-          "--stdin-filename",
-          "{buffer_path}",
-          "-"
-        ]
+        "arguments": ["format", "--stdin-filename", "{buffer_path}", "-"]
       }
     },
     "HTML": {
-      "format_on_save": {
-        "external": {
-          "command": "prettier",
-          "arguments": [
-            "--stdin-filepath",
-            "{buffer_path}"
-          ]
-        }
-      }
+      "format_on_save": "off"
     },
     "TypeScript": {
-      "language_servers": [
-        "!typescript-language-server",
-        "!eslint",
-        "vtsls",
-        "..."
-      ],
-      "format_on_save": {
-        "external": {
-          "command": "prettier",
-          "arguments": [
-            "--stdin-filepath",
-            "{buffer_path}"
-          ]
-        }
-      }
+      "language_servers": ["!typescript-language-server", "!eslint", "vtsls", "..."]
     },
     "JavaScript": {
-      "language_servers": [
-        "!typescript-language-server",
-        "!eslint",
-        "vtsls",
-        "..."
-      ],
-      "format_on_save": {
-        "external": {
-          "command": "prettier",
-          "arguments": [
-            "--stdin-filepath",
-            "{buffer_path}"
-          ]
-        }
-      }
+      "language_servers": ["!typescript-language-server", "!eslint", "vtsls", "..."]
     }
   }
 }
