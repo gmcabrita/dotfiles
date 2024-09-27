@@ -59,7 +59,7 @@
   "buffer_font_features": {
     "calt": false
   },
-  "cursor_shape": "block",
+  "cursor_shape": "bar",
   "cursor_blink": false,
   "git": {
     "git_gutter": "tracked_files"
