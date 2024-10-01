@@ -18,7 +18,6 @@
 - Notifications:
   - Allow notifications when the display is sleeping: No
 - Keyboard:
-  - Disable caps lock
   - Swap fn and ctrl
   - Press globe key to: "Do nothing"
   - App Shortcuts
@@ -72,6 +71,8 @@
   - Marked
   - Bartender
 - Install Tailscale from App Store
+- Hyperkey
+  - Remap Caps Lock to F20
 - https://twitter.com/thorstenball/status/1736679960784310775
 - https://www.pronotes.app/
 - Copy zsh history from icloud
