@@ -40,7 +40,6 @@
   "vertical_scroll_margin": 0,
   "base_keymap": "VSCode",
   "theme": "Gruvbox Dark Hard",
-  "buffer_font_size": 16.4,
   "vim_mode": false,
   "project_panel": {
     "dock": "right",
@@ -56,6 +55,7 @@
     "calt": false
   },
   "buffer_font_family": "JetBrains Mono NL",
+  "buffer_font_size": 16.4,
   "buffer_font_features": {
     "calt": false
   },
