@@ -10,11 +10,15 @@
   "tabs": {
     "file_icons": false
   },
+  "preview_tabs": {
+    "enabled": false
+  },
   "language_models": {
     "anthropic": {
       "version": "1"
     }
   },
+  "extend_comment_on_newline": false,
   "assistant": {
     "default_model": {
       "provider": "anthropic",
