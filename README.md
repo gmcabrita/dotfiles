@@ -23,6 +23,9 @@
   - App Shortcuts
     - Apple Notes
       - Note List Search... = `⌘ P`
+- Desktop & Dock
+  - Window Tiling
+    - Disable "Tiled windows have margins"
 - Change DNS
   - 8.8.8.8
   - 8.8.4.4
