@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+go list ./... |
+  sed "s;$(go list);.;g;s;$;/...;" |
+  fzf |
+  xargs go test -cover -race -timeout=10s -v
