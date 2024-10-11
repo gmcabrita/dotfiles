@@ -31,7 +31,8 @@
     "inline_completion_provider": "copilot"
   },
   "terminal": {
-    "dock": "right"
+    "dock": "right",
+    "cursor_shape": "bar"
   },
   "scrollbar": {
     "show": "always"
