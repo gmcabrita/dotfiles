@@ -115,6 +115,7 @@
     "toml": true,
     "typst": true,
     "xml": true,
+    "zedokai": true,
     "zig": true
   },
   "file_types": {
