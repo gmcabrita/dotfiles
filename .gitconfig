@@ -69,8 +69,17 @@
 	# Quick status
 	s = status
 
-	# Quick log
-	l = log
+	l = "!. ~/.githelpers && pretty_git_log"
+	la = "!git l --all"
+	lr = "!git l -30"
+	lra = "!git lr --all"
+	lg = "!git l -G $1 -- $2"
+
+  # View history graph
+	graph = log --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
+	tree = log --oneline --decorate --graph
+
+  ruf = "!. ~/.githelpers && remove_untracked_files"
 
 	# Quick log with patch
 	lp = log --patch
@@ -88,12 +97,6 @@
 
 	# Modified files
 	modified = diff --name-only --diff-filter=M
-
-	# View history graph
-	graph = log --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
-
-	# View abbreviated SHA, description, and history graph of the latest 20 commits
-	ll = log --pretty=oneline -n 20 --graph --abbrev-commit
 
 	# Show verbose output about tags, branches or remotes
 	tags = tag -l

@@ -2,6 +2,7 @@
 
 cp .gitconfig $HOME/
 cp .gitignore $HOME/
+cp .githelpers $HOME/
 cp .zshrc $HOME/
 cp .default-gems $HOME/
 cp .psqlrc $HOME/
