@@ -128,6 +128,9 @@
 	# Find commits by commit message
 	fm = "!f() { git log --pretty=format:'%C(yellow)%h  %Cblue%ad  %Creset%s%Cgreen  [%cn] %Cred%d' --decorate --date=short --grep=$1; }; f"
 
+	fco = "!. ~/.githelpers && git_fco"
+	prco = "!. ~/.githelpers && git_prco"
+
 	# List contributors with number of commits
 	contributors = shortlog --summary --numbered
 [apply]

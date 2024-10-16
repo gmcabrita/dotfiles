@@ -17,3 +17,11 @@ pretty_git_log() {
 remove_untracked_files() {
   git ls-files --other --exclude-standard | xargs rm -rf
 }
+
+git_fco() {
+  git branch --no-color --sort=-committerdate --format='%(refname:short)' | fzf --header 'git checkout' | xargs git checkout
+}
+# [p]ull request check[o]ut
+git_prco() {
+  gh pr list --author "@me" | fzf --header 'checkout PR' | awk '{print $(NF-5)}' | xargs git checkout
+}
