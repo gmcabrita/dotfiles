@@ -181,3 +181,12 @@ function update-programming-languages() {
   rustup update
   pip install "reladiff[all]"
 }
+
+# [f]uzzy check[o]ut
+fo() {
+  git branch --no-color --sort=-committerdate --format='%(refname:short)' | fzf --header 'git checkout' | xargs git checkout
+}
+# [p]ull request check[o]ut
+po() {
+  gh pr list --author "@me" | fzf --header 'checkout PR' | awk '{print $(NF-5)}' | xargs git checkout
+}
