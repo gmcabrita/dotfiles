@@ -106,6 +106,7 @@
     "lua": true,
     "make": true,
     "nginx": true,
+    "proto": true,
     "rainbow-csv": true,
     "ruby": true,
     "scss": true,
