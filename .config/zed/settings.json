@@ -82,7 +82,7 @@
   "show_completion_documentation": true,
   "soft_wrap": "preferred_line_length",
   "inlay_hints": {
-    "enabled": false,
+    "enabled": true,
     "show_type_hints": true,
     "show_parameter_hints": true,
     "show_other_hints": true
@@ -124,6 +124,30 @@
   },
   "language_servers": ["!eslint", "..."],
   "lsp": {
+    "gopls": {
+      "initialization_options": {
+        "gofumpt": true,
+        "staticcheck": true,
+        "templateExtensions": ["tmpl"],
+        "usePlaceholders": true,
+        "analyses": {
+          "shadow": true,
+          "unusedvariable": true,
+          "useany": true
+        },
+        "completeUnimported": true,
+        "experimentalPostfixCompletions": true,
+        "hints": {
+          "assignVariableTypes": false,
+          "compositeLiteralFields": false,
+          "compositeLiteralTypes": false,
+          "constantValues": true,
+          "functionTypeParameters": true,
+          "parameterNames": true,
+          "rangeVariableTypes": true
+        }
+      }
+    },
     "next-ls": {
       "initialization_options": {
         "experimental": {
