@@ -644,8 +644,14 @@
   },
   "languages": {
     "Ruby": {
-      "format_on_save": "off",
-      "language_servers": ["ruby-lsp", "!solargraph", "!rubocop", "..."]
+      "format_on_save": "on",
+      "language_servers": ["ruby-lsp", "!solargraph", "!rubocop", "..."],
+      "formatter": {
+        "external": {
+          "command": "standardrb",
+          "arguments": ["--fix", "--stdin", "ignored", "--stderr"]
+        }
+      }
     },
     "Go": {
       "hard_tabs": true
