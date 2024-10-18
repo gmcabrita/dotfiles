@@ -1,18 +1,25 @@
 [
   {
+    "context": "Pane",
     "bindings": {
       "ctrl-shift-tab": "pane::ActivatePrevItem",
       "ctrl-tab": "pane::ActivateNextItem",
+      "cmd-1": ["pane::ActivateItem", 0],
+      "cmd-2": ["pane::ActivateItem", 1],
+      "cmd-3": ["pane::ActivateItem", 2],
+      "cmd-4": ["pane::ActivateItem", 3],
+      "cmd-5": ["pane::ActivateItem", 4],
+      "cmd-6": ["pane::ActivateItem", 5],
+      "cmd-7": ["pane::ActivateItem", 6],
+      "cmd-8": ["pane::ActivateItem", 7],
+      "cmd-9": "pane::ActivateLastItem",
       "cmd-m": null
-    },
+    }
   },
   {
     "context": "Editor && mode == full",
     "bindings": {
-      "cmd-ctrl-enter": [
-        "workspace::SendKeystrokes",
-        "cmd-alt-e ctrl-enter"
-      ]
+      "cmd-ctrl-enter": ["workspace::SendKeystrokes", "cmd-alt-e ctrl-enter"]
     }
   }
 ]
