@@ -644,7 +644,7 @@
   },
   "languages": {
     "Ruby": {
-      "format_on_save": "on",
+      "format_on_save": "off",
       "language_servers": ["ruby-lsp", "!solargraph", "!rubocop", "..."],
       "formatter": {
         "external": {
