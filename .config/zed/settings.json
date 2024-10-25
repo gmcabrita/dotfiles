@@ -82,7 +82,7 @@
   "show_completion_documentation": true,
   "soft_wrap": "preferred_line_length",
   "inlay_hints": {
-    "enabled": true,
+    "enabled": false,
     "show_type_hints": true,
     "show_parameter_hints": true,
     "show_other_hints": true
@@ -160,8 +160,24 @@
     "ruby-lsp": {
       "initialization_options": {
         "enabledFeatures": {
+          "codeActions": false,
+          "codeLens": false,
+          "completion": false,
+          "definition": true,
           "diagnostics": false,
-          "formatting": false
+          "documentHighlights": false,
+          "documentLink": false,
+          "documentSymbols": true,
+          "foldingRanges": false,
+          "formatting": false,
+          "hover": false,
+          "inlayHint": false,
+          "onTypeFormatting": false,
+          "selectionRanges": false,
+          "semanticHighlighting": false,
+          "signatureHelp": false,
+          "typeHierarchy": false,
+          "workspaceSymbol": true
         },
         "indexing": {
           "excludedPatterns": ["**/spec/**/*.rb"],
