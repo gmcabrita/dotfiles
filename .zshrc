@@ -182,3 +182,7 @@ function update-programming-languages() {
   rustup update
   pip install "reladiff[all]"
 }
+
+function update-everything() {
+  brew update && brew upgrade && update-programming-languages
+}
