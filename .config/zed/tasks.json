@@ -6,23 +6,17 @@
   {
     "label": "ruby: test file",
     "command": "bin/rspec",
-    "args": [
-      "$ZED_FILE"
-    ]
+    "args": ["$ZED_FILE"]
   },
   {
-    "label": "ruby: test one",
+    "label": "ruby: test line",
     "command": "bin/rspec",
-    "args": [
-      "$ZED_FILE:$ZED_ROW"
-    ]
+    "args": ["$ZED_FILE:$ZED_ROW"],
+    "tags": ["ruby-test"]
   },
   {
     "label": "ruby: test file, fail fast",
     "command": "bin/rspec",
-    "args": [
-      "--fail-fast",
-      "$ZED_FILE"
-    ]
+    "args": ["--fail-fast", "$ZED_FILE"]
   }
 ]
