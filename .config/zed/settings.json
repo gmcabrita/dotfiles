@@ -198,13 +198,7 @@
   "languages": {
     "Ruby": {
       "format_on_save": "on",
-      "language_servers": ["ruby-lsp", "!solargraph", "!rubocop", "..."],
-      "formatter": {
-        "external": {
-          "command": "standardrb",
-          "arguments": ["--fix", "--stdin", "ignored", "--stderr"]
-        }
-      }
+      "language_servers": ["ruby-lsp", "!solargraph", "!rubocop", "..."]
     },
     "Go": {
       "hard_tabs": true
