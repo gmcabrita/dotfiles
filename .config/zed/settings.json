@@ -80,9 +80,9 @@
   "show_inline_completions": false,
   "show_completions_on_input": true,
   "show_completion_documentation": true,
-  "soft_wrap": "preferred_line_length",
+  "soft_wrap": "editor_width",
   "inlay_hints": {
-    "enabled": false,
+    "enabled": true,
     "show_type_hints": true,
     "show_parameter_hints": true,
     "show_other_hints": true
@@ -159,6 +159,9 @@
     },
     "ruby-lsp": {
       "initialization_options": {
+        "experimentalFeaturesEnabled": true,
+        "formatter": "standard",
+        "linters": ["standard"],
         "enabledFeatures": {
           "codeActions": true,
           "codeLens": true,
@@ -179,6 +182,12 @@
           "typeHierarchy": true,
           "workspaceSymbol": true
         },
+        "featuresConfiguration": {
+          "inlayHint": {
+            "implicitHashValue": true,
+            "implicitRescue": true
+          }
+        },
         "indexing": {
           "excludedPatterns": ["**/spec/**/*.rb"],
           "excludedGems": []
@@ -188,7 +197,7 @@
   },
   "languages": {
     "Ruby": {
-      "format_on_save": "off",
+      "format_on_save": "on",
       "language_servers": ["ruby-lsp", "!solargraph", "!rubocop", "..."],
       "formatter": {
         "external": {
