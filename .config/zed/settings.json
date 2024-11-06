@@ -67,7 +67,11 @@
   "cursor_shape": "bar",
   "cursor_blink": false,
   "git": {
-    "git_gutter": "tracked_files"
+    "git_gutter": "tracked_files",
+    "inline_blame": {
+      "enabled": true,
+      "show_commit_summary": true
+    }
   },
   "hard_tabs": false,
   "tab_size": 2,
