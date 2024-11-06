@@ -69,10 +69,10 @@
 	# Quick status
 	s = status
 
-	l = "!. ~/.githelpers && pretty_git_log"
 	la = "!git l --all"
 	lr = "!git l -30"
 	lra = "!git lr --all"
+	l = "!git lra"
 	lg = "!git l -G $1 -- $2"
 
   # View history graph
@@ -80,6 +80,8 @@
 	tree = log --oneline --decorate --graph
 
   ruf = "!. ~/.githelpers && remove_untracked_files"
+ 	fco = "!. ~/.githelpers && git_fco"
+	prco = "!. ~/.githelpers && git_prco"
 
 	# Quick log with patch
 	lp = log --patch
@@ -127,9 +129,6 @@
 
 	# Find commits by commit message
 	fm = "!f() { git log --pretty=format:'%C(yellow)%h  %Cblue%ad  %Creset%s%Cgreen  [%cn] %Cred%d' --decorate --date=short --grep=$1; }; f"
-
-	fco = "!. ~/.githelpers && git_fco"
-	prco = "!. ~/.githelpers && git_prco"
 
 	# List contributors with number of commits
 	contributors = shortlog --summary --numbered
