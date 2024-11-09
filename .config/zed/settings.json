@@ -24,7 +24,8 @@
       "provider": "anthropic",
       "model": "claude-3-5-sonnet-latest"
     },
-    "version": "2"
+    "version": "2",
+    "enable_experimental_live_diffs": true
   },
   "features": {
     "copilot": true,
