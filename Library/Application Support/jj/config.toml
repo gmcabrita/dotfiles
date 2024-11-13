@@ -1,3 +1,61 @@
+# https://gist.github.com/thoughtpolice/8f2fd36ae17cd11b8e7bd93a70e31ad6
+# https://github.com/mitchellh/nixos-config/blob/main/users/mitchellh/jujutsu.toml
 [user]
 name = "Gonçalo Mendes Cabrita"
 email = "goncalo@mendescabrita.com"
+
+[format]
+tree-level-conflicts = true
+
+[templates]
+op_log_node = 'if(current_operation, "@", "◉")'
+log_node = '''
+label("node",
+  coalesce(
+    if(!self, label("elided", "⇋")),
+    if(current_working_copy, label("working_copy", "◉")),
+    if(conflict, label("conflict", "x")),
+    if(immutable, label("immutable", "◆")),
+    if(description.starts_with("wip: "), label("wip", "!")),
+    label("normal", "○")
+  )
+)
+'''
+
+[aliases]
+b = ["branch"]
+bl = ["branch", "list"]
+n = ["new"]
+d = ["diff"]
+h = ["help"]
+ws = ["workspace"]
+l = ["log"]
+ll = ["log", "-T", "builtin_log_detailed"]
+sl = ["log", "-r", "(trunk()..@):: | (trunk()..@)-"]
+goto = ["edit"]
+retrunk = ["rebase", "-d", "trunk()"]
+gh-push = ["git", "push", "--remote", "gh"]
+open = ["log", "-r", "open()"]
+
+nom = ["squash", "--into", "@", "--from"]
+yeet = ["squash", "--from", "@", "--into"]
+
+[revset-aliases]
+"at" = "@"
+'immutable_heads()' = 'trunk() | remote_branches() | tags()'
+'trunk()' = 'latest((present(main) | present(master)) & remote_branches())'
+'user(x)' = 'author(x) | committer(x)'
+'open()' = '(mine() ~ ::trunk()) ~ heads(empty())'
+'gh-pages' = 'ancestors(remote_branches(exact:"gh-pages"))'
+'wip' = 'description("wip: ")'
+'ready' = 'open() ~ (wip::)'
+
+[template-aliases]
+"format_timestamp(timestamp)" = "timestamp.ago()"
+
+[ui]
+default-command = "log"
+pager = { command = ["less", "-FRX"], env = { LESSCHARSET = "utf-8" } }
+log-synthetic-elided-nodes = true
+graph.style = "square"
+allow-filesets = true
