@@ -33,7 +33,7 @@
   },
   "terminal": {
     "dock": "right",
-    "cursor_shape": "bar"
+    "cursor_shape": "block"
   },
   "scrollbar": {
     "show": "always"
