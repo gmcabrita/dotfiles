@@ -1,162 +1,167 @@
 [user]
-	email = goncalo@mendescabrita.com
-	name = Gonçalo Mendes Cabrita
-	signingkey = ~/.ssh/id_ed25519
+  email = goncalo@mendescabrita.com
+  name = Gonçalo Mendes Cabrita
+  signingkey = ~/.ssh/id_ed25519
 [commit]
-	gpgsign = true
+  gpgsign = true
 [gpg]
-	format = ssh
+  format = ssh
 [credential]
-	helper = manager
+  helper = manager
 [core]
-	fscache = true
-	autocrlf = false
-	editor = "zed -n -w"
-	symlinks = true
-	fsmonitor = false
-	excludesfile = ~/.gitignore
+  fscache = true
+  autocrlf = false
+  editor = "zed -n -w"
+  symlinks = true
+  fsmonitor = false
+  excludesfile = ~/.gitignore
 [diff]
-	algorithm = histogram
-	colorMoved = default
+  algorithm = histogram
+  colorMoved = default
 [branch]
-	sort = -committerdate
+  sort = -committerdate
 [merge]
-	conflictstyle = zdiff3
+  conflictstyle = zdiff3
 [color]
-	ui = auto
+  ui = auto
 [color "branch"]
-	current = yellow reverse
-	local = yellow
-	remote = green
+  current = yellow reverse
+  local = yellow
+  remote = green
 [color "diff"]
-	meta = yellow bold
-	frag = magenta bold # line info
-	old = red # deletions
-	new = green # additions
-	whitespace = red reverse
+  meta = yellow bold
+  frag = magenta bold # line info
+  old = red # deletions
+  new = green # additions
+  whitespace = red reverse
 [color "status"]
-	added = yellow
-	changed = green
-	untracked = cyan
+  added = yellow
+  changed = green
+  untracked = cyan
 [gist]
-	private = yes
+  private = yes
 [alias]
-	# Push and open PR
-	ppr = !git push && gh pr create -w
+  # Push and open PR
+  ppr = !git push && gh pr create -w
 
-	# New
-	new = !git init && git symbolic-ref HEAD refs/heads/main
+  # New
+  new = !git init && git symbolic-ref HEAD refs/heads/main
 
-	# Quick commit
-	c = commit
+  # Quick commit
+  c = commit
 
-	# Quick branch
-	b = branch
+  # Quick branch
+  b = branch
 
-	# Quick add
-	a = add
-	aa = add .
+  # Quick add
+  a = add
+  aa = add .
 
-	# Quick add hunks
-	ap = add --patch
+  # Quick add hunks
+  ap = add --patch
 
-	# Quick checkout
-	co = checkout
+  # Quick checkout
+  co = checkout
 
-	# Quick push
-	p = push
+  maincheckout = "!f() { if [ -n \"$(git status --porcelain)\" ]; then echo \"Error: You have uncommitted changes, discard or stash them first.\"; exit 1; fi; git checkout $(git symbolic-ref refs/remotes/origin/HEAD | sed \"s@^refs/remotes/origin/@@\") && git checkout -b \"$1\"; }; f"
+  mainco = maincheckout
+  mco = maincheckout
 
-	# Quick status
-	s = status
+  # Quick push
+  p = push
 
-	prettylog = "!. ~/.githelpers && pretty_git_log"
-	la = "!git prettylog --all"
-	lr = "!git prettylog -30"
-	lra = "!git lr --all"
-	l = "!git lra"
-	lg = "!git prettylog -G $1 -- $2"
+  # Quick status
+  s = status
+
+  prettylog = "!. ~/.githelpers && pretty_git_log"
+  la = "!git prettylog --all"
+  lr = "!git prettylog -30"
+  lra = "!git lr --all"
+  l = "!git lra"
+  lg = "!git prettylog -G $1 -- $2"
 
   # View history graph
-	graph = log --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
-	tree = log --oneline --decorate --graph
+  graph = log --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
+  tree = log --oneline --decorate --graph
 
   ruf = "!. ~/.githelpers && remove_untracked_files"
- 	fco = "!. ~/.githelpers && git_fco"
-	prco = "!. ~/.githelpers && git_prco"
+  discard = ruf
+  fco = "!. ~/.githelpers && git_fco"
+  prco = "!. ~/.githelpers && git_prco"
 
-	# Quick log with patch
-	lp = log --patch
+  # Quick log with patch
+  lp = log --patch
 
-	# Find when some piece of code was initially introduced
-	when = log --reverse -S
+  # Find when some piece of code was initially introduced
+  when = log --reverse -S
 
-	# Quick diff
-	d = diff
-	ds = diff --staged
+  # Quick diff
+  d = diff
+  ds = diff --staged
 
-	# Word-based diff
-	wd = diff --color-words
-	wds = diff --staged --color-words
+  # Word-based diff
+  wd = diff --color-words
+  wds = diff --staged --color-words
 
-	# Modified files
-	modified = diff --name-only --diff-filter=M
+  # Modified files
+  modified = diff --name-only --diff-filter=M
 
-	# Show verbose output about tags, branches or remotes
-	tags = tag -l
-	branches = branch -a
-	remotes = remote -v
+  # Show verbose output about tags, branches or remotes
+  tags = tag -l
+  branches = branch -a
+  remotes = remote -v
 
-	# Quick commit ammend
-	amend = commit --amend
+  # Quick commit ammend
+  amend = commit --amend
 
-	publish = !git commit -am \"Publish updates\"; git push
-	puxaforte = !git reset --hard "@{upstream}"; git clean -d -f; git pull
-	rip = !git reset --hard HEAD; git clean -d -f
+  publish = !git commit -am \"Publish updates\"; git push
+  puxaforte = !git reset --hard "@{upstream}"; git clean -d -f; git pull
+  rip = !git reset --hard HEAD; git clean -d -f
 
-	delete = branch -D
-	unstage = reset HEAD --
-	uncommit = reset --soft HEAD^
-	undo = reset HEAD~
+  delete = branch -D
+  unstage = reset HEAD --
+  uncommit = reset --soft HEAD^
+  undo = reset HEAD~
 
-	cleanup = "!f() { git remote prune origin; git for-each-ref --format '%(refname:short)' 'refs/heads' | grep -v \"master\\|main\\|develop\" | xargs git branch -D; }; f"
+  cleanup = "!f() { git remote prune origin; git for-each-ref --format '%(refname:short)' 'refs/heads' | grep -v \"master\\|main\\|develop\" | xargs git branch -D; }; f"
 
-	cleantags = !git tag -l | xargs git tag -d && git fetch -t
+  cleantags = !git tag -l | xargs git tag -d && git fetch -t
 
-	# Find branches containing commit
-	fb = "!f() { git branch -a --contains $1; }; f"
+  # Find branches containing commit
+  fb = "!f() { git branch -a --contains $1; }; f"
 
-	# Find tags containing commit
-	ft = "!f() { git describe --always --contains $1; }; f"
+  # Find tags containing commit
+  ft = "!f() { git describe --always --contains $1; }; f"
 
-	# Find commits by commit message
-	fm = "!f() { git log --pretty=format:'%C(yellow)%h  %Cblue%ad  %Creset%s%Cgreen  [%cn] %Cred%d' --decorate --date=short --grep=$1; }; f"
+  # Find commits by commit message
+  fm = "!f() { git log --pretty=format:'%C(yellow)%h  %Cblue%ad  %Creset%s%Cgreen  [%cn] %Cred%d' --decorate --date=short --grep=$1; }; f"
 
-	# List contributors with number of commits
-	contributors = shortlog --summary --numbered
+  # List contributors with number of commits
+  contributors = shortlog --summary --numbered
 [apply]
-	# Detect whitespace errors when applying a patch
-	whitespace = fix
+  # Detect whitespace errors when applying a patch
+  whitespace = fix
 [push]
-	default = simple
-	followTags = true
-	autoSetupRemote = true
+  default = simple
+  followTags = true
+  autoSetupRemote = true
 [pull]
-	rebase = false
+  rebase = false
 
 # URL shorthands
 [url "git@github.com:"]
-	insteadOf = "gh:"
-	pushInsteadOf = "github:"
-	pushInsteadOf = "git://github.com/"
+  insteadOf = "gh:"
+  pushInsteadOf = "github:"
+  pushInsteadOf = "git://github.com/"
 [url "git://github.com/"]
-	insteadOf = "github:"
+  insteadOf = "github:"
 [url "git@gist.github.com:"]
-	insteadOf = "gst:"
-	pushInsteadOf = "gist:"
-	pushInsteadOf = "git://gist.github.com/"
+  insteadOf = "gst:"
+  pushInsteadOf = "gist:"
+  pushInsteadOf = "git://gist.github.com/"
 [url "git://gist.github.com/"]
-	insteadOf = "gist:"
+  insteadOf = "gist:"
 [init]
-	defaultBranch = main
+  defaultBranch = main
 [credential "helperselector"]
-	selected = manager-core
+  selected = manager-core
