@@ -35,6 +35,13 @@
     "dock": "right",
     "cursor_shape": "block"
   },
+  "experimental.theme_overrides": {
+    "players": [
+      {
+        "cursor": "#908376"
+      }
+    ]
+  },
   "scrollbar": {
     "show": "always"
   },
