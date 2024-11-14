@@ -148,6 +148,7 @@ asdf plugin-add python
 asdf plugin-add yarn
 asdf plugin-add pnpm
 asdf plugin-add zig
+asdf plugin-add zls https://github.com/dochang/asdf-zls.git
 asdf plugin-add golang
 asdf plugin-add erlang
 asdf plugin-add elixir
@@ -159,6 +160,7 @@ asdf install python latest
 asdf install yarn 1.22.19
 asdf install pnpm latest
 asdf install zig latest
+asdf install zls latest
 asdf install golang latest
 asdf install erlang latest
 asdf install elixir latest
@@ -169,6 +171,7 @@ asdf global ruby latest
 asdf global yarn 1.22.19
 asdf global pnpm latest
 asdf global zig latest
+asdf global zls latest
 asdf global golang latest
 asdf global erlang latest
 asdf global elixir latest
