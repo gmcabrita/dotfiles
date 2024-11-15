@@ -85,7 +85,6 @@
   tree = log --oneline --decorate --graph
 
   ruf = "!. ~/.githelpers && remove_untracked_files"
-  discard = ruf
   fco = "!. ~/.githelpers && git_fco"
   prco = "!. ~/.githelpers && git_prco"
 
@@ -115,8 +114,9 @@
   amend = commit --amend
 
   publish = !git commit -am \"Publish updates\"; git push
-  puxaforte = !git reset --hard "@{upstream}"; git clean -d -f; git pull
-  rip = !git reset --hard HEAD; git clean -d -f
+  puxaforte = !git reset --hard "@{upstream}"; git ruf; git clean -d -f; git pull
+  rip = !git reset --hard HEAD; git ruf; git clean -d -f
+  discard = rip
 
   delete = branch -D
   unstage = reset HEAD --
