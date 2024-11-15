@@ -113,9 +113,9 @@
   # Quick commit ammend
   amend = commit --amend
 
-  publish = !git commit -am \"Publish updates\"; git push
-  puxaforte = !git reset --hard "@{upstream}"; git ruf; git clean -d -f; git pull
-  rip = !git reset --hard HEAD; git ruf; git clean -d -f
+  publish = "!f() { git commit -am \"Publish updates\"; git push; }; f"
+  puxaforte = "!f() { git reset --hard "@{upstream}"; git clean -d -f; git pull; }; f"
+  rip = "!f() { git reset --hard HEAD; git clean -d -f; }; f"
   discard = rip
 
   delete = branch -D
