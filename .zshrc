@@ -189,3 +189,14 @@ function update-programming-languages() {
 function update-everything() {
   brew update && brew upgrade && update-programming-languages
 }
+
+function sxr8() {
+  curl -s "https://www.tradegate.de/refresh.php?isin=IE00B5BMR087" | jq -r '[.bid, .ask, ((.bid + .ask) * 500 | round / 1000), ((.ask / .bid - 1) * 100000 | round / 1000)] | @tsv'
+}
+
+function sxr8loop() {
+  for w in {1..10}; do
+    sxr8;
+    sleep 1;
+  done
+}
