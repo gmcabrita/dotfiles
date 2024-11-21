@@ -38,7 +38,8 @@
 ## Post-install script setup
 
 - Chrome
-  - chrome://flags/#allow-insecure-localhost
+  - chrome://flags/#unsafely-treat-insecure-origin-as-secure
+    - https://localhost,http://localhost,https://localhost:3000,https://localhost:3099
   - Configure 1password
     - Show autofill menu on field focus: no
   - uBlacklist import from Google Drive
