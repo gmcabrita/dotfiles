@@ -89,7 +89,7 @@
   "semantic_index": {
     "enabled": true
   },
-  "show_inline_completions": false,
+  "show_inline_completions": true,
   "show_completions_on_input": true,
   "show_completion_documentation": true,
   "soft_wrap": "editor_width",
