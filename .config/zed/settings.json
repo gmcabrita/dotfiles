@@ -676,6 +676,25 @@
     }
   },
   "languages": {
+    "SQL": {
+      "formatter": "prettier",
+      "prettier": {
+        "allowed": true,
+        "parser": "sql",
+        "plugins": ["prettier-plugin-sql"],
+        "overrides": [
+          {
+            "files": "*.sql",
+            "options": {
+              "keywordCase": "lower",
+              "dataTypeCase": "lower",
+              "functionCase": "lower"
+            }
+          }
+        ]
+      },
+      "tab_size": 2
+    },
     "Ruby": {
       "format_on_save": "on",
       "language_servers": ["ruby-lsp", "!solargraph", "!rubocop", "..."]
