@@ -676,6 +676,9 @@
     }
   },
   "languages": {
+    "Git Commit": {
+      "preferred_line_length": 72
+    },
     "SQL": {
       "formatter": "prettier",
       "prettier": {
