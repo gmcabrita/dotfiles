@@ -133,7 +133,7 @@ sudo defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
 sudo sysctl kern.maxfiles=64000 kern.maxfilesperproc=28000
 
 brew install --cask 1password orbstack betterdisplay google-chrome linearmouse zed httpiee monodraw karabiner-elements db-browser-for-sqlite google-cloud-sdk slack whatsapp signal zoom raycast shureplus-motiv plex-media-server setapp macrorecorder modern-csv macs-fan-control whisky homebrew/cask-fonts/font-jetbrains-mono reader homebrew/cask-fonts/font-inter telegram hyperkey anki notion notion-calendar chatgpt claude NetNewsWire
-brew install --formula git gh sqlite duckdb fzf dos2unix colordiff bash asdf git-extras git-delta gnu-time jq fq less moreutils ncdu ripgrep grep rlwrap scc asciinema tree libpq cloud-sql-proxy glow gum mods vhs google-cloud-sdk gnu-tar gpg htop tailspin 1password-cli yt-dlp pgcli litecli hyperfine k9s rbspy vegeta ugrep btop neofetch fswatch elixir-ls just typst zola sqlc terraform rustup sad httpstat gitleaks semgrep gptscript gptscript-ai/tap/clio jj pg_top jd spacer zoxide rclone duf eza fd doggo
+brew install --formula git gh sqlite duckdb fzf dos2unix colordiff bash libyaml jemalloc mise git-extras git-delta gnu-time jq fq less moreutils ncdu ripgrep grep rlwrap scc asciinema tree libpq cloud-sql-proxy glow gum mods vhs google-cloud-sdk gnu-tar gpg htop tailspin 1password-cli yt-dlp pgcli litecli hyperfine k9s rbspy vegeta ugrep btop neofetch fswatch elixir-ls just typst zola sqlc terraform rustup sad httpstat gitleaks semgrep gptscript gptscript-ai/tap/clio jj pg_top jd spacer zoxide rclone duf eza fd doggo
 
 $(brew --prefix)/opt/fzf/install
 
@@ -141,41 +141,32 @@ $(brew --prefix)/opt/fzf/install
 brew autoupdate start 43200
 
 # Programming language stuff
-asdf plugin-add nodejs
-asdf plugin-add bun
-asdf plugin-add ruby
-asdf plugin-add python
-asdf plugin-add yarn
-asdf plugin-add pnpm
-asdf plugin-add zig
-asdf plugin-add zls https://github.com/dochang/asdf-zls.git
-asdf plugin-add golang
-asdf plugin-add erlang
-asdf plugin-add elixir
-asdf plugin-add gleam
-asdf install nodejs $(asdf nodejs resolve lts --latest-available)
-asdf install bun latest
-asdf install ruby latest
-asdf install python latest
-asdf install yarn 1.22.19
-asdf install pnpm latest
-asdf install zig latest
-asdf install zls latest
-asdf install golang latest
-asdf install erlang latest
-asdf install elixir latest
-asdf install gleam latest
-asdf global nodejs $(asdf nodejs resolve lts --latest-available)
-asdf global bun latest
-asdf global ruby latest
-asdf global yarn 1.22.19
-asdf global pnpm latest
-asdf global zig latest
-asdf global zls latest
-asdf global golang latest
-asdf global erlang latest
-asdf global elixir latest
-asdf global gleam latest
+mise plugin install yarn
+mise plugin install pnpm
+mise plugin install zls https://github.com/dochang/asdf-zls.git
+mise install node@lts
+JEMALLOC_LIBS="-L$(brew --prefix jemalloc)/lib -ljemalloc" \
+JEMALLOC_CFLAGS="-I$(brew --prefix jemalloc)/include" \
+CPPFLAGS="-I$(brew --prefix jemalloc)/include" \
+LDFLAGS="-L$(brew --prefix jemalloc)/lib" \
+RUBY_CONFIGURE_OPTS=--with-jemalloc mise install bun@latest \
+                                                 node@lts \
+                                                 pnpm@latest \
+                                                 yarn@latest\
+                                                 ruby@latest \
+                                                 python@latest \
+                                                 zig@latest \
+                                                 zls@latest \
+                                                 go@latest
+mise global bun@latest \
+            node@lts \
+            pnpm@latest \
+            yarn@latest \
+            ruby@latest \
+            python@latest \
+            zig@latest \
+            zls@latest \
+            go@latest
 rustup-init \
   --default-host "aarch64-apple-darwin" \
   --default-toolchain "stable" \

@@ -1,6 +1,11 @@
 PATH="/opt/homebrew/opt/rustup/bin:$HOME/.bin:/opt/homebrew/opt/sqlite/bin:/opt/homebrew/opt/libpq/bin:/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH"
 . "$HOME/.cargo/env"
 # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+export JEMALLOC_LIBS="-L$(brew --prefix jemalloc)/lib -ljemalloc"
+export JEMALLOC_CFLAGS="-I$(brew --prefix jemalloc)/include"
+export CPPFLAGS="-I$(brew --prefix jemalloc)/include -I$(xcrun --show-sdk-path)/usr/include"
+export LDFLAGS="-L$(brew --prefix jemalloc)/lib -L$(xcrun --show-sdk-path)/usr/lib"
+export RUBY_CONFIGURE_OPTS=--with-jemalloc
 export PGGSSENCMODE=disable
 export EDITOR="zed"
 export PSQL_EDITOR="zed -n -w"
@@ -55,7 +60,59 @@ zmodload zsh/complist
 zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 
-. /opt/homebrew/opt/asdf/libexec/asdf.sh
+export MISE_SHELL=zsh
+export __MISE_ORIG_PATH="$PATH"
+
+mise() {
+  local command
+  command="${1:-}"
+  if [ "$#" = 0 ]; then
+    command /opt/homebrew/bin/mise
+    return
+  fi
+  shift
+
+  case "$command" in
+  deactivate|shell|sh)
+    # if argv doesn't contains -h,--help
+    if [[ ! " $@ " =~ " --help " ]] && [[ ! " $@ " =~ " -h " ]]; then
+      eval "$(command /opt/homebrew/bin/mise "$command" "$@")"
+      return $?
+    fi
+    ;;
+  esac
+  command /opt/homebrew/bin/mise "$command" "$@"
+}
+
+_mise_hook() {
+  eval "$(/opt/homebrew/bin/mise hook-env -s zsh)";
+}
+typeset -ag precmd_functions;
+if [[ -z "${precmd_functions[(r)_mise_hook]+1}" ]]; then
+  precmd_functions=( _mise_hook ${precmd_functions[@]} )
+fi
+typeset -ag chpwd_functions;
+if [[ -z "${chpwd_functions[(r)_mise_hook]+1}" ]]; then
+  chpwd_functions=( _mise_hook ${chpwd_functions[@]} )
+fi
+
+if [ -z "${_mise_cmd_not_found:-}" ]; then
+    _mise_cmd_not_found=1
+    [ -n "$(declare -f command_not_found_handler)" ] && eval "${$(declare -f command_not_found_handler)/command_not_found_handler/_command_not_found_handler}"
+
+    function command_not_found_handler() {
+        if /opt/homebrew/bin/mise hook-not-found -s zsh -- "$1"; then
+          _mise_hook
+          "$@"
+        elif [ -n "$(declare -f _command_not_found_handler)" ]; then
+            _command_not_found_handler "$@"
+        else
+            echo "zsh: command not found: $1" >&2
+            return 127
+        fi
+    }
+fi
+
 source /opt/homebrew/opt/git-extras/share/git-extras/git-extras-completion.zsh
 source "$(brew --prefix)/share/google-cloud-sdk/path.zsh.inc"
 source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
@@ -147,11 +204,6 @@ function convert_mp4_to_mov() {
   ffmpeg -i "$1.mp4" -movflags use_metadata_tags -map_metadata 0 -f mov "$1.mov"
 }
 
-function livebook-install() {
-  mix do local.rebar --force, local.hex --force
-  mix escript.install hex livebook
-}
-
 function git-fetch-all-repos() {
   find . -type d -depth 1 -exec git --git-dir={}/.git --work-tree=$PWD/{} pull --all \;
   find . -type d -depth 1 -exec git --git-dir={}/.git --work-tree=$PWD/{} fetch origin master:master \;
@@ -159,29 +211,9 @@ function git-fetch-all-repos() {
 }
 
 function update-programming-languages() {
-  asdf plugin update --all
-  asdf install nodejs $(asdf nodejs resolve lts --latest-available)
-  asdf install bun latest
-  asdf install ruby latest
-  asdf install python latest
-  asdf install pnpm latest
-  asdf uninstall zig master
-  asdf install zig master
-  asdf install zls master
-  asdf install golang latest
-  asdf install erlang latest
-  asdf install elixir latest
-  asdf install gleam latest
-  asdf global nodejs $(asdf nodejs resolve lts --latest-available)
-  asdf global bun latest
-  asdf global ruby latest
-  asdf global pnpm latest
-  asdf global zig master
-  asdf global zls master
-  asdf global golang latest
-  asdf global erlang latest
-  asdf global elixir latest
-  asdf global gleam latest
+  mise plugins up
+  mise up --bump
+  mise reshim
   rustup update
   pip install "reladiff[all]"
 }
