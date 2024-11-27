@@ -6,6 +6,7 @@ export JEMALLOC_CFLAGS="-I$(brew --prefix jemalloc)/include"
 export CPPFLAGS="-I$(brew --prefix jemalloc)/include -I$(xcrun --show-sdk-path)/usr/include -I$(brew --prefix sqlite)/include"
 export LDFLAGS="-L$(brew --prefix jemalloc)/lib -L$(xcrun --show-sdk-path)/usr/lib -L$(brew --prefix sqlite)/lib"
 export RUBY_CONFIGURE_OPTS=--with-jemalloc
+export BUNDLE_IGNORE_FUNDING_REQUESTS=YES
 export PGGSSENCMODE=disable
 export EDITOR="zed"
 export PSQL_EDITOR="zed -n -w"
