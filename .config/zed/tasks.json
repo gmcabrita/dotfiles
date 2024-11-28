@@ -2,14 +2,12 @@
   {
     "label": "ruby: test suite",
     "command": "bin/rspec",
-    "tags": ["ruby-test"],
     "reveal": "no_focus"
   },
   {
     "label": "ruby: test file",
     "command": "bin/rspec",
     "args": ["$ZED_FILE"],
-    "tags": ["ruby-test"],
     "reveal": "no_focus"
   },
   {
@@ -23,7 +21,6 @@
     "label": "ruby: test file, fail fast",
     "command": "bin/rspec",
     "args": ["--fail-fast", "$ZED_FILE"],
-    "tags": ["ruby-test"],
     "reveal": "no_focus"
   },
   {
@@ -39,7 +36,6 @@
     "command": "zig",
     "args": ["build", "test"],
     "cwd": "$ZED_DIRNAME",
-    "tags": ["zig-test"],
     "reveal": "no_focus"
   },
   {
