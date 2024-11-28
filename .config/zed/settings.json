@@ -733,6 +733,9 @@
     },
     "JavaScript": {
       "language_servers": ["!typescript-language-server", "!eslint", "vtsls", "..."]
+    },
+    "Zig": {
+      "tab_size": 4
     }
   }
 }
