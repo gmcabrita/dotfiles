@@ -2,12 +2,14 @@
   {
     "label": "ruby: test suite",
     "command": "bin/rspec",
+    "tags": ["ruby-test"],
     "reveal": "no_focus"
   },
   {
     "label": "ruby: test file",
     "command": "bin/rspec",
     "args": ["$ZED_FILE"],
+    "tags": ["ruby-test"],
     "reveal": "no_focus"
   },
   {
@@ -21,62 +23,47 @@
     "label": "ruby: test file, fail fast",
     "command": "bin/rspec",
     "args": ["--fail-fast", "$ZED_FILE"],
+    "tags": ["ruby-test"],
     "reveal": "no_focus"
   },
   {
-    "label": "zig build",
+    "label": "zig: build",
     "command": "zig",
     "args": ["build"],
     "cwd": "$ZED_DIRNAME",
-    "tags": ["zig-build"]
+    "tags": ["zig-build"],
+    "reveal": "no_focus"
   },
   {
-    "label": "zig test",
+    "label": "zig: test suite",
     "command": "zig",
-    "args": ["test", "$ZED_FILENAME", "--test-filter", "$ZED_CUSTOM_test_name"],
+    "args": ["build", "test"],
     "cwd": "$ZED_DIRNAME",
-    "tags": ["zig-test"]
+    "tags": ["zig-test"],
+    "reveal": "no_focus"
   },
   {
-    "label": "zig run",
+    "label": "zig: test file",
+    "command": "zig",
+    "args": ["test", "$ZED_FILENAME"],
+    "cwd": "$ZED_DIRNAME",
+    "tags": ["zig-test"],
+    "reveal": "no_focus"
+  },
+  {
+    "label": "zig: test line",
+    "command": "zig",
+    "args": ["test", "$ZED_FILENAME", "--test-filter", "$ZED_SYMBOL"],
+    "cwd": "$ZED_DIRNAME",
+    "tags": ["zig-test"],
+    "reveal": "no_focus"
+  },
+  {
+    "label": "zig: run",
     "command": "zig",
     "args": ["run", "$ZED_FILENAME"],
     "cwd": "$ZED_DIRNAME",
-    "tags": ["zig-run"]
-  },
-  {
-    "label": "zig fmt",
-    "command": "zig",
-    "args": ["fmt", "$ZED_FILENAME"],
-    "cwd": "$ZED_DIRNAME",
-    "tags": ["zig-fmt"]
-  },
-  {
-    "label": "zig build (release-safe)",
-    "command": "zig",
-    "args": ["build", "-Doptimize=ReleaseSafe"],
-    "cwd": "$ZED_DIRNAME",
-    "tags": ["zig-build"]
-  },
-  {
-    "label": "zig build (release-fast)",
-    "command": "zig",
-    "args": ["build", "-Doptimize=ReleaseFast"],
-    "cwd": "$ZED_DIRNAME",
-    "tags": ["zig-build"]
-  },
-  {
-    "label": "zig build run (release-safe)",
-    "command": "zig",
-    "args": ["build", "run", "-Doptimize=ReleaseSafe"],
-    "cwd": "$ZED_DIRNAME",
-    "tags": ["zig-build"]
-  },
-  {
-    "label": "zig build run (release-fast)",
-    "command": "zig",
-    "args": ["build", "run", "-Doptimize=ReleaseFast"],
-    "cwd": "$ZED_DIRNAME",
-    "tags": ["zig-build"]
+    "tags": ["zig-run"],
+    "reveal": "no_focus"
   }
 ]
