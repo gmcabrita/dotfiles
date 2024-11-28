@@ -3,3 +3,5 @@
 .jj/
 .swc/
 .DS_Store/
+.zig-cache/
+zig-out/
