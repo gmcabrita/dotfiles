@@ -1,4 +1,5 @@
-PATH="/opt/homebrew/opt/rustup/bin:$HOME/.bin:/opt/homebrew/opt/sqlite/bin:/opt/homebrew/opt/libpq/bin:/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH"
+PATH="$HOME/.bin:/opt/homebrew/opt/sqlite/bin:/opt/homebrew/opt/libpq/bin:/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH"
+# PATH="/opt/homebrew/opt/rustup/bin:$PATH"
 . "$HOME/.cargo/env"
 # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export JEMALLOC_LIBS="-L$(brew --prefix jemalloc)/lib -ljemalloc"
@@ -215,7 +216,7 @@ function update-programming-languages() {
   mise plugins up
   mise up --bump
   mise reshim
-  rustup update
+  # rustup update
   pip install "reladiff[all]"
 }
 
