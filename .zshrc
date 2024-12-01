@@ -1,4 +1,4 @@
-PATH="$HOME/.bin:/opt/homebrew/opt/sqlite/bin:/opt/homebrew/opt/libpq/bin:/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH"
+PATH="$HOME/.local/share/mise/shims:$HOME/.bin:/opt/homebrew/opt/sqlite/bin:/opt/homebrew/opt/libpq/bin:/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH"
 # PATH="/opt/homebrew/opt/rustup/bin:$PATH"
 . "$HOME/.cargo/env"
 # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES

@@ -190,7 +190,7 @@
           "codeActions": true,
           "codeLens": false,
           "completion": false,
-          "definition": true,
+          "definition": false,
           "diagnostics": true,
           "documentHighlights": true,
           "documentLink": false,
@@ -204,7 +204,7 @@
           "semanticHighlighting": false,
           "signatureHelp": false,
           "typeHierarchy": false,
-          "workspaceSymbol": true
+          "workspaceSymbol": false
         },
         "featuresConfiguration": {
           "inlayHint": {
