@@ -190,7 +190,7 @@
           "codeActions": true,
           "codeLens": false,
           "completion": false,
-          "definition": false,
+          "definition": true,
           "diagnostics": true,
           "documentHighlights": true,
           "documentLink": false,
