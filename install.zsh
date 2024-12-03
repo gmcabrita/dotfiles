@@ -144,6 +144,7 @@ brew autoupdate start 43200
 mise plugin install yarn
 mise plugin install pnpm
 mise plugin install zls https://github.com/dochang/asdf-zls.git
+ERL_AFLAGS="-kernel shell_history enabled" \
 JEMALLOC_LIBS="-L$(brew --prefix jemalloc)/lib -ljemalloc" \
 JEMALLOC_CFLAGS="-I$(brew --prefix jemalloc)/include" \
 CPPFLAGS="-I$(brew --prefix jemalloc)/include -I$(brew --prefix gmp)/include -I$(xcrun --show-sdk-path)/usr/include -I$(brew --prefix sqlite)/include" \
