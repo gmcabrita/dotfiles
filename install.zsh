@@ -133,7 +133,7 @@ sudo defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
 sudo sysctl kern.maxfiles=64000 kern.maxfilesperproc=28000
 
 brew install --cask 1password orbstack betterdisplay google-chrome linearmouse zed httpiee monodraw karabiner-elements db-browser-for-sqlite google-cloud-sdk slack whatsapp signal zoom raycast shureplus-motiv plex-media-server setapp macrorecorder modern-csv macs-fan-control whisky homebrew/cask-fonts/font-jetbrains-mono reader homebrew/cask-fonts/font-inter telegram hyperkey anki notion notion-calendar chatgpt claude NetNewsWire
-brew install --formula git gh sqlite duckdb fzf dos2unix colordiff bash libyaml jemalloc mise git-extras git-delta gnu-time jq fq less moreutils ncdu ripgrep rga poppler grep rlwrap scc asciinema tree libpq cloud-sql-proxy glow gum mods vhs google-cloud-sdk gnu-tar gpg htop tailspin 1password-cli yt-dlp pgcli litecli hyperfine k9s rbspy vegeta ugrep btop neofetch fswatch elixir-ls just typst zola sqlc terraform sad httpstat gitleaks semgrep gptscript gptscript-ai/tap/clio jj pg_top jd spacer zoxide rclone duf eza fd doggo rustup autoconf gperf libffi zlib gmp
+brew install --formula git gh sqlite duckdb fzf dos2unix colordiff bash libyaml jemalloc mise git-extras git-delta gnu-time jq fq less moreutils ncdu ripgrep rga poppler grep rlwrap scc asciinema tree libpq cloud-sql-proxy glow gum mods vhs google-cloud-sdk gnu-tar gpg htop tailspin 1password-cli yt-dlp pgcli litecli hyperfine k9s rbspy vegeta ugrep btop neofetch fswatch elixir-ls just typst zola sqlc terraform sad httpstat gitleaks semgrep gptscript gptscript-ai/tap/clio jj pg_top jd spacer zoxide rclone duf eza fd doggo autoconf gperf libffi zlib gmp
 
 $(brew --prefix)/opt/fzf/install
 
@@ -144,37 +144,27 @@ brew autoupdate start 43200
 mise plugin install yarn
 mise plugin install pnpm
 mise plugin install zls https://github.com/dochang/asdf-zls.git
-mise install node@lts
 JEMALLOC_LIBS="-L$(brew --prefix jemalloc)/lib -ljemalloc" \
 JEMALLOC_CFLAGS="-I$(brew --prefix jemalloc)/include" \
-CPPFLAGS="-I$(brew --prefix jemalloc)/include" \
-LDFLAGS="-L$(brew --prefix jemalloc)/lib" \
-RUBY_CONFIGURE_OPTS=--with-jemalloc mise install bun@latest \
-                                                 node@lts \
-                                                 pnpm@latest \
-                                                 yarn@latest\
-                                                 ruby@latest \
-                                                 python@latest \
-                                                 zig@latest \
-                                                 zls@latest \
-                                                 go@latest
-mise global bun@latest \
-            node@lts \
+CPPFLAGS="-I$(brew --prefix jemalloc)/include -I$(brew --prefix gmp)/include -I$(xcrun --show-sdk-path)/usr/include -I$(brew --prefix sqlite)/include" \
+LDFLAGS="-L$(brew --prefix jemalloc)/lib -L$(brew --prefix gmp)/lib -L$(xcrun --show-sdk-path)/usr/lib -L$(brew --prefix sqlite)/lib" \
+PKG_CONFIG_PATH="$(brew --prefix gmp)/lib/pkgconfig:$(brew --prefix jemalloc)/lib/pkgconfig:$PKG_CONFIG_PATH" \
+RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
+  mise install node@lts \
+    bun@latest \
+    pnpm@latest \
+    yarn@latest\
+    ruby@latest \
+    python@latest \
+    erlang@latest \
+    elixir@latest
+mise global node@lts \
+            bun@latest \
             pnpm@latest \
             yarn@latest \
             ruby@latest \
             python@latest \
-            zig@latest \
-            zls@latest \
-            go@latest
-rustup-init \
-  --default-host "aarch64-apple-darwin" \
-  --default-toolchain "stable" \
-  --profile "complete" \
-  --no-modify-path \
-  -y
-
-rustup completions zsh rustup > ~/.zfunc/_rustup
-rustup completions zsh cargo > ~/.zfunc/_cargo
+            erlang@latest \
+            elixir@latest
 
 pip install "reladiff[all]"

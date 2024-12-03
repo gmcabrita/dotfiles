@@ -1,4 +1,4 @@
-PATH="/opt/homebrew/opt/rustup/bin:$HOME/.local/share/mise/shims:$HOME/.bin:/opt/homebrew/opt/sqlite/bin:/opt/homebrew/opt/libpq/bin:/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH"
+PATH="$HOME/.local/share/mise/shims:$HOME/.bin:/opt/homebrew/opt/sqlite/bin:/opt/homebrew/opt/libpq/bin:/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH"
 . "$HOME/.cargo/env"
 # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export JEMALLOC_LIBS="-L$(brew --prefix jemalloc)/lib -ljemalloc"
@@ -6,7 +6,7 @@ export JEMALLOC_CFLAGS="-I$(brew --prefix jemalloc)/include"
 export CPPFLAGS="-I$(brew --prefix jemalloc)/include -I$(brew --prefix gmp)/include -I$(xcrun --show-sdk-path)/usr/include -I$(brew --prefix sqlite)/include"
 export LDFLAGS="-L$(brew --prefix jemalloc)/lib -L$(brew --prefix gmp)/lib -L$(xcrun --show-sdk-path)/usr/lib -L$(brew --prefix sqlite)/lib"
 export PKG_CONFIG_PATH="$(brew --prefix gmp)/lib/pkgconfig:$(brew --prefix jemalloc)/lib/pkgconfig:$PKG_CONFIG_PATH"
-export RUBY_CONFIGURE_OPTS=" --with-gmp --with-jemalloc"
+export RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc"
 export BUNDLE_IGNORE_FUNDING_REQUESTS=YES
 export PGGSSENCMODE=disable
 export EDITOR="zed"
@@ -206,6 +206,11 @@ function convert_mp4_to_mov() {
   ffmpeg -i "$1.mp4" -movflags use_metadata_tags -map_metadata 0 -f mov "$1.mov"
 }
 
+function livebook-install() {
+  mix do local.rebar --force, local.hex --force
+  mix escript.install hex livebook
+}
+
 function git-fetch-all-repos() {
   find . -type d -depth 1 -exec git --git-dir={}/.git --work-tree=$PWD/{} pull --all \;
   find . -type d -depth 1 -exec git --git-dir={}/.git --work-tree=$PWD/{} fetch origin master:master \;
@@ -216,7 +221,6 @@ function update-programming-languages() {
   mise plugins up
   mise up --bump
   mise reshim
-  rustup update
   pip install "reladiff[all]"
 }
 
