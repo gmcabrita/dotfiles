@@ -148,6 +148,12 @@
   },
   "language_servers": ["!eslint", "..."],
   "lsp": {
+    "zls": {
+      "settings": {
+        "enable_build_on_save": true,
+        "build_on_save_step": "check"
+      }
+    },
     "gopls": {
       "initialization_options": {
         "gofumpt": true,
