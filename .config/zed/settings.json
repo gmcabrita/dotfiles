@@ -64,7 +64,7 @@
   "use_autoclose": false,
   "vertical_scroll_margin": 0,
   "base_keymap": "VSCode",
-  "theme": "Github Light",
+  "theme": "Xcode Default Light",
   "vim_mode": false,
   "project_panel": {
     "dock": "right",
@@ -141,6 +141,7 @@
     "toml": true,
     "typst": true,
     "xml": true,
+    "xcode-themes": true,
     "zedokai": true,
     "zig": true
   },

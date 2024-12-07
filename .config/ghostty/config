@@ -11,7 +11,7 @@ cursor-style-blink = false
 shell-integration-features = no-cursor
 macos-titlebar-style = tabs
 # theme = GruvboxDarkHard
-theme = Github
+theme = xcodelight
 
 
 # default window size
