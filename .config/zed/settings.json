@@ -8,6 +8,7 @@
 // from the command palette or from `Zed` application menu.
 {
   "file_scan_exclusions": [
+    "node_modules",
     "**/.git",
     "**/.svn",
     "**/.hg",
