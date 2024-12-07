@@ -155,17 +155,19 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
     pnpm@latest \
     yarn@latest\
     ruby@latest \
+    go@latest \
     python@latest \
     erlang@latest \
     elixir@latest \
     zig@latest
-mise global node@lts \
+mise use -g node@lts \
             bun@latest \
             pnpm@latest \
             yarn@latest \
             ruby@latest \
             python@latest \
             erlang@latest \
+            go@latest \
             elixir@latest \
             zig@latest
 
