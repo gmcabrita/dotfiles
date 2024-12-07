@@ -10,62 +10,9 @@ cursor-style = bar
 cursor-style-blink = false
 shell-integration-features = no-cursor
 macos-titlebar-style = tabs
+# theme = GruvboxDarkHard
+theme = Github
 
-# One Light theme
-# Taken from https://github.com/mbadolato/iTerm2-Color-Schemes/blob/d58e107fc18955fd199166f3f3cc6b3d36bc2beb/ghostty/AtomOneLight
-# palette = 0=#000000
-# palette = 1=#de3e35
-# palette = 2=#3f953a
-# palette = 3=#d2b67c
-# palette = 4=#2f5af3
-# palette = 5=#950095
-# palette = 6=#3f953a
-# palette = 7=#bbbbbb
-# palette = 8=#000000
-# palette = 9=#de3e35
-# palette = 10=#3f953a
-# palette = 11=#d2b67c
-# palette = 12=#2f5af3
-# palette = 13=#a00095
-# palette = 14=#3f953a
-# palette = 15=#ffffff
-# background = f9f9f9
-# foreground = 2a2c33
-# cursor-color = bbbbbb
-# selection-background = ededed
-# selection-foreground = 2a2c33
-
-# Gruvbox Dark Hard
-# Taken from https://github.com/mrnugget/dotfiles/blob/master/ghostty_config
-cursor-color = #928374
-background = #1d2021
-foreground = #fbf1c7
-selection-foreground = #928374
-selection-background = #ebdbb2
-# black
-palette = 0=#1d2021
-palette = 8=#7c6f64
-# red
-palette = 1=#cc241d
-palette = 9=#fb4934
-# green
-palette = 2=#98971a
-palette = 10=#b8bb26
-# yellow
-palette = 3=#d79921
-palette = 11=#fabd2f
-# blue
-palette = 4=#458588
-palette = 12=#83a598
-# purple
-palette = 5=#b16286
-palette = 13=#d3869b
-# aqua
-palette = 6=#689d6a
-palette = 14=#8ec07c
-# white
-palette = 7=#a89984
-palette = 15=#fbf1c7
 
 # default window size
 # window-width = 100

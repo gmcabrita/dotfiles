@@ -47,13 +47,13 @@
     "dock": "right",
     "cursor_shape": "bar"
   },
-  "experimental.theme_overrides": {
-    "players": [
-      {
-        "cursor": "#908376"
-      }
-    ]
-  },
+  // "experimental.theme_overrides": {
+  //   "players": [
+  //     {
+  //       "cursor": "#908376"
+  //     }
+  //   ]
+  // },
   "scrollbar": {
     "show": "always"
   },
@@ -64,7 +64,7 @@
   "use_autoclose": false,
   "vertical_scroll_margin": 0,
   "base_keymap": "VSCode",
-  "theme": "Gruvbox Dark Hard",
+  "theme": "Github Light",
   "vim_mode": false,
   "project_panel": {
     "dock": "right",
@@ -123,6 +123,7 @@
     "elixir": true,
     "erlang": true,
     "git-firefly": true,
+    "github-theme": true,
     "gleam": true,
     "html": true,
     "just": true,
