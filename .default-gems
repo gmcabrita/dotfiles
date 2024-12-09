@@ -1,2 +1,7 @@
 ruby-lsp
+vernier
 profile-viewer
+benchmark-ips
+memory_profiler
+debug
+stackprof
