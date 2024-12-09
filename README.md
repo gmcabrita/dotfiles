@@ -23,6 +23,8 @@
   - App Shortcuts
     - Apple Notes
       - Note List Search... = `⌘ P`
+  - Input Sources > Edit
+    - Disable everything
 - Desktop & Dock
   - Window Tiling
     - Disable "Tiled windows have margins"
