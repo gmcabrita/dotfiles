@@ -733,14 +733,14 @@
       "hard_tabs": true
     },
     "Elixir": {
-      "language_servers": ["next-ls", "!elixir-ls", "!lexical", "..."],
+      "language_servers": ["next-ls", "!lexical", "!elixir-ls", "..."],
       "external": {
         "command": "mix",
         "arguments": ["format", "--stdin-filename", "{buffer_path}", "-"]
       }
     },
     "HEEX": {
-      "language_servers": ["next-ls", "!elixir-ls", "!lexical", "..."],
+      "language_servers": ["next-ls", "!lexical", "!elixir-ls", "tailwindcss-ls", "..."],
       "external": {
         "command": "mix",
         "arguments": ["format", "--stdin-filename", "{buffer_path}", "-"]
