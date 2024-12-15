@@ -150,25 +150,16 @@ CPPFLAGS="-I$(brew --prefix jemalloc)/include -I$(brew --prefix gmp)/include -I$
 LDFLAGS="-L$(brew --prefix jemalloc)/lib -L$(brew --prefix gmp)/lib -L$(xcrun --show-sdk-path)/usr/lib -L$(brew --prefix sqlite)/lib" \
 PKG_CONFIG_PATH="$(brew --prefix gmp)/lib/pkgconfig:$(brew --prefix jemalloc)/lib/pkgconfig:$PKG_CONFIG_PATH" \
 RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
-  mise install node@lts \
-    bun@latest \
-    pnpm@latest \
-    yarn@latest\
-    ruby@latest \
-    go@latest \
-    python@latest \
-    erlang@latest \
-    elixir@latest \
-    zig@latest
-mise use -g node@lts \
-            bun@latest \
-            pnpm@latest \
-            yarn@latest \
-            ruby@latest \
-            python@latest \
-            erlang@latest \
-            go@latest \
-            elixir@latest \
-            zig@latest
+  mise use -g node@lts \
+              bun@latest \
+              pnpm@latest \
+              yarn@latest \
+              ruby@latest \
+              go@latest \
+              python@latest \
+              erlang@latest \
+              elixir@latest \
+              zig@latest \
+              watchexec@latest
 
 pip install "reladiff[all]"
