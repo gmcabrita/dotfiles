@@ -7,6 +7,7 @@ cp .zshrc $HOME/
 cp .default-gems $HOME/
 cp .psqlrc $HOME/
 cp .sqliterc $HOME/
+cp .iex.exs $HOME/
 
 mkdir -p $HOME/Developer
 
