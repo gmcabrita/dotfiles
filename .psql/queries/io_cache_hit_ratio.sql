@@ -4,5 +4,5 @@ select (hits/(reads+hits)::float) as hit_ratio,
 from pg_stat_io
 where
   backend_type ='client backend' and
-  io_object = 'relation' and
-  io_context = 'normal';
+  object = 'relation' and
+  context = 'normal';
