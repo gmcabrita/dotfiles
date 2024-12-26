@@ -11,3 +11,5 @@ shell-integration-features = no-cursor
 macos-titlebar-style = tabs
 theme = xcodelight
 scrollback-limit=100000000
+window-width = 120
+window-height = 30
