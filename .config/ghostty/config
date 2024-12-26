@@ -4,16 +4,10 @@ font-feature = -calt
 background-opacity = 1
 background-blur-radius = 20
 macos-non-native-fullscreen = visible-menu
-# macos-option-as-alt = left
 mouse-hide-while-typing = false
 cursor-style = bar
 cursor-style-blink = false
 shell-integration-features = no-cursor
 macos-titlebar-style = tabs
-# theme = GruvboxDarkHard
 theme = xcodelight
-
-
-# default window size
-# window-width = 100
-# window-height = 25
+scrollback-limit=100000000
