@@ -1,0 +1,11 @@
+{
+  "target": "rspec_line_build",
+  "cancel": {"kill": true},
+  "selector": "source.ruby",
+  "variants": [
+    {
+      "name": "line",
+      "singleline": true
+    }
+  ],
+}

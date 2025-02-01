@@ -1,0 +1,7 @@
+// Settings in here override those in "LSP-copilot/LSP-copilot.sublime-settings"
+
+{
+  "settings": {
+    "completion_style": "phantom"
+  }
+}

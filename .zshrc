@@ -3,15 +3,15 @@ PATH="$HOME/.local/share/mise/shims:$HOME/.bin:/opt/homebrew/opt/sqlite/bin:/opt
 # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export JEMALLOC_LIBS="-L$(brew --prefix jemalloc)/lib -ljemalloc"
 export JEMALLOC_CFLAGS="-I$(brew --prefix jemalloc)/include"
-export CPPFLAGS="-I$(brew --prefix jemalloc)/include -I$(brew --prefix gmp)/include -I$(xcrun --show-sdk-path)/usr/include -I$(brew --prefix sqlite)/include"
+export CPPFLAGS="-I$(brew --prefix jemalloc)/include -I$(brew --prefix gmp)/include -I$(xcrun --show-sdk-path)/usr/include -I$(brew --prefix sqlite)/include"F
 export LDFLAGS="-L$(brew --prefix jemalloc)/lib -L$(brew --prefix gmp)/lib -L$(xcrun --show-sdk-path)/usr/lib -L$(brew --prefix sqlite)/lib"
 export PKG_CONFIG_PATH="$(brew --prefix gmp)/lib/pkgconfig:$(brew --prefix jemalloc)/lib/pkgconfig:$PKG_CONFIG_PATH"
 export RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc"
 export BUNDLE_IGNORE_FUNDING_REQUESTS=YES
 export PGGSSENCMODE=disable
-export EDITOR="zed"
-export PSQL_EDITOR="zed -n -w"
-export KUBE_EDITOR="zed -n -w"
+export EDITOR="subl"
+export PSQL_EDITOR="subl -n -w"
+export KUBE_EDITOR="subl -n -w"
 export ERL_AFLAGS="-kernel shell_history enabled"
 export FZF_DEFAULT_OPTS="--color=light"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
@@ -172,6 +172,10 @@ function g() {
   git "$@"
 }
 
+function s() {
+  subl "$@"
+}
+
 function gti() {
   git "$@"
 }
@@ -185,7 +189,7 @@ function dc() {
 }
 
 function egm() {
-  git modified | xargs zed
+  git modified | xargs subl
 }
 
 function todo() {

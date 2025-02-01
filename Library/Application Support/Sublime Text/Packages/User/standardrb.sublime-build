@@ -1,0 +1,7 @@
+{
+  "shell_cmd": "zsh -c 'source ~/.zshrc; cd ${folder}; bundle exec standardrb --fix'",
+  "shell": true,
+  "file_regex": "# ([A-Za-z:0-9_./ ]+rb):([0-9]+)",
+  "working_dir": "${project_path:${folder:${file_path}}}",
+  "selector": "source.ruby",
+}
