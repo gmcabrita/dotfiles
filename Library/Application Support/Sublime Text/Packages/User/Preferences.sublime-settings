@@ -3,10 +3,10 @@
 {
   "auto_complete": false,
   "auto_complete_commit_on_tab": true,
-  "binary_file_patterns": ["node_modules/**","deps/**","out/**","_archive/**","**/.git","**/.svn","**/.hg","**/CVS","**/.DS_Store","**/Thumbs.db","**/.classpath","**/.settings","**/.zig-cache","**/zig-out",],
+  "binary_file_patterns": ["node_modules/**","deps/**","out/**","_archive/**","**/.git","**/.svn","**/.hg","**/CVS","**/.DS_Store","**/Thumbs.db","**/.classpath","**/.settings","**/.zig-cache","**/zig-out","tmp/cache",],
   "bold_folder_labels": true,
   "caret_style": "smooth",
-  "color_scheme": "rsms-dark.sublime-color-scheme",
+  "color_scheme": "rsms-theme/rsms-dark.sublime-color-scheme",
   "draw_indent_guides": false,
   "draw_white_space": "selection",
   "file_exclude_patterns": ["*.pyc","*.pyo","*.exe","*.dll","*.obj","*.o","*.a","*.lib","*.so","*.dylib","*.ncb","*.sdf","*.suo","*.pdb","*.idb",".DS_Store",],
