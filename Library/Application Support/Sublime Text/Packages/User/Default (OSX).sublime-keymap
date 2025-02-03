@@ -4,7 +4,5 @@
   { "keys": ["ctrl+shift+tab"], "command": "prev_view" },
   { "keys": ["alt+super+r"], "command": "build_last"},
   { "keys": ["super+t"], "command": "new_file" },
-  { "keys": ["shift+super+/"], "command": "copilot_conversation_chat" },
-  { "keys": ["super+shift+t"], "command": "open_terminal" },
-  { "keys": ["super+shift+alt+t"], "command": "open_terminal_project_folder" }
+  { "keys": ["shift+super+/"], "command": "copilot_conversation_chat" }
 ]
