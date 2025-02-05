@@ -4,5 +4,5 @@
   { "keys": ["ctrl+shift+tab"], "command": "prev_view" },
   { "keys": ["alt+super+r"], "command": "build_last"},
   { "keys": ["super+t"], "command": "new_file" },
-  { "keys": ["shift+super+/"], "command": "copilot_conversation_chat" }
+  { "keys": ["shift+super+/"], "command": "claudette_ask_question" },
 ]
