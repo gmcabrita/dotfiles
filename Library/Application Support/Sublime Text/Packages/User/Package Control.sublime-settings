@@ -5,10 +5,14 @@
 	],
 	"installed_packages":
 	[
+		"Claudette",
+		"Git blame",
 		"LSP",
 		"LSP-copilot",
 		"Package Control",
+		"PackageDev",
 		"ProjectManager",
 		"SideBarEnhancements",
+		"ZigUnofficial",
 	],
 }
