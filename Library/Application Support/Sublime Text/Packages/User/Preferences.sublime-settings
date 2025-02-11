@@ -31,7 +31,7 @@
   "shell_environment": true,
   "show_definitions": false,
   "show_full_path": true,
-  "show_git_status": false,
+  "show_git_status": true,
   "show_minimap": false,
   "show_tab_close_buttons": false,
   "tab_completion": true,

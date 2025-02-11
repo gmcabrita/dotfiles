@@ -74,7 +74,7 @@
   la = "!git prettylog --all"
   lr = "!git prettylog -30"
   lra = "!git lr --all"
-  l = "!git lra"
+  l = "!git log"
   lg = "!git prettylog -G $1 -- $2"
 
   # View history graph
