@@ -4,6 +4,10 @@
   signingkey = ~/.ssh/id_ed25519
 [commit]
   gpgsign = true
+  verbose = true
+[rerere]
+  enabled = true
+  autoupdate = true
 [gpg]
   format = ssh
 [credential]
@@ -17,12 +21,18 @@
   excludesfile = ~/.gitignore
 [diff]
   algorithm = histogram
-  colorMoved = default
+  colorMoved = plain
+  mnemonicPrefix = true
+  renames = true
 [branch]
   sort = -committerdate
+[tag]
+  sort = version:refname
 [merge]
   conflictstyle = zdiff3
 [color]
+  ui = auto
+[column]
   ui = auto
 [color "branch"]
   current = yellow reverse
@@ -38,6 +48,8 @@
   added = yellow
   changed = green
   untracked = cyan
+[help]
+  autocorrect = prompt
 [gist]
   private = yes
 [alias]
@@ -142,8 +154,16 @@
   default = simple
   followTags = true
   autoSetupRemote = true
+[fetch]
+  prune = true
+  pruneTags = true
+  all = true
 [pull]
   rebase = false
+[rebase]
+  autoSquash = true
+  autoStash = true
+  updateRefs = true
 
 # URL shorthands
 [url "git@github.com:"]
