@@ -261,3 +261,7 @@ function sxr8loop() {
     sleep 1;
   done
 }
+
+function nosleep() {
+  caffeinate -isd
+}

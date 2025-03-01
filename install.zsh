@@ -70,6 +70,9 @@ defaults write com.apple.Notes ShouldUseSmartQuotes -bool false
 # Don't adjust screen brightness in low light
 # sudo defaults write /Library/Preferences/com.apple.iokit.AmbientLightSensor "Automatic Display Enabled" -bool false
 
+# Make file proxy appear immediately (the little icon in the toolbar inside a window that you can drag to move the open file elsewhere)
+defaults write NSGlobalDomain "NSToolbarTitleViewRolloverDelay" -float "0"
+
 # Require password immediately after display sleep or screen saver begins
 defaults write com.apple.screensaver askForPassword -int 1
 defaults write com.apple.screensaver askForPasswordDelay -int 0
@@ -132,7 +135,7 @@ sudo defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
 # Increase file limits
 sudo sysctl kern.maxfiles=64000 kern.maxfilesperproc=28000
 
-brew install --cask 1password orbstack betterdisplay google-chrome brave-browser linearmouse zed sublime-text sublime-merge httpiee monodraw karabiner-elements db-browser-for-sqlite google-cloud-sdk slack whatsapp signal zoom raycast shureplus-motiv plex-media-server setapp macrorecorder modern-csv macs-fan-control whisky homebrew/cask-fonts/font-jetbrains-mono homebrew/cask-fonts/font-inter telegram chatgpt NetNewsWire linear-linear ghostty
+brew install --cask 1password orbstack betterdisplay google-chrome brave-browser zed sublime-text sublime-merge httpiee monodraw karabiner-elements db-browser-for-sqlite google-cloud-sdk slack whatsapp signal zoom raycast shureplus-motiv plex-media-server setapp macrorecorder modern-csv macs-fan-control whisky homebrew/cask-fonts/font-jetbrains-mono homebrew/cask-fonts/font-inter telegram chatgpt NetNewsWire ghostty
 brew install --formula git gh sqlite duckdb fzf dos2unix colordiff bash libyaml jemalloc mise git-extras git-delta gnu-time jq less moreutils ncdu ripgrep rga poppler grep rlwrap scc asciinema tree libpq cloud-sql-proxy glow gum mods vhs google-cloud-sdk gnu-tar gpg htop tailspin 1password-cli yt-dlp pgcli litecli hyperfine k9s rbspy vegeta ugrep btop neofetch fswatch elixir-ls typst zola sqlc terraform sad httpstat gitleaks semgrep gptscript gptscript-ai/tap/clio jj pg_top jd spacer zoxide rclone duf eza fd doggo autoconf gperf libffi zlib gmp gron xsv wader/tap/fq comby
 
 $(brew --prefix)/opt/fzf/install
