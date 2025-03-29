@@ -1,5 +1,5 @@
 # Default model (gpt-3.5-turbo, gpt-4, ggml-gpt4all-j...).
-default-model: claude-3-7-sonnet
+default-model: gemini
 # Text to append when using the -f flag.
 format-text: Format the response as markdown without enclosing backticks.
 # Ask for the response to be formatted as markdown unless otherwise set.
@@ -33,6 +33,7 @@ roles:
     - When you spot a bug or issue, please always suggest a remediation.
     - Include code snippets only when necessary to understand the issue.
     - Does the code follow common coding conventions and idioms for the language used? Does it include appropriate tests? If not, suggest initial tests that could be added.
+    - Try to be concise.
 # Maximum number of tokens in response.
 # max-tokens: 100
 # Aliases and endpoints for OpenAI compatible REST API.
@@ -50,6 +51,11 @@ apis:
         max-input-chars: 680000
       claude-3-opus-20240229:
         aliases: ["claude3-opus", "opus"]
+        max-input-chars: 680000
+  google:
+    models:
+      gemini-2.5-pro-exp-03-25:
+        aliases: ["gemini"]
         max-input-chars: 680000
   openai:
     base-url: https://api.openai.com/v1
