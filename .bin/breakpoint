@@ -1,0 +1,10 @@
+#!/usr/bin/env zsh
+# To use this in a script call it like this:
+# `source breakpoint`
+
+echo "Debugging (Ctrl-d to exit)"
+while read "?Debugging> " debugging_line
+do
+  eval "$debugging_line"
+done
+echo ""
