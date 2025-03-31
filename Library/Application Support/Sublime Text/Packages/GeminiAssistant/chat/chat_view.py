@@ -231,13 +231,13 @@ class GeminiAssistantChatView:
             vs = self.view.settings()
             vs.set("line_numbers", line_numbers)
             vs.set("rulers", rulers if isinstance(rulers, list) else [])
-            vs.set("gutter", line_numbers) # Gutter visibility tied to line numbers
-            vs.set("draw_centered", False) # Typically false for chat logs
-            vs.set("word_wrap", True) # Usually desired for chat
-            vs.set("wrap_width", 0) # Wrap at window width if word_wrap is true
-            vs.set("margin", 2) # Small margin
-            vs.set("scroll_past_end", False) # Don't scroll past the end
-            # Mark it as a chat view and the current one
+            # vs.set("gutter", line_numbers) # Gutter visibility tied to line numbers
+            # vs.set("draw_centered", False) # Typically false for chat logs
+            # vs.set("word_wrap", True) # Usually desired for chat
+            # vs.set("wrap_width", 0) # Wrap at window width if word_wrap is true
+            # vs.set("margin", 2) # Small margin
+            # vs.set("scroll_past_end", False) # Don't scroll past the end
+            # # Mark it as a chat view and the current one
             vs.set("gemini_assistant_is_chat_view", True)
             # Initialize conversation history setting (must be JSON serializable)
             vs.set("gemini_assistant_conversation_json", "[]")
@@ -660,10 +660,7 @@ class GeminiAssistantChatView:
         # Use a unique href scheme like "copycode:" to avoid conflicts
         # Ensure the escaped code is properly quoted within the href attribute.
         button = f'<a class="gemini-copy-button" title="Copy code block" href="copycode:{escaped_code}">Copy Code</a>'
-        # Display language hint if available
-        lang_indicator = f'<span class="gemini-lang-indicator">{language}</span>' if language else ''
-
-        return f'{style}<div class="gemini-code-block-button">{button}{lang_indicator}</div>'
+        return f'{style}<div class="gemini-code-block-button">{button}</div>'
 
 
     def destroy(self):

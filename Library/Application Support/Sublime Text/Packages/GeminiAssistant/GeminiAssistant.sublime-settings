@@ -16,10 +16,10 @@
   // no system instruction will be sent.
   // Google Gemini API uses 'system_instruction'
   "system_messages": [
-    "You are a helpful AI assistant focused on programming help. Provide code examples where relevant.",
+    "You are a helpful AI assistant focused on programming help.",
     "You are a helpful AI assistant focused on writing and documentation.",
     "You are a helpful AI assistant ready to help with any task.",
-        "" // Add an empty option to send no system instruction
+    "" // Add an empty option to send no system instruction
   ],
   "default_system_message_index": 0,
 
