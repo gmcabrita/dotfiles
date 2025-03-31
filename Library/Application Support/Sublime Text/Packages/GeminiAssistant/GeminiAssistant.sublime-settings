@@ -1,0 +1,43 @@
+{
+  // Your Google AI API key from Google AI Studio: https://aistudio.google.com/app/apikey
+  "api_key": "",
+
+  // Default max tokens for the response. The API might have its own limits per model.
+  "max_output_tokens": 65536, // Changed from max_tokens, aligned with Gemini 2.5 Pro output limit
+
+  // Note that a 'Switch Model' command exists that allows you to select the
+  // model via the command palette.
+  // See available models: https://ai.google.dev/models/gemini
+  // Use the model ID (e.g., "gemini-1.5-flash-latest", "gemini-1.5-pro-latest")
+  "model": "gemini-2.5-pro-exp-03-25",
+
+  // The system instruction is sent with the first request to the Google API.
+  // If an empty system message is selected as the default_system_message_index,
+  // no system instruction will be sent.
+  // Google Gemini API uses 'system_instruction'
+  "system_messages": [
+    "You are a helpful AI assistant focused on programming help. Provide code examples where relevant.",
+    "You are a helpful AI assistant focused on writing and documentation.",
+    "You are a helpful AI assistant ready to help with any task.",
+        "" // Add an empty option to send no system instruction
+  ],
+  "default_system_message_index": 0,
+
+  // Temperature controls randomness. Lower values make the model more deterministic. (0.0 - 1.0)
+  "temperature": 0.7, // Adjusted default
+    // Top P controls diversity via nucleus sampling. (0.0 - 1.0)
+    "top_p": 0.95, // Added common Google parameter
+    // Top K controls diversity by limiting the sampling pool. (Integer >= 1)
+    "top_k": 40, // Added common Google parameter
+
+  // Note: Cost calculation based on Anthropic pricing is removed.
+  // Google AI Gemini API pricing: https://ai.google.dev/pricing
+
+  "chat": {
+    "line_numbers": false,
+    "rulers": false,
+    // If set_scratch is set to true, the chat view will be closed without
+    // prompting to save.
+    "set_scratch": true
+  }
+}

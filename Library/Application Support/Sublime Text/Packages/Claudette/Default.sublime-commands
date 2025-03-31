@@ -1,0 +1,62 @@
+[
+	{
+		"caption": "Claudette: Ask Question",
+		"command": "claudette_ask_question"
+	},
+	{
+		"caption": "Claudette: Ask Question In New Chat View",
+		"command": "claudette_ask_new_question"
+	},
+	{
+		"caption": "Claudette: Clear Chat History",
+		"command": "claudette_clear_chat_history"
+	},
+	{
+		"caption": "Claudette: Export Chat History",
+		"command": "claudette_export_chat_history"
+	},
+	{
+		"caption": "Claudette: Import Chat History",
+		"command": "claudette_import_chat_history"
+	},
+	{
+		"caption": "Claudette: Switch Model",
+		"command": "claudette_select_model_panel"
+	},
+	{
+		"caption": "Claudette: Switch System Prompt",
+		"command": "claudette_select_system_message_panel"
+	},
+	{
+		"caption": "Claudette: Add Current File To Context",
+		"command": "claudette_context_add_current_file"
+	},
+	{
+		"caption": "Claudette: Remove Current File From Context",
+		"command": "claudette_context_remove_current_file"
+	},
+	{
+		"caption": "Claudette: Add All Open Files To Context",
+		"command": "claudette_context_add_open_files"
+	},
+	{
+		"caption": "Claudette: Show Included Files",
+		"command": "claudette_context_manage_files"
+	},
+	{
+		"caption": "Claudette: Refresh Included Files",
+		"command": "claudette_context_refresh_files"
+	},
+	{
+		"caption": "Claudette: Clear Included Files",
+		"command": "claudette_context_clear_files"
+	},
+	{
+		"caption": "Claudette: Settings",
+		"command": "edit_settings",
+		"args": {
+			"base_file": "${packages}/Claudette/Claudette.sublime-settings",
+			"default": "{\n\t$0\n}\n"
+		}
+	}
+]

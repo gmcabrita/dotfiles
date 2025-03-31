@@ -1,0 +1,65 @@
+[
+    {
+        "caption": "Gemini Assistant: Ask Question",
+        "command": "gemini_assistant_ask_question"
+    },
+    {
+        "caption": "Gemini Assistant: Ask Question In New Chat View",
+        "command": "gemini_assistant_ask_new_question"
+    },
+    {
+        "caption": "Gemini Assistant: Clear Chat History",
+        "command": "gemini_assistant_clear_chat_history"
+    },
+    {
+        "caption": "Gemini Assistant: Export Chat History",
+        "command": "gemini_assistant_export_chat_history"
+    },
+    {
+        "caption": "Gemini Assistant: Import Chat History",
+        "command": "gemini_assistant_import_chat_history"
+    },
+    {
+        "caption": "Gemini Assistant: Switch Model",
+        "command": "gemini_assistant_select_model_panel"
+    },
+    {
+        "caption": "Gemini Assistant: Switch System Instruction", // Renamed caption
+        "command": "gemini_assistant_select_system_message_panel"
+    },
+    {
+        "caption": "Gemini Assistant: Add Current File To Context",
+        "command": "gemini_assistant_context_add_current_file"
+    },
+    {
+        "caption": "Gemini Assistant: Remove Current File From Context",
+        "command": "gemini_assistant_context_remove_current_file"
+    },
+    {
+        "caption": "Gemini Assistant: Add All Open Files To Context",
+        "command": "gemini_assistant_context_add_open_files"
+    },
+    {
+        "caption": "Gemini Assistant: Show Included Files",
+        "command": "gemini_assistant_context_manage_files"
+    },
+    {
+        "caption": "Gemini Assistant: Refresh Included Files",
+        "command": "gemini_assistant_context_refresh_files"
+    },
+    {
+        "caption": "Gemini Assistant: Clear Included Files",
+        "command": "gemini_assistant_context_clear_files"
+    },
+    {
+        "caption": "Gemini Assistant: Settings",
+        "command": "edit_settings",
+        "args": {
+            // Updated base_file path
+            "base_file": "${packages}/GeminiAssistant/GeminiAssistant.sublime-settings",
+            // Provide a more complete default structure for user settings
+            "default": "{\n\t\"api_key\": \"PASTE_YOUR_GOOGLE_AI_API_KEY_HERE\",\n\t\"model\": \"gemini-2.5-pro-exp-03-25\",\n\t//\"temperature\": 0.8,\n\t$0\n}\n",
+            "user_file": "${packages}/User/GeminiAssistant.sublime-settings" // Specify user settings file
+        }
+    }
+]

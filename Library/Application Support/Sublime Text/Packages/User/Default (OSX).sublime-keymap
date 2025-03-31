@@ -4,5 +4,5 @@
   { "keys": ["ctrl+shift+tab"], "command": "prev_view" },
   { "keys": ["alt+super+r"], "command": "build_last"},
   { "keys": ["super+t"], "command": "new_file" },
-  { "keys": ["shift+super+/"], "command": "claudette_ask_question" },
+  { "keys": ["shift+super+/"], "command": "gemini_assistant_ask_question" },
 ]

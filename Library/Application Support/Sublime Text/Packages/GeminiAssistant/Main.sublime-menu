@@ -1,0 +1,112 @@
+[
+    {
+        "id": "tools",
+        "children": [
+            {
+                "id": "gemini_assistant", // Renamed ID
+                "caption": "Gemini Assistant", // Renamed Caption
+                "children": [
+                    {
+                        "caption": "Ask Question",
+                        "command": "gemini_assistant_ask_question" // Renamed command
+                    },
+                    {
+                        "caption": "Ask Question In New Chat View",
+                        "command": "gemini_assistant_ask_new_question" // Renamed command
+                    },
+                    {
+                        "caption": "Switch Model",
+                        "command": "gemini_assistant_select_model_panel" // Renamed command
+                    },
+                    {
+                        "caption": "Switch System Instruction", // Renamed Caption
+                        "command": "gemini_assistant_select_system_message_panel" // Renamed command
+                    },
+                    {
+                        "caption": "Chat History",
+                        "children": [
+                            {
+                                "caption": "Clear Chat History",
+                                "command": "gemini_assistant_clear_chat_history", // Renamed command
+                                "mnemonic": "C"
+                            },
+                            {
+                                "caption": "Export Chat History",
+                                "command": "gemini_assistant_export_chat_history", // Renamed command
+                                "mnemonic": "E"
+                            },
+                            {
+                                "caption": "Import Chat History",
+                                "command": "gemini_assistant_import_chat_history", // Renamed command
+                                "mnemonic": "I"
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "Chat Context",
+                        "children": [
+                            {
+                                "caption": "Show Included Files",
+                                "command": "gemini_assistant_context_manage_files", // Renamed command
+                                "mnemonic": "S"
+                            },
+                            {"caption": "-"},
+                            {
+                                "caption": "Add Current File To Context",
+                                "command": "gemini_assistant_context_add_current_file", // Renamed command
+                                "mnemonic": "A"
+                            },
+                            {
+                                "caption": "Remove Current File From Context",
+                                "command": "gemini_assistant_context_remove_current_file", // Renamed command
+                                "mnemonic": "R"
+                            },
+                            {
+                                "caption": "Add All Open Files To Context",
+                                "command": "gemini_assistant_context_add_open_files", // Renamed command
+                                "mnemonic": "O"
+                            },
+                            {"caption": "-"},
+                            {
+                                "caption": "Refresh Included Files",
+                                "command": "gemini_assistant_context_refresh_files", // Renamed command
+                                "mnemonic": "f"
+                            },
+                            {
+                                "caption": "Clear Included Files",
+                                "command": "gemini_assistant_context_clear_files", // Renamed command
+                                "mnemonic": "l"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "preferences",
+        "children": [
+            {
+                "id": "package-settings",
+                "children": [
+                    {
+                        "caption": "Gemini Assistant", // Renamed Caption
+                        "children": [
+                            {
+                                "caption": "Settings",
+                                "command": "edit_settings",
+                                "args": {
+                                     // Use renamed settings file path
+                                    "base_file": "${packages}/GeminiAssistant/GeminiAssistant.sublime-settings",
+                                    "default": "{\n\t\"api_key\": \"PASTE_YOUR_GOOGLE_AI_API_KEY_HERE\",\n\t\"model\": \"gemini-2.5-pro-exp-03-25\",\n\t//\"temperature\": 0.8,\n\t$0\n}\n",
+                                    "user_file": "${packages}/User/GeminiAssistant.sublime-settings" // Specify user settings file
+                                },
+                                "mnemonic": "S"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]
