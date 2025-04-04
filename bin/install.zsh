@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-source copy-dotfiles.zsh
+source bin/copy-dotfiles.zsh
 
 mkdir ~/.zfunc
 
