@@ -15,23 +15,23 @@ with
                         regexp_replace(
                             regexp_replace(
                                 query,
-                                e'\\?(::[a-zA-Z_]+)?( *, *\\?(::[a-zA-Z_]+)?)+',
+                                e '\\?(::[a-zA-Z_]+)?( *, *\\?(::[a-zA-Z_]+)?)+',
                                 '?',
                                 'g'
                             ),
-                            e'\\$[0-9]+(::[a-zA-Z_]+)?( *, *\\$[0-9]+(::[a-zA-Z_]+)?)*',
+                            e '\\$[0-9]+(::[a-zA-Z_]+)?( *, *\\$[0-9]+(::[a-zA-Z_]+)?)*',
                             '$N',
                             'g'
                         ),
-                        e'--.*$',
+                        e '--.*$',
                         '',
                         'ng'
                     ),
-                    e'/\\*.*?\\*/',
+                    e '/\\*.*?\\*/',
                     '',
                     'g'
                 ),
-                e'\r',
+                e '\r',
                 ''
             ) as query_normalized
         from pg_stat_statements_slice
@@ -53,10 +53,10 @@ with
                 translate(
                     replace(
                         (array_agg(query order by length(query)))[1],
-                        e'-- \n',
-                        e'--\n'
+                        e '-- \n',
+                        e '--\n'
                     ),
-                    e'\r',
+                    e '\r',
                     ''
                 ),
                 1,
@@ -204,16 +204,16 @@ with
         where calls is not null
     )
 select
-    e'total time:\t'
+    e 'total time:\t'
     || total_exec_time
     || ' (IO: '
     || io_time_percent
-    || e'%)\n'
-    || e'total queries:\t'
+    || e '%)\n'
+    || e 'total queries:\t'
     || total_queries
     || ' (unique: '
     || unique_queries
-    || e')\n'
+    || e ')\n'
     || 'report for '
     || (
         select
@@ -223,10 +223,10 @@ select
                 else current_database() || ' database'
             end
     )
-    || e', version b0.9.6'
+    || e ', version b0.9.6'
     || ' @ PostgreSQL '
     || (select setting from pg_settings where name = 'server_version')
-    || e'\ntracking '
+    || e '\ntracking '
     || (select setting from pg_settings where name = 'pg_stat_statements.track')
     || ' '
     || (select setting from pg_settings where name = 'pg_stat_statements.max')
@@ -249,7 +249,7 @@ select
         from pg_settings
         where name = 'log_min_duration_statement'
     )
-    || e' queries\n'
+    || e ' queries\n'
     || (
         select
             coalesce(
@@ -259,24 +259,24 @@ select
                     || ' must be vacuumed within '
                     || to_char(2147483647 - age(datfrozenxid), 'FM999,999,999,990')
                     || ' transactions',
-                    e'\n'
+                    e '\n'
                     order by age(datfrozenxid) desc
                 )
-                || e'\n',
+                || e '\n',
                 ''
             )
         from pg_database
         where (2147483647 - age(datfrozenxid)) < 200000000
     )
-    || e'\n'
+    || e '\n'
 from totals_readable
 union all
 (
     select
-        e'=============================================================================================================\n'
+        e '=============================================================================================================\n'
         || 'pos:'
         || pos
-        || e'\t total time: '
+        || e '\t total time: '
         || total_exec_time
         || ' ('
         || time_percent
@@ -284,27 +284,27 @@ union all
         || io_time_percent
         || ', Non-IO: '
         || non_io_time_percent
-        || e')\t calls: '
+        || e ')\t calls: '
         || calls
         || ' ('
         || calls_percent
-        || e'%)\t avg_time: '
+        || e '%)\t avg_time: '
         || avg_time
         || 'ms (IO: '
         || avg_io_time_percent
-        || e')\n'
+        || e ')\n'
         || 'user: '
         || username
-        || e'\t db: '
+        || e '\t db: '
         || database
-        || e'\t rows: '
+        || e '\t rows: '
         || rows
         || ' ('
         || row_percent
         || '%)'
-        || e'\t query:\n'
+        || e '\t query:\n'
         || query
-        || e'\n'
+        || e '\n'
     from statements_readable
     order by pos
 )

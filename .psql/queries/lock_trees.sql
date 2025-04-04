@@ -62,7 +62,7 @@ with recursive
             leads.lvl + 1,
             (select count(*) from pairs q where q.locker = i.locker),
             leads.track || i.locker,
-            i.locker = any (leads.track)
+            i.locker = any(leads.track)
         from pairs i, leads
         where i.waiter = leads.locker and not cycle
     ),
@@ -83,7 +83,7 @@ with recursive
                 and not exists (
                     select
                     from leads i
-                    where i.locker = any (o.track) and (i.lvl > o.lvl or i.q < o.q)
+                    where i.locker = any(o.track) and (i.lvl > o.lvl or i.q < o.q)
                 )
             )
             or (
@@ -98,17 +98,17 @@ with recursive
             w.waiter pid,
             tree.pid,
             tree.root,
-            case when w.waiter = any (tree.dl) then tree.dl end,
+            case when w.waiter = any(tree.dl) then tree.dl end,
             w.obj,
             tree.lvl + 1,
             tree.path || '.' || w.waiter,
             all_pids || array_agg(w.waiter) over ()
         from tree
-        join pairs w on tree.pid = w.locker and not w.waiter = any (all_pids)
+        join pairs w on tree.pid = w.locker and not w.waiter = any(all_pids)
     )
 select
-    (clock_timestamp() - a.xact_start)::interval(0) as ts_age,
-    (clock_timestamp() - a.state_change)::interval(0) as change_age,
+    (clock_timestamp() - a.xact_start)::interval (0) as ts_age,
+    (clock_timestamp() - a.state_change)::interval (0) as change_age,
     a.datname,
     a.usename,
     a.client_addr,
@@ -120,9 +120,9 @@ select
         from tree p
         where p.path ~ ('^' || tree.path) and not p.path = tree.path
     ) blocked,
-    case when tree.pid = any (tree.dl) then '!>' else repeat(' .', lvl) end
+    case when tree.pid = any(tree.dl) then '!>' else repeat(' .', lvl) end
     || ' '
-    || trim(left(regexp_replace(a.query, E'\\s+', ' ', 'g'), 100)) query
+    || trim(left(regexp_replace(a.query, e '\\s+', ' ', 'g'), 100)) query
 from tree
 left join pairs w on w.waiter = tree.pid and w.locker = tree.dad
 join pg_stat_activity a using (pid)

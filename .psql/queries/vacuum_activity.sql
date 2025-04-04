@@ -40,10 +40,10 @@ with
     )
 select
     pid as "PID",
-    duration::interval(0)::text as "Duration",
+    duration::interval (0)::text as "Duration",
     mode as "Mode",
     database || coalesce(
-        e'\n '
+        e '\n '
         || coalesce(nullif(schema_name, 'public ') || '. ', ' ')
         || table_name
         || coalesce(' [ ' || tblspace || '] ', ' '),
@@ -57,14 +57,14 @@ select
     || ' ( '
     || scanned_pct
     || '%) '
-    || e' scanned\n '
+    || e ' scanned\n '
     || vacuumed
     || ' ( '
     || vacuumed_pct
     || '%) vacuumed ' as "Heap Vacuuming",
     index_vacuum_count
     || ' completed cycles, '
-    || e'\n '
+    || e '\n '
     || case
         when dead_tuple_bytes > 10 ^ 12
         then round(dead_tuple_bytes::numeric / 10 ^ 12::numeric, 0)::text || 'T '
@@ -78,7 +78,7 @@ select
     end
     || ' ( '
     || dead_pct
-    || e'%) dead tuples\nof max ~ '
+    || e '%) dead tuples\nof max ~ '
     || case
         when max_dead_tuple_bytes > 10 ^ 12
         then round(max_dead_tuple_bytes::numeric / 10 ^ 12::numeric, 0)::text || 'T '

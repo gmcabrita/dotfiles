@@ -14,7 +14,7 @@ with
                 when relopts like '%autovacuum_vacuum_threshold%'
                 then
                     regexp_replace(
-                        relopts, '.*autovacuum_vacuum_threshold=([0-9.]+).*', E'\\1'
+                        relopts, '.*autovacuum_vacuum_threshold=([0-9.]+).*', e '\\1'
                     )::int8
                 else current_setting('autovacuum_vacuum_threshold')::int8
             end as autovacuum_vacuum_threshold,
@@ -22,7 +22,7 @@ with
                 when relopts like '%autovacuum_vacuum_scale_factor%'
                 then
                     regexp_replace(
-                        relopts, '.*autovacuum_vacuum_scale_factor=([0-9.]+).*', E'\\1'
+                        relopts, '.*autovacuum_vacuum_scale_factor=([0-9.]+).*', e '\\1'
                     )::numeric
                 else current_setting('autovacuum_vacuum_scale_factor')::numeric
             end as autovacuum_vacuum_scale_factor,
