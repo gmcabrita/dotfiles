@@ -13,6 +13,8 @@ scrollback-limit=100000000
 window-width = 120
 window-height = 30
 
+theme = Mariana
+
 # rsms-dark
 palette = 0=#333332
 palette = 1=#ff968c
