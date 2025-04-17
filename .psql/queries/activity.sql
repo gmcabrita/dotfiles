@@ -10,6 +10,7 @@ select
         where state_change < now() - interval '1 hour'
     ) as "State changed >1h ago"
 from pg_stat_activity
-group by grouping sets ((datname, usename, state), (usename, state), ())
+group by grouping
+sets ((datname, usename, state), (usename, state), ())
 order by usename is null desc, datname is null desc, 2 asc, 3 asc, count(*) desc
 ;

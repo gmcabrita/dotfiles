@@ -28,7 +28,7 @@ with
     fk_attributes as (
         select fkoid, conrelid, attname, attnum
         from fk_list
-        join pg_attribute on conrelid = attrelid and attnum = any(key_cols)
+        join pg_attribute on conrelid = attrelid and attnum = any (key_cols)
         order by fkoid, attnum
     ),
     fk_cols_list as (

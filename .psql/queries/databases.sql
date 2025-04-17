@@ -92,7 +92,7 @@ select
             || '%)'
         else 'no access'
     end as "Size",
-    (now() - stats_reset)::interval (0)::text as "Stats Age",
+    (now() - stats_reset)::interval(0)::text as "Stats Age",
     case
         when blks_hit + blks_read > 0
         then (round(blks_hit * 100::numeric / (blks_hit + blks_read), 2))::text || '%'
