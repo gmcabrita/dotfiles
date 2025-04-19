@@ -3,6 +3,8 @@
 ## On previous machine
 
 - `cp ~/.zsh_history ~/iCloud\ Drive/Software/.zsh_history`
+- Export iStat Menu settings
+- Export Raycast settings
 
 ## Pre-install script setup
 
@@ -39,34 +41,26 @@
 
 ## Post-install script setup
 
-- Chrome
-  - Configure 1password
+- https://github.com/Gaulomatic/AirPodsSanity
+  - Configure it
+- Brave
+  - Configure 1Password
     - Show autofill menu on field focus: no
   - uBlacklist import from Google Drive
-  - uBlock Origin
   - https://github.com/bpc-clone/bypass-paywalls-chrome-clean/blob/master/allowlist/README.md
 - 1Password
-- Google Drive Stream
-- Slack
 - `gh auth login`
   - Add ssh key as gpg key
 - Orbstack
-- Spotify
 - Slack
 - Discord
 - WhatsApp
-- Telegram
-- Signal
 - Monodraw
-- Notion
-- Notion Calendar
 - NetNewsWire
-- ChatGPT
-- Claude
 - Raycast
   - Disable spotlight
-  - Import config from iCloud Drive
-- Zed
+  - Import config from iCloud Drive (or login if we still have Pro)
+- Sublime Text
 - Zoom
 - Setapp + apps
   - CleanShot X
@@ -74,14 +68,10 @@
   - Soulver
   - CleanMyMac X
   - iStat Menus
+    - Import config from iCloud Drive
   - Proxyman
-  - Marked
-  - Bartender
-- Install Tailscale from App Store
-- Hyperkey
-  - Remap Caps Lock to F20
 - https://twitter.com/thorstenball/status/1736679960784310775
-- https://www.pronotes.app/
+  - Keep "Wake for network access" on because of Plex
 - Copy zsh history from icloud
   - `cp ~/iCloud\ Drive/Software/.zsh_history ~/.zsh_history`
 - Finder settings:
