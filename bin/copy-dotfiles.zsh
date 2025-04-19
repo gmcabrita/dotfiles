@@ -31,8 +31,6 @@ cp Library/Application\ Support/go/telemetry/* $HOME/Library/Application\ Suppor
 
 mkdir -p $HOME/Library/Application\ Support/Sublime\ Text
 cp -rf Library/Application\ Support/Sublime\ Text $HOME/Library/Application\ Support
-ANTHROPIC_API_KEY="op://Personal/ebpfp27lruzgaf57gwcxs7s4ka/password" op run --no-masking -- bash -c 'API_KEY=$(echo $ANTHROPIC_API_KEY); perl -pi -e "s/REDACTED/$API_KEY/g" $HOME/Library/Application\ Support/Sublime\ Text/Packages/User/Claudette.sublime-settings'
-GOOGLE_API_KEY="op://Personal/amgiqtk6hefolumdkxidsxmc6y/password" op run --no-masking -- bash -c 'API_KEY=$(echo $GOOGLE_API_KEY); perl -pi -e "s/REDACTED/$API_KEY/g" $HOME/Library/Application\ Support/Sublime\ Text/Packages/User/GeminiAssistant.sublime-settings'
 
 mkdir -p $HOME/Library/Application\ Support/mods
 cp Library/Application\ Support/mods/* $HOME/Library/Application\ Support/mods

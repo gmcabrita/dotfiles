@@ -10,6 +10,8 @@ export RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc"
 export BUNDLE_IGNORE_FUNDING_REQUESTS=YES
 export PGGSSENCMODE=disable
 export EDITOR="subl"
+# Useful for multiline editing in iex using Esc+O (https://bsky.app/profile/bobbby.online/post/3llwpqtwwf22r)
+export VISUAL="subl -n -w"
 export PSQL_EDITOR="subl -n -w"
 export KUBE_EDITOR="subl -n -w"
 export ERL_AFLAGS="-kernel shell_history enabled"
