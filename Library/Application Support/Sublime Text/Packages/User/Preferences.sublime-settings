@@ -7,7 +7,7 @@
   "bold_folder_labels": true,
   "caret_style": "smooth",
   "color_scheme": "rsms-dark.sublime-color-scheme",
-  "draw_indent_guides": false,
+  "draw_indent_guides": true,
   "draw_white_space": "selection",
   "file_exclude_patterns": ["*.pyc","*.pyo","*.exe","*.dll","*.obj","*.o","*.a","*.lib","*.so","*.dylib","*.ncb","*.sdf","*.suo","*.pdb","*.idb",".DS_Store",".irb_history",],
   "file_tab_style": "rounded",
