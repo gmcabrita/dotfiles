@@ -1,6 +1,19 @@
 #!/usr/bin/env elixir
 
-[package, task | args] = System.argv()
+usage = fn ->
+  IO.puts("Usage: mixx <package> <task> [args]")
+  System.halt(1)
+end
 
-Mix.install([String.to_atom(package)])
-Mix.Task.run(task, args)
+
+args = System.argv()
+
+case args do
+  [] ->
+    usage.()
+  [_] ->
+    usage.()
+  [package, task | rest_args] ->
+    Mix.install([String.to_atom(package)])
+    Mix.Task.run(task, rest_args)
+end
