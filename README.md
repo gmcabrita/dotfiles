@@ -27,6 +27,8 @@
       - Note List Search... = `⌘ P`
   - Input Sources > Edit
     - Disable everything
+- Trackpad:
+  - Disable "Look up & data detectors"
 - Desktop & Dock
   - Window Tiling
     - Disable "Tiled windows have margins"
