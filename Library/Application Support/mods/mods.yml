@@ -1,5 +1,5 @@
 # Default model (gpt-3.5-turbo, gpt-4, ggml-gpt4all-j...).
-default-model: o4-mini
+default-model: gemini
 # Text to append when using the -f flag.
 format-text: Format the response as markdown without enclosing backticks.
 # Ask for the response to be formatted as markdown unless otherwise set.
