@@ -26,6 +26,9 @@ cp .config/ghostty/* $HOME/.config/ghostty
 mkdir -p $HOME/.config/zed
 cp .config/zed/* $HOME/.config/zed
 
+mkdir -p $HOME/.config/jj
+cp .config/jj/* $HOME/.config/jj
+
 mkdir -p $HOME/Library/Application\ Support/go/telemetry
 cp Library/Application\ Support/go/telemetry/* $HOME/Library/Application\ Support/go/telemetry
 
@@ -34,6 +37,3 @@ cp -rf Library/Application\ Support/Sublime\ Text $HOME/Library/Application\ Sup
 
 mkdir -p $HOME/Library/Application\ Support/mods
 cp Library/Application\ Support/mods/* $HOME/Library/Application\ Support/mods
-
-mkdir -p $HOME/Library/Application\ Support/jj
-cp Library/Application\ Support/jj/* $HOME/Library/Application\ Support/jj
