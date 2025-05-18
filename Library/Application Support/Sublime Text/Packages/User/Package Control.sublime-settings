@@ -5,17 +5,14 @@
 	],
 	"installed_packages":
 	[
-		"Elixir",
 		"Git blame",
 		"gruvbox",
+		"JsPrettier",
 		"LSP",
 		"LSP-copilot",
-		"LSP-elixir",
-		"LSP-gopls",
 		"LSP-typescript",
 		"Package Control",
 		"PackageDev",
 		"SideBarEnhancements",
-		"ZigUnofficial",
 	],
 }
