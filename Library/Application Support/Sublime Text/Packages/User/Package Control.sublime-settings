@@ -7,12 +7,12 @@
 	[
 		"Git blame",
 		"gruvbox",
-		"JsPrettier",
 		"LSP",
 		"LSP-copilot",
 		"LSP-typescript",
 		"Package Control",
 		"PackageDev",
+		"Prettierd Format",
 		"SideBarEnhancements",
 	],
 }
