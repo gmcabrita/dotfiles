@@ -1,7 +1,7 @@
 // Settings in here override those in "Default/Preferences.sublime-settings",
 // and are overridden in turn by syntax-specific settings.
 {
-  "auto_complete": true,
+  "auto_complete": false,
   "auto_complete_commit_on_tab": true,
   "binary_file_patterns": ["node_modules/**","deps/**","out/**","_archive/**",".git/**",".svn/**",".hg/**","CVS/**",".DS_Store/**","Thumbs.db/**",".classpath/**",".settings/**",".zig-cache/**","zig-out/**","tmp/cache",],
   "bold_folder_labels": true,
