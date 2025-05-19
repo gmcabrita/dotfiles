@@ -10,8 +10,8 @@ cursor-style-blink = false
 shell-integration-features = no-cursor
 macos-titlebar-style = tabs
 scrollback-limit=100000000
-window-width = 120
-window-height = 30
+window-width = 10000
+window-height = 10000
 
 theme = GruvboxDarkHard
 
