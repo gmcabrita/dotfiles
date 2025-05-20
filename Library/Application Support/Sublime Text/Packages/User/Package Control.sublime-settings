@@ -9,6 +9,7 @@
 		"gruvbox",
 		"LSP",
 		"LSP-copilot",
+		"LSP-gopls",
 		"LSP-typescript",
 		"Package Control",
 		"PackageDev",
