@@ -30,6 +30,7 @@
   "remember_full_screen": true,
   "rulers": [100],
   "save_on_focus_lost": false,
+  "sidebar_on_right": true,
   "scroll_past_end": true,
   "scroll_speed": 3.0,
   "shell_environment": true,
