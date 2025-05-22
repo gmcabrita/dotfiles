@@ -5,6 +5,7 @@
 	],
 	"installed_packages":
 	[
+		"Elixir",
 		"Git blame",
 		"Gomod",
 		"gruvbox",
