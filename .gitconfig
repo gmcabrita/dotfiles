@@ -113,7 +113,7 @@
 
   # Modified files
   modified = diff --name-only --diff-filter=M
-  modified-all = diff HEAD --name-only
+  modified-all = diff HEAD --name-only --diff-filter=MA
 
   # Show verbose output about tags, branches or remotes
   tags = tag -l
