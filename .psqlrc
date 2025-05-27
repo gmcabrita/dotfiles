@@ -1,5 +1,11 @@
 \set QUIET 1
 
+select
+  (:'DBNAME' ilike '%_prod' or :'DBNAME' ilike '%_production') as is_prod,
+  (:'DBNAME' ilike '%_stag' or :'DBNAME' ilike '%_staging') as is_stag,
+  (:'DBNAME' ilike '%_dev' or :'DBNAME' ilike '%_development') as is_dev,
+  (:'DBNAME' ilike '%_test' or :'DBNAME' ilike '%_testing') as is_test \gset
+
 \pset null '[NULL]'
 \x auto
 \timing
@@ -9,7 +15,17 @@
 \set HISTCONTROL ignoredups
 \set COMP_KEYWORD_CASE lower
 
+\if :is_prod
+\set PROMPT1 '\033[1;31m%n@%/\033[0m%R%#%x '
+\elif :is_stag
+\set PROMPT1 '\033[1;33m%n@%/\033[0m%R%#%x '
+\elif :is_dev
+\set PROMPT1 '\033[1;34m%n@%/\033[0m%R%#%x '
+\elif :is_test
+\set PROMPT1 '\033[1;32m%n@%/\033[0m%R%#%x '
+\else
 \set PROMPT1 '%n@%/%R%#%x '
+\endif
 \set PROMPT2 '[more] %R> '
 
 \pset linestyle unicode
