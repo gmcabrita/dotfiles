@@ -54,7 +54,9 @@
   private = yes
 [alias]
   # Push and open PR
-  ppr = !git push && gh pr create -w
+  ppr = !git push && gh pr create --web
+
+  web = !gh repo view --web
 
   # Quick commit
   c = commit
