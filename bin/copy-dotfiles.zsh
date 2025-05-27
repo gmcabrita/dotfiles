@@ -37,3 +37,9 @@ cp -rf Library/Application\ Support/Sublime\ Text $HOME/Library/Application\ Sup
 
 mkdir -p $HOME/Library/Application\ Support/mods
 cp Library/Application\ Support/mods/* $HOME/Library/Application\ Support/mods
+
+if (( ${#HOME/Library/Application\ Support/Firefox/Profiles/*(N/)} > 0 )); then
+  for dir in $HOME/Library/Application\ Support/Firefox/Profiles/*(N/); do
+      cp -r .firefox-profiles/* "$dir"
+  done
+fi
