@@ -64,7 +64,6 @@
   - Import config from iCloud Drive (or login if we still have Pro)
 - Sublime Text
 - Zoom
-- Tailscale
 - Setapp + apps
   - CleanShot X
   - TablePlus
