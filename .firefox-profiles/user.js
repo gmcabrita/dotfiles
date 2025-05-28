@@ -257,6 +257,9 @@ user_pref("browser.download.useDownloadDir", false);
 // PREF: display the installation prompt for all extensions
 user_pref("extensions.postDownloadThirdPartyPrompt", false);
 
+user_pref("browser.tabs.tabClipWidth", 0);
+user_pref("browser.tabs.tabMinWidth", 60);
+
 /****************************************************************************
  * SECTION: SMOOTHFOX                                                       *
  ****************************************************************************/
