@@ -120,9 +120,9 @@ select
         from tree p
         where p.path ~ ('^' || tree.path) and not p.path = tree.path
     ) blocked,
-    case when tree.pid = any (tree.dl) then '!>' else repeat(' .', lvl) end
+    case when tree.pid = any(tree.dl) then '!>' else repeat(' .', lvl) end
     || ' '
-    || trim(left(regexp_replace(a.query, E'\\s+', ' ', 'g'), 100)) query
+    || trim(left(regexp_replace(a.query, '\s+', ' ', 'g'), 100)) query
 from tree
 left join pairs w on w.waiter = tree.pid and w.locker = tree.dad
 join pg_stat_activity a using (pid)

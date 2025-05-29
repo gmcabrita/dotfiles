@@ -40,7 +40,7 @@ with
     )
 select
     pid as "PID",
-    duration::interval(0)::text as "Duration",
+    duration::interval (0)::text as "Duration",
     mode as "Mode",
     database || coalesce(
         e'\n '
