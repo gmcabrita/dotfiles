@@ -34,7 +34,9 @@ select
 \set version 'select version();'
 \set extensions 'select * from pg_available_extensions;'
 
-\set long_running `cat ~/.psql/queries/long_running.sql`
+\set long_running `cat ~/.psql/queries/runing_2_minutes.sql`
+\set running_2_minutes `cat ~/.psql/queries/runing_2_minutes.sql`
+\set running_30_seconds `cat ~/.psql/queries/running_30_seconds.sql`
 \set databases `cat ~/.psql/queries/databases.sql`
 \set hot_update_ratio `cat ~/.psql/queries/hot_update_ratio.sql`
 \set tables `cat ~/.psql/queries/tables.sql`
