@@ -9,8 +9,8 @@ with recursive
         select
             pg_blocking_pids(pid) blocked_by,
             *,
-            age(clock_timestamp(), xact_start)::interval(0) as tx_age,
-            age(clock_timestamp(), state_change)::interval(0) as state_age
+            age(clock_timestamp(), xact_start)::interval (0) as tx_age,
+            age(clock_timestamp(), state_change)::interval (0) as state_age
         from pg_stat_activity
         where state is distinct from 'idle'
     ),
