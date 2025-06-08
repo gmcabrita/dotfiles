@@ -6,6 +6,7 @@ cp .githelpers $HOME/
 cp .zshrc $HOME/
 cp .default-gems $HOME/
 cp .psqlrc $HOME/
+cp .editrc $HOME/
 cp .sqliterc $HOME/
 cp .iex.exs $HOME/
 
