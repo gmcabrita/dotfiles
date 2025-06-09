@@ -160,5 +160,5 @@ select
     end as "Live",
     fillfactor
 from step4
-order by real_size desc nulls last
+order by bloat_size desc nulls last
 ;
