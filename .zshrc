@@ -17,6 +17,7 @@ export PSQL_EDITOR="subl -n -w"
 export KUBE_EDITOR="subl -n -w"
 export ERL_AFLAGS="-kernel shell_history enabled"
 export FZF_DEFAULT_OPTS="--color=light"
+export PAGER="less -S"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 #### History
