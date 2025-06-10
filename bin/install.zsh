@@ -169,6 +169,7 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               erlang@latest \
               elixir@latest \
               zig@latest \
+              zls@latest \
               watchexec@latest
 
 pip install "reladiff[all]" "shandy-sqlfmt[jinjafmt]"
