@@ -33,6 +33,7 @@ select
 \set activity `cat ~/.psql/queries/activity.sql`
 \set table_bloat_estimation `cat ~/.psql/queries/table_bloat_estimation.sql`
 \set btree_bloat_estimation `cat ~/.psql/queries/btree_bloat_estimation.sql`
+\set btree_reindex_candidates `cat ~/.psql/queries/btree_reindex_candidates.sql`
 \set rare_indexes `cat ~/.psql/queries/rare_indexes.sql`
 \set redundant_indexes `cat ~/.psql/queries/redundant_indexes.sql`
 \set non_indexed_fks `cat ~/.psql/queries/non_indexed_fks.sql`
