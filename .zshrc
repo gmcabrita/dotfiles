@@ -236,36 +236,6 @@ function update-everything() {
   brew update && brew upgrade && update-programming-languages
 }
 
-function sxr8() {
-  curl -s "https://www.tradegate.de/refresh.php?isin=IE00B5BMR087" | \
-  jq -r '["Bid", "Ask", "Mid", "Spread"] as $headers |
-        ([.bid, .ask] | map(if type == "string" then gsub(",";".") | tonumber else . end)) as [$bid, $ask] |
-        [$headers,
-          [$bid, $ask, ($bid + $ask) / 2, (($ask / $bid - 1) * 100)]
-        ] | .[] | join("\t")' | \
-  awk -F'\t' 'NR==1 {printf "%-8s %-8s %-8s %-8s\n", $1, $2, $3, $4}
-              NR==2 {printf "%-8.2f %-8.2f %-8.2f %-8.2f\n", $1, $2, $3, $4}'
-}
-
-function sxr8_no_header() {
-  curl -s "https://www.tradegate.de/refresh.php?isin=IE00B5BMR087" | \
-  jq -r '([.bid, .ask] | map(if type == "string" then gsub(",";".") | tonumber else . end)) as [$bid, $ask] |
-        [$bid, $ask,
-        ($bid + $ask) / 2,
-        (($ask / $bid - 1) * 100)] |
-        join("\t")' | \
-  awk -F'\t' '{printf "%-8.2f %-8.2f %-8.2f %-8.2f\n", $1, $2, $3, $4}'
-}
-
-function sxr8loop() {
-  sxr8
-  sleep 1;
-  for w in {1..9}; do
-    sxr8_no_header;
-    sleep 1;
-  done
-}
-
 function nosleep() {
   caffeinate -isd
 }
