@@ -126,6 +126,7 @@ with
         from step3
     )
 select
+    table_name,
     index_name,
     pg_size_pretty(real_size::numeric)::text as index_size,
     pg_size_pretty(bloat_size::numeric)::text as bloat_size,
