@@ -39,4 +39,4 @@ theme = GruvboxDarkHard
 # selection-background = #323231
 # selection-foreground = #d1d1d1
 
-keybind = cmd+shift+j=write_scrollback_file:open
+keybind = cmd+shift+j=write_screen_file:open
