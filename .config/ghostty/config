@@ -38,3 +38,5 @@ theme = GruvboxDarkHard
 # cursor-text = #1a1a19
 # selection-background = #323231
 # selection-foreground = #d1d1d1
+
+keybind = cmd+shift+j=write_scrollback_file:open
