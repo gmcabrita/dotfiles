@@ -17,8 +17,8 @@ with
             16 as pageopqdata,
             case
                 when max(coalesce(s.null_frac, 0)) = 0
-                then 2
-                else 2 + ((32 + 8 - 1) / 8)
+                then 8  -- IndexTupleData size
+                else 8 + ((32 + 8 - 1) / 8)  -- IndexTupleData size + IndexAttributeBitMapData size ( max num filed per index + 8 - 1 /8)
             end as index_tuple_hdr_bm,
             sum(
                 (1 - coalesce(s.null_frac, 0)) * coalesce(s.avg_width, 1024)
@@ -120,9 +120,9 @@ with
             *,
             bs * (relpages)::bigint as real_size,
             bs * (relpages - est_pages)::bigint as extra_size,
-            100 * (relpages - est_pages)::float / relpages as extra_ratio,
+            100 * (relpages - est_pages)::float / relpages as extra_pct,
             bs * (relpages - est_pages_ff) as bloat_size,
-            100 * (relpages - est_pages_ff)::float / relpages as bloat_ratio
+            100 * (relpages - est_pages_ff)::float / relpages as bloat_pct
         from step3
     )
 select
@@ -139,7 +139,7 @@ select
             '~'
             || pg_size_pretty(extra_size::numeric)::text
             || ' ('
-            || round(extra_ratio::numeric, 2)::text
+            || round(extra_pct::numeric, 2)::text
             || '%)'
         else null
     end as "Extra",
@@ -149,7 +149,7 @@ select
             '~'
             || pg_size_pretty(bloat_size::numeric)::text
             || ' ('
-            || round(bloat_ratio::numeric, 2)::text
+            || round(bloat_pct::numeric, 2)::text
             || '%)'
         else null
     end as "Bloat",

@@ -85,13 +85,13 @@ with
                 when tblpages - est_tblpages > 0
                 then 100 * (tblpages - est_tblpages) / tblpages::float
                 else 0
-            end as extra_ratio,
+            end as extra_pct,
             (tblpages - est_tblpages_ff) * bs as bloat_size,
             case
                 when tblpages - est_tblpages_ff > 0
                 then 100 * (tblpages - est_tblpages_ff) / tblpages::float
                 else 0
-            end as bloat_ratio
+            end as bloat_pct
         from step3
         left join pg_stat_user_tables su on su.relid = tblid
     )
@@ -105,7 +105,7 @@ select
             '~'
             || pg_size_pretty(extra_size::numeric)::text
             || ' ('
-            || round(extra_ratio::numeric, 2)::text
+            || round(extra_pct::numeric, 2)::text
             || '%)'
         else null
     end as "Extra",
@@ -115,7 +115,7 @@ select
             '~'
             || pg_size_pretty(bloat_size::numeric)::text
             || ' ('
-            || round(bloat_ratio::numeric, 2)::text
+            || round(bloat_pct::numeric, 2)::text
             || '%)'
         else null
     end as "Bloat estimate",
