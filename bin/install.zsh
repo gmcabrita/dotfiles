@@ -172,4 +172,6 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               zls@latest \
               watchexec@latest
 
+mix local.hex --force
+
 pip install "reladiff[all]" "shandy-sqlfmt[jinjafmt]"

@@ -230,6 +230,7 @@ function update-programming-languages() {
   mise up --bump
   mise reshim
   pip install "reladiff[all]" "shandy-sqlfmt[jinjafmt]"
+  mix local.hex --force
 }
 
 function update-everything() {
