@@ -45,11 +45,10 @@
 
 - https://github.com/Gaulomatic/AirPodsSanity
   - Configure it
-- Firefox
+- Chrome
   - Configure 1Password
     - Show autofill menu on field focus: No
   - uBlacklist import from Google Drive
-  - https://gitflic.ru/project/magnolia1234/bypass-paywalls-firefox-clean
 - 1Password
 - `gh auth login`
   - Add ssh key as gpg key
