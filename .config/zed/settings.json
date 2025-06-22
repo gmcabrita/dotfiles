@@ -32,29 +32,28 @@
     }
   },
   "extend_comment_on_newline": false,
-  "assistant": {
+  "agent": {
     "default_model": {
       "provider": "anthropic",
-      "model": "claude-3-5-sonnet-latest"
+      "model": "claude-sonnet-4-2025051"
     },
-    "version": "2",
-    "enable_experimental_live_diffs": true
+    "version": "2"
   },
   "features": {
     "copilot": true,
-    "inline_completion_provider": "copilot"
+    "edit_prediction_provider": "copilot"
   },
   "terminal": {
     "dock": "right",
-    "cursor_shape": "bar"
+    "cursor_shape": "block"
   },
-  // "experimental.theme_overrides": {
-  //   "players": [
-  //     {
-  //       "cursor": "#908376"
-  //     }
-  //   ]
-  // },
+  "experimental.theme_overrides": {
+    "players": [
+      {
+        "cursor": "#908376"
+      }
+    ]
+  },
   "scrollbar": {
     "show": "always"
   },
@@ -65,7 +64,7 @@
   "use_autoclose": false,
   "vertical_scroll_margin": 0,
   "base_keymap": "VSCode",
-  "theme": "Xcode Default Light",
+  "theme": "Gruvbox Dark Hard",
   "vim_mode": false,
   "project_panel": {
     "dock": "right",
@@ -85,8 +84,8 @@
   "buffer_font_features": {
     "calt": false
   },
-  "cursor_shape": "bar",
-  "cursor_blink": false,
+  "cursor_shape": "block",
+  "cursor_blink": true,
   "git": {
     "git_gutter": "tracked_files",
     "inline_blame": {
@@ -102,7 +101,7 @@
   "semantic_index": {
     "enabled": true
   },
-  "show_inline_completions": true,
+  "show_edit_predictions": true,
   "show_completions_on_input": true,
   "show_completion_documentation": true,
   "soft_wrap": "editor_width",
@@ -721,7 +720,7 @@
     },
     "Ruby": {
       "format_on_save": "on",
-      "language_servers": ["ruby-lsp", "!solargraph", "!rubocop", "..."]
+      "language_servers": ["ruby-lsp", "!steep", "!sorbet", "!solargraph", "!rubocop", "..."]
     },
     "Go": {
       "hard_tabs": true

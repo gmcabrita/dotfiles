@@ -10,11 +10,11 @@ export PKG_CONFIG_PATH="$(brew --prefix gmp)/lib/pkgconfig:$(brew --prefix jemal
 export RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc"
 export BUNDLE_IGNORE_FUNDING_REQUESTS=YES
 export PGGSSENCMODE=disable
-export EDITOR="subl"
+export EDITOR="zed"
 # Useful for multiline editing in iex using Esc+O (https://bsky.app/profile/bobbby.online/post/3llwpqtwwf22r)
-export VISUAL="subl -n -w"
-export PSQL_EDITOR="subl -n -w"
-export KUBE_EDITOR="subl -n -w"
+export VISUAL="zed -n -w"
+export PSQL_EDITOR="zed -n -w"
+export KUBE_EDITOR="zed -n -w"
 export ERL_AFLAGS="-kernel shell_history enabled"
 export FZF_DEFAULT_OPTS="--color=light"
 export PAGER="less -S"
@@ -193,7 +193,7 @@ function dc() {
 }
 
 function egm() {
-  git modified | xargs subl
+  git modified | xargs $EDITOR
 }
 
 function todo() {
