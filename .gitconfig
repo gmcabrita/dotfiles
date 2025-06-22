@@ -54,7 +54,7 @@
   private = yes
 [alias]
   # Push and open PR
-  ppr = !git push && gh pr create --web
+  ppr = !git push && gh pr create --web --assignee="@me"
 
   web = !gh repo view --web
 
