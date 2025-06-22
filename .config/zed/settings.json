@@ -46,7 +46,7 @@
   "terminal": {
     "dock": "right",
     "cursor_shape": "block",
-    "blinking": "on",
+    "blinking": "off",
     "font_family": "JetBrains Mono NL",
     "font_size": 17
   },
@@ -90,7 +90,7 @@
     "calt": false
   },
   "cursor_shape": "block",
-  "cursor_blink": true,
+  "cursor_blink": false,
   "git": {
     "git_gutter": "tracked_files",
     "inline_blame": {
