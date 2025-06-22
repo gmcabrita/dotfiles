@@ -2,7 +2,7 @@
   {
     "context": "Pane",
     "bindings": {
-      "ctrl-shift-tab": "pane::ActivatePrevItem",
+      "ctrl-shift-tab": "pane::ActivatePreviousItem",
       "ctrl-tab": "pane::ActivateNextItem",
       "cmd-1": ["pane::ActivateItem", 0],
       "cmd-2": ["pane::ActivateItem", 1],
