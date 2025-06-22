@@ -61,6 +61,7 @@
     "breadcrumbs": true,
     "quick_actions": true
   },
+  "on_last_window_closed": "quit_app",
   "use_autoclose": false,
   "vertical_scroll_margin": 0,
   "base_keymap": "VSCode",
