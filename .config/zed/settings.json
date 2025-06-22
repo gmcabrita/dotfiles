@@ -35,7 +35,7 @@
   "agent": {
     "default_model": {
       "provider": "anthropic",
-      "model": "claude-sonnet-4-2025051"
+      "model": "claude-sonnet-4-latest"
     },
     "version": "2"
   },
@@ -45,7 +45,10 @@
   },
   "terminal": {
     "dock": "right",
-    "cursor_shape": "block"
+    "cursor_shape": "block",
+    "blinking": "on",
+    "font_family": "JetBrains Mono NL",
+    "font_size": 17
   },
   "experimental.theme_overrides": {
     "players": [
@@ -80,6 +83,7 @@
   "ui_font_features": {
     "calt": false
   },
+  "agent_font_size": 17,
   "buffer_font_family": "JetBrains Mono NL",
   "buffer_font_size": 17,
   "buffer_font_features": {
