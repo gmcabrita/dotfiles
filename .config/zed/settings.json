@@ -101,7 +101,9 @@
   "hard_tabs": false,
   "tab_size": 2,
   "hover_popover_enabled": true,
-  "preferred_line_length": 120,
+  "show_wrap_guides": null,
+  "wrap_guides": [100],
+  "preferred_line_length": 100,
   "remove_trailing_whitespace_on_save": true,
   "semantic_index": {
     "enabled": true
