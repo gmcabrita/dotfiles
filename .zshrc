@@ -3,7 +3,7 @@ PATH="$HOME/.local/share/mise/shims:$HOME/.bin:/opt/homebrew/opt/sqlite/bin:/opt
 # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export MIX_OS_DEPS_COMPILE_PARTITION_COUNT=$(sysctl -n hw.perflevel0.logicalcpu 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || nproc --all 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
 export JEMALLOC_LIBS="-L$(brew --prefix jemalloc)/lib -ljemalloc"
-export JEMALLOC_CFLAGS="-I$(brew --prefix jemalloc)/include"
+export JEMALLOC_CFLAGS="-I$(brew --prerfix jemalloc)/include"
 export CPPFLAGS="-I$(brew --prefix jemalloc)/include -I$(brew --prefix gmp)/include -I$(xcrun --show-sdk-path)/usr/include -I$(brew --prefix sqlite)/include"F
 export LDFLAGS="-L$(brew --prefix jemalloc)/lib -L$(brew --prefix gmp)/lib -L$(xcrun --show-sdk-path)/usr/lib -L$(brew --prefix sqlite)/lib"
 export PKG_CONFIG_PATH="$(brew --prefix gmp)/lib/pkgconfig:$(brew --prefix jemalloc)/lib/pkgconfig:$PKG_CONFIG_PATH"
@@ -239,7 +239,7 @@ function update-programming-languages() {
 }
 
 function update-everything() {
-  brew update && brew upgrade && update-programming-languages
+  brew update && brew bundle install --cleanup --file=~/.config/Brewfile && brew upgrade && update-programming-languages
 }
 
 function nosleep() {

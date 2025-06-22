@@ -141,10 +141,7 @@ sudo defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
 # Increase file limits
 sudo sysctl kern.maxfiles=64000 kern.maxfilesperproc=28000
 
-brew install --cask 1password orbstack betterdisplay firefox google-chrome brave-browser zed sublime-text sublime-merge httpiee monodraw karabiner-elements db-browser-for-sqlite google-cloud-sdk slack whatsapp signal zoom raycast shureplus-motiv plex-media-server setapp macrorecorder modern-csv macs-fan-control whisky font-jetbrains-mono font-inter telegram chatgpt NetNewsWire ghostty tailscale
-brew install --formula git gh sqlite duckdb fzf dos2unix colordiff bash libyaml jemalloc mise git-extras git-delta gnu-time jq less moreutils ncdu ripgrep rga poppler grep rlwrap scc asciinema tree libpq cloud-sql-proxy glow gum mods vhs gnu-tar gpg htop tailspin 1password-cli yt-dlp pgcli litecli hyperfine k9s rbspy vegeta ugrep btop neofetch fswatch elixir-ls typst zola sqlc terraform sad httpstat gitleaks semgrep gptscript gptscript-ai/tap/clio jj pg_top jd spacer zoxide rclone duf eza fd doggo autoconf gperf libffi zlib gmp gron xsv wader/tap/fq comby xan jless prettierd hurl
-
-brew install sst/tap/opencode
+brew bundle install --cleanup --file=~/.config/Brewfile
 
 $(brew --prefix)/opt/fzf/install
 
