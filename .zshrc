@@ -176,6 +176,10 @@ function g() {
   git "$@"
 }
 
+function e() {
+  $EDITOR "$@"
+}
+
 function s() {
   subl "$@"
 }
