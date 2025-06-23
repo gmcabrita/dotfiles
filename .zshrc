@@ -235,7 +235,6 @@ function update-programming-languages() {
   mise reshim
   pip install "reladiff[all]" "shandy-sqlfmt[jinjafmt]"
   mix local.hex --force
-  go install sketch.dev/cmd/sketch@latest
 }
 
 function update-everything() {

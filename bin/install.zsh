@@ -174,4 +174,3 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
 mix local.hex --force
 
 pip install "reladiff[all]" "shandy-sqlfmt[jinjafmt]"
-go install sketch.dev/cmd/sketch@latest
