@@ -61,7 +61,6 @@
 - Raycast
   - Disable spotlight
   - Import config from iCloud Drive (or login if we still have Pro)
-- Sublime Text
 - Zoom
 - Setapp + apps
   - CleanShot X

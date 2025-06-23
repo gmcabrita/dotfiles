@@ -15,7 +15,7 @@
 [core]
   fscache = true
   autocrlf = false
-  editor = "subl -n -w"
+  editor = "zed -n -w"
   symlinks = true
   fsmonitor = false
   excludesfile = ~/.gitignore
