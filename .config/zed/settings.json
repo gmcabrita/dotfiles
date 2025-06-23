@@ -153,7 +153,8 @@
     "zig": true
   },
   "file_types": {
-    "Just": ["Justfile"]
+    "Just": ["Justfile"],
+    "Elixir": ["tmp.*.erl"]
   },
   "language_servers": ["!eslint", "..."],
   "lsp": {
