@@ -61,11 +61,11 @@ defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool false
 # Disable text replacements
 defaults write NSGlobalDomain NSUserDictionaryReplacementItems -array
 
-# Set Sublime Text 4 as the default editor for plaintext files
+# Set Zed as the default editor for plaintext files
 defaults write com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers -array-add \
-  '{LSHandlerContentType=public.plain-text;LSHandlerRoleAll=com.sublimetext.4;}' \
-  '{LSHandlerContentType=public.unix-executable;LSHandlerRoleAll=com.sublimetext.4;}' \
-  '{LSHandlerContentType=public.data;LSHandlerRoleAll=com.sublimetext.4;}'
+  '{LSHandlerContentType=public.plain-text;LSHandlerRoleAll=dev.zed.Zed;}' \
+  '{LSHandlerContentType=public.unix-executable;LSHandlerRoleAll=dev.zed.Zed;}' \
+  '{LSHandlerContentType=public.data;LSHandlerRoleAll=dev.zed.Zed;}'
 
 # Same, but for Apple Notes
 defaults write com.apple.Notes ShouldCorrectSpellingAutomatically -bool false
