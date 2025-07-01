@@ -169,7 +169,8 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               elixir@latest \
               zig@latest \
               zls@latest \
-              watchexec@latest
+              watchexec@latest \
+              gleam@latest
 
 mix local.hex --force
 
