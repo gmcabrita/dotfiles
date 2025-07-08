@@ -229,6 +229,7 @@ function git-fetch-all-repos() {
 }
 
 function update-programming-languages() {
+  mise cache clear
   mise plugins up
   mise up --bump
   mise reshim
