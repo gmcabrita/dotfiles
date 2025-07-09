@@ -1,4 +1,8 @@
-select blockers.pid, blockers.usename, blockers.query_start, blockers.query
+select
+    blockers.pid,
+    blockers.usename,
+    blockers.query_start,
+    blockers.query
 from pg_stat_activity blockers
 inner join
     (

@@ -1,5 +1,6 @@
 select
-    coalesce(nullif(pn.nspname, 'public') || '.', '') || pct.relname as "relation_name",
+    coalesce(nullif(pn.nspname, 'public') || '.', '')
+    || pct.relname as "relation_name",
     pci.relname as index_name,
     pn.nspname as schema_name,
     pct.relname as table_name,
@@ -11,7 +12,9 @@ select
         pct.relname
     ) as drop_code,
     replace(
-        format('%s; -- table %s', pg_get_indexdef(pidx.indexrelid), pct.relname),
+        format(
+            '%s; -- table %s', pg_get_indexdef(pidx.indexrelid), pct.relname
+        ),
         'CREATE INDEX',
         'CREATE INDEX CONCURRENTLY'
     ) as revert_code

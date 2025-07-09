@@ -1,5 +1,4 @@
-with
-    fk_actions(code, action) as (
+with fk_actions(code, action) as (
         values
             ('a', 'error'),
             ('r', 'restrict'),

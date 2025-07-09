@@ -11,7 +11,9 @@ select
     format(
         '%s (%s of %s)',
         coalesce(
-            (round(100 * blocks_done::numeric / nullif(blocks_total, 0), 2))::text
+            (
+                round(100 * blocks_done::numeric / nullif(blocks_total, 0), 2)
+            )::text
             || '%',
             'N/A'
         ),
@@ -21,7 +23,9 @@ select
     format(
         '%s (%s of %s)',
         coalesce(
-            (round(100 * tuples_done::numeric / nullif(tuples_total, 0), 2))::text
+            (
+                round(100 * tuples_done::numeric / nullif(tuples_total, 0), 2)
+            )::text
             || '%',
             'N/A'
         ),
@@ -37,7 +41,9 @@ select
     format(
         '%s (%s of %s)',
         coalesce(
-            (round(100 * lockers_done::numeric / nullif(lockers_total, 0), 2))::text
+            (
+                round(100 * lockers_done::numeric / nullif(lockers_total, 0), 2)
+            )::text
             || '%',
             'N/A'
         ),
@@ -48,7 +54,12 @@ select
         '%s (%s of %s)',
         coalesce(
             (
-                round(100 * partitions_done::numeric / nullif(partitions_total, 0), 2)
+                round(
+                    100
+                    * partitions_done::numeric
+                    / nullif(partitions_total, 0),
+                    2
+                )
             )::text
             || '%',
             'N/A'
@@ -63,7 +74,10 @@ select
                 coalesce(
                     (
                         round(
-                            100 * n_dead_tup::numeric / nullif(reltuples::numeric, 0), 2
+                            100
+                            * n_dead_tup::numeric
+                            / nullif(reltuples::numeric, 0),
+                            2
                         )
                     )::text
                     || '%',
