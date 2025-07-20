@@ -26,21 +26,14 @@
   "preview_tabs": {
     "enabled": false
   },
-  "language_models": {
-    "anthropic": {
-      "version": "1"
-    }
-  },
   "extend_comment_on_newline": false,
   "agent": {
     "default_model": {
       "provider": "anthropic",
       "model": "claude-sonnet-4-latest"
-    },
-    "version": "2"
+    }
   },
   "features": {
-    "copilot": true,
     "edit_prediction_provider": "copilot"
   },
   "terminal": {
@@ -105,9 +98,6 @@
   "wrap_guides": [100],
   "preferred_line_length": 100,
   "remove_trailing_whitespace_on_save": true,
-  "semantic_index": {
-    "enabled": true
-  },
   "show_edit_predictions": true,
   "show_completions_on_input": true,
   "show_completion_documentation": true,
@@ -743,18 +733,10 @@
       "hard_tabs": true
     },
     "Elixir": {
-      "language_servers": ["next-ls", "!lexical", "!elixir-ls", "..."],
-      "external": {
-        "command": "mix",
-        "arguments": ["format", "--stdin-filename", "{buffer_path}", "-"]
-      }
+      "language_servers": ["next-ls", "!lexical", "!elixir-ls", "..."]
     },
     "HEEX": {
-      "language_servers": ["next-ls", "!lexical", "!elixir-ls", "tailwindcss-ls", "..."],
-      "external": {
-        "command": "mix",
-        "arguments": ["format", "--stdin-filename", "{buffer_path}", "-"]
-      }
+      "language_servers": ["next-ls", "!lexical", "!elixir-ls", "tailwindcss-ls", "..."]
     },
     "HTML": {
       "format_on_save": "off"
