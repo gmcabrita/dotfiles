@@ -24,7 +24,7 @@ export PAGER="less -S"
 export HISTFILE=$HOME/.zsh_history
 export HISTSIZE=10000000
 export SAVEHIST=10000000
-export HISTORY_IGNORE="(ls|cd|pwd|exit|cd)*"
+export HISTORY_IGNORE="(ls|cd|pwd|exit|cd|mv|rm)*"
 
 # Immediately append to history file:
 setopt INC_APPEND_HISTORY
