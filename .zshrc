@@ -136,11 +136,9 @@ bindkey -M menuselect '^[[Z' reverse-menu-complete
 
 #### Prompt
 
-autoload -Uz vcs_info
-function precmd() { vcs_info; }
-zstyle ':vcs_info:git:*' formats '(%b) '
 setopt PROMPT_SUBST
-PS1='%F{green}%~%f ${vcs_info_msg_0_}%# '
+PS1='%F{green}%~%f %# '
+
 
 #### Aliases
 
