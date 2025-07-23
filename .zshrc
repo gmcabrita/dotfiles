@@ -17,6 +17,11 @@ export KUBE_EDITOR="zed -n -w"
 export ERL_AFLAGS="-kernel shell_history enabled"
 export FZF_DEFAULT_OPTS="--color=light"
 export PAGER="less -S"
+
+set -a
+source "$HOME/.env"
+set +a
+
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 #### History
