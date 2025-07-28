@@ -1,8 +1,2 @@
 #!/usr/bin/env bash
-/usr/bin/time -lo /tmp/mem.log "$@"
-exitCode=$?
-data=$(cat /tmp/mem.log)
-
-peak_memory=$(echo "$data" | grep "maximum resident set size" | awk '{print $1}')
-in_mb=$(echo "scale=2; $peak_memory/1024/1024" | bc)
-printf "\e[0;30m(peak memory: \e[0;1;36m%smb\e[0;30m)\e[0m\n" "$in_mb" >&2
+pnpx maxrss $@
