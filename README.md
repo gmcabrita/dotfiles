@@ -48,6 +48,7 @@
 - Chrome
   - Configure 1Password
     - Show autofill menu on field focus: No
+    - Sign in automatically after autofill: No
   - uBlacklist import from Google Drive
 - 1Password
 - `gh auth login`
