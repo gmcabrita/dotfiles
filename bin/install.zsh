@@ -124,8 +124,11 @@ defaults write com.apple.dock mineffect -string "scale"
 
 # Auto-hide the Dock
 defaults write com.apple.dock autohide -bool true
-defaults write com.apple.dock autohide-delay -int 0
+defaults write com.apple.dock autohide-delay -int 1000
 defaults write com.apple.dock autohide-time-modifier -float 0.4
+
+# Disable Dock icons bounce animation
+defaults write com.apple.dock no-bouncing -bool true
 
 # Speedup dock animations
 defaults write com.apple.dock springboard-show-duration -float .1
