@@ -733,7 +733,7 @@
       "hard_tabs": true
     },
     "Elixir": {
-      "language_servers": ["next-ls", "!lexical", "!elixir-ls", "..."]
+      "language_servers": ["expert", "!next-ls", "!lexical", "!elixir-ls", "..."]
     },
     "HEEX": {
       "language_servers": ["next-ls", "!lexical", "!elixir-ls", "tailwindcss-ls", "..."]
