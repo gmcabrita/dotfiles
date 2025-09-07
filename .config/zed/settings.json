@@ -21,16 +21,82 @@
     "**/zig-out"
   ],
   "tabs": {
-    "file_icons": false
+    "file_icons": false,
+    "git_status": true
   },
   "preview_tabs": {
     "enabled": false
   },
   "extend_comment_on_newline": false,
   "agent": {
+    "always_allow_tool_actions": true,
+    "profiles": {
+      "minimal": {
+        "name": "Minimal",
+        "tools": {
+          "web_search": true
+        },
+        "enable_all_context_servers": false,
+        "context_servers": {}
+      },
+      "write": {
+        "name": "Write",
+        "tools": {
+          "web_search": true,
+          "create_directory": true,
+          "terminal": true,
+          "batch_tool": true,
+          "code_symbols": true,
+          "copy_path": true,
+          "create_file": true,
+          "delete_path": true,
+          "diagnostics": true,
+          "edit_file": true,
+          "fetch": true,
+          "list_directory": true,
+          "move_path": true,
+          "now": true,
+          "find_path": true,
+          "read_file": true,
+          "grep": true,
+          "symbol_info": true,
+          "thinking": true,
+          "open": true
+        },
+        "enable_all_context_servers": true,
+        "context_servers": {}
+      },
+      "ask": {
+        "name": "Ask",
+        "tools": {
+          "open": true,
+          "create_directory": false,
+          "copy_path": false,
+          "code_symbols": true,
+          "web_search": true,
+          "terminal": false,
+          "diagnostics": true,
+          "fetch": true,
+          "list_directory": true,
+          "now": true,
+          "find_path": true,
+          "read_file": true,
+          "grep": true,
+          "thinking": true,
+          "symbol_info": true
+        },
+        "enable_all_context_servers": true,
+        "context_servers": {}
+      }
+    },
+    "inline_assistant_model": {
+      "provider": "anthropic",
+      "model": "claude-opus-4-1-latest"
+    },
+    "default_profile": "write",
     "default_model": {
       "provider": "anthropic",
-      "model": "claude-sonnet-4-latest"
+      "model": "claude-opus-4-1-latest"
     }
   },
   "features": {
@@ -99,6 +165,10 @@
   "preferred_line_length": 100,
   "remove_trailing_whitespace_on_save": true,
   "show_edit_predictions": true,
+  "edit_predictions": {
+    "mode": "subtle",
+    "enabled_in_text_threads": false
+  },
   "show_completions_on_input": true,
   "show_completion_documentation": true,
   "soft_wrap": "editor_width",
@@ -144,7 +214,9 @@
   },
   "file_types": {
     "Just": ["Justfile"],
-    "Elixir": ["tmp.*.erl"]
+    "Elixir": ["tmp.*.erl"],
+    "JSON": [".prettierrc", ".stylelintrc", ".babelrc"],
+    "HTML": ["*.svg"]
   },
   "language_servers": ["!eslint", "..."],
   "lsp": {
@@ -718,6 +790,9 @@
         ]
       },
       "tab_size": 2
+    },
+    "CSS": {
+      "language_servers": ["tailwindcss-language-server"]
     },
     "Ruby": {
       "format_on_save": "on",
