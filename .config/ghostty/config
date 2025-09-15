@@ -13,7 +13,7 @@ scrollback-limit=100000000
 window-width = 10000
 window-height = 10000
 
-theme = GruvboxDarkHard
+theme = Gruvbox Dark Hard
 
 # rsms-dark
 # palette = 0=#333332
