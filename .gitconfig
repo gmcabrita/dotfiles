@@ -74,6 +74,9 @@
   # Quick checkout
   co = checkout
 
+  # Quick switch
+  sw = switch
+
   maincheckout = "!f() { if [ -n \"$(git status --porcelain)\" ]; then echo \"Error: You have uncommitted changes, discard or stash them first.\"; exit 1; fi; git checkout $(git symbolic-ref refs/remotes/origin/HEAD | sed \"s@^refs/remotes/origin/@@\") && git checkout -b \"$1\"; }; f"
   mainco = maincheckout
   mco = maincheckout
@@ -96,8 +99,10 @@
   tree = log --oneline --decorate --graph
 
   ruf = "!. ~/.githelpers && remove_untracked_files"
-  fco = "!. ~/.githelpers && git_fco"
-  prco = "!. ~/.githelpers && git_prco"
+  fsw = "!. ~/.githelpers && git_fsw"
+  prsw = "!. ~/.githelpers && git_prsw"
+  fco = "!. ~/.githelpers && echo \"REMINDER: migrate to 'git fsw'\" && git_fsw"
+  prco = "!. ~/.githelpers && echo \"REMINDER: migrate to 'git prsw'\"  && git_prsw"
 
   # Quick log with patch
   lp = log --patch
