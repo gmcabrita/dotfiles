@@ -3,7 +3,6 @@
 ## On previous machine
 
 - `cp ~/.zsh_history ~/iCloud\ Drive/Software/.zsh_history`
-- Export iStat Menu settings
 - Export Raycast settings
 
 ## Pre-install script setup
@@ -68,7 +67,6 @@
   - TablePlus
   - Soulver
   - CleanMyMac X
-  - iStat Menus
     - Import config from iCloud Drive
   - Proxyman
 - https://twitter.com/thorstenball/status/1736679960784310775
