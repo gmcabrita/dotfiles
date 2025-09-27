@@ -113,7 +113,9 @@
 
   # Quick diff
   d = diff
+  dd = diff --no-ext-diff
   ds = diff --staged
+  dds = diff --no-ext-diff
 
   # Word-based diff
   wd = diff --color-words
