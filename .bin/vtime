@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+# This program, when run like:
+# vtime some_command --with --options --and=arguments
+# Will run the command, while displaying (in first line of terminal) how much time elapsed so far.
+# After the command will end it will also display full time it took to run.
+update_timer() {
+    # Update timer information every .1s
+    while true
+    do
+        # The \e… sequence will:
+        # 1. \e[s - Save cursor position
+        # 2. \e[1;1H - Move cursor to top left of terminal
+        # 3. \e[K - remove everything in line after the cursor
+        # 4. \e[u - Restore cursor position (move it back to where it was before \e[s
+        # Also, I have to use awk (or whatever else) because bash doesn't support floating point arithmetic.
+        printf '\e[s\e[1;1H%(%Y-%m-%d %H:%M:%S)T; %ss elapsed running %s\e[K\e[u' \
+            -1 \
+            "$( awk -v "s=${global_start_time}" -v "e=${EPOCHREALTIME}" 'BEGIN { printf "%.2f", e-s }' )" \
+            "${global_the_command::60}"
+        sleep .1
+    done
+}
+
+global_start_time="${EPOCHREALTIME}"
+global_the_command="$*"
+
+# Start background task to update elapsed time display
+update_timer &
+timer_pid="$!"
+# Make sure background task will be killed if/when this script exits.
+trap 'kill "${timer_pid}" &>/dev/null; wait "${timer_pid}" &>/dev/null' EXIT
+
+# Try to make the command outputting data so that it will not overwrite timer.
+# It's not all that important, and timer will overwrite it back, but it can create unpleasant "flicker"
+terminal_size="$( LC_ALL=C stty size )"
+printf '\e[s\e[2;%sr\e[u' "${terminal_size%% *}"
+
+# Run supplied command
+"$@"
+# Save return code from the command.
+ret=$?
+
+# Restore proper scrolling window - whole terminal
+printf '\e[s\e[r\e[u'
+
+# Print total time that it took to run the command
+awk -v "s=${global_start_time}" -v "e=${EPOCHREALTIME}" 'BEGIN { printf "real %.3fs\n", e-s }'
+
+# Exit keeping return code from the supplied command
+exit "${ret}"
+
+# vim: set filetype=bash shiftwidth=4 expandtab smarttab softtabstop=4 tabstop=4 textwidth=132 :
