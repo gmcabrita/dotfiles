@@ -144,6 +144,8 @@ while true; do
         # Show a unified diff with labels
         "${DIFF_CMD[@]}" --label "OLD ($baseline_hash)" --label "NEW ($curr_hash)" "$PREV_FILE" "$CURR_FILE" || true
 
+        say "change detected" -v zarvox
+
         break
     fi
 
