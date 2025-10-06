@@ -137,7 +137,7 @@ while true; do
 
         # Choose diff options
         DIFF_CMD=(diff -u)
-        if $SHOW_COLOR && diff --help 2>&1 | grep -q -- '--color'; then
+        if diff --help 2>&1 | grep -q -- '--color'; then
             DIFF_CMD+=(--color=always)
         fi
 
