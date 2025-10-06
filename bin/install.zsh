@@ -15,10 +15,11 @@ ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/iCloud Drive"
 
 # Set hostname
 vared -p "Computer name: " -c name
-sudo scutil --set ComputerName $name
-sudo scutil --set HostName $name
-sudo scutil --set LocalHostName $name
-sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName -string $name
+LOCALHOSTNAME=$(echo $name | sed -e "y/ç' /c--/")
+sudo scutil --set ComputerName "$name"
+sudo scutil --set HostName "$name"
+sudo scutil --set LocalHostName "$LOCALHOSTNAME"
+sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName -string "$name"
 
 # Show advanced printing settings by default
 defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
