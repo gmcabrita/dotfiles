@@ -1,0 +1,151 @@
+#!/usr/bin/env zsh
+
+set -euo pipefail
+
+# Defaults
+URL=""
+INTERVAL=30
+TIMEOUT=15
+USERAGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+
+usage() {
+    cat <<'EOF'
+Usage:
+    watchhtml <URL> [--interval|-i SECONDS] [--timeout|-t SECONDS]
+                          [--user-agent|-A UA] [--cmd|-c "COMMAND ..."]
+
+Examples:
+    watchhtml "https://example.com/page"
+    watchhtml "https://example.com/page" --interval 10 --timeout 8
+    watchhtml "https://example.com/page" | notify-send "Changed!"
+    watchhtml "https://example.com/page" | echo Page changed at $(date)
+EOF
+}
+
+# Parse argv
+if [[ $# -eq 0 ]]; then
+    usage >&2
+    exit 1
+fi
+
+# First non-flag argument is URL
+while (( $# > 0 )); do
+    case "$1" in
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -i|--interval)
+            shift
+            [[ $# -gt 0 ]] || { echo "Missing value for --interval" >&2; exit 2; }
+            INTERVAL="$1"
+            ;;
+        -t|--timeout)
+            shift
+            [[ $# -gt 0 ]] || { echo "Missing value for --timeout" >&2; exit 2; }
+            TIMEOUT="$1"
+            ;;
+        -A|--user-agent)
+            shift
+            [[ $# -gt 0 ]] || { echo "Missing value for --user-agent" >&2; exit 2; }
+            USERAGENT="$1"
+            ;;
+        --) # explicit end of flags
+            shift
+            break
+            ;;
+        -*)
+            echo "Unknown option: $1" >&2
+            usage >&2
+            exit 2
+            ;;
+        *)
+            # First positional -> URL
+            if [[ -z "$URL" ]]; then
+                URL="$1"
+            else
+                echo "Unexpected positional argument: $1" >&2
+                usage >&2
+                exit 2
+            fi
+            ;;
+    esac
+    shift
+done
+
+# If something remains after --, treat first as URL if not set
+if [[ -z "$URL" && $# -gt 0 ]]; then
+    URL="$1"
+    shift
+fi
+
+if [[ -z "$URL" ]]; then
+    echo "URL is required." >&2
+    usage >&2
+    exit 2
+fi
+
+# Temp files for previous and current bodies
+PREV_FILE="$(mktemp -t html_prev.XXXXXX)"
+CURR_FILE="$(mktemp -t html_curr.XXXXXX)"
+cleanup() {
+    rm -f -- "$PREV_FILE" "$CURR_FILE"
+}
+trap cleanup EXIT INT TERM
+
+fetch_body() {
+    # stdout: body
+    curl -fsS --max-time "$TIMEOUT" -L -A "$USERAGENT" "$URL"
+}
+
+hash_of() {
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum | awk '{print $1}'
+    else
+        shasum -a 256 | awk '{print $1}'
+    fi
+}
+
+print "Watching: $URL"
+print "Interval: ${INTERVAL}s, Timeout: ${TIMEOUT}s"
+print "User-Agent: $USERAGENT"
+
+# Acquire baseline body and hash
+baseline_hash=""
+while [[ -z "$baseline_hash" ]]; do
+    if fetch_body > "$PREV_FILE"; then
+        baseline_hash=$(cat "$PREV_FILE" | hash_of)
+        print "Baseline acquired: $baseline_hash"
+    else
+        print "Initial fetch failed; retrying in ${INTERVAL}s..." >&2
+        sleep "$INTERVAL"
+    fi
+done
+
+# Poll loop
+while true; do
+    if ! fetch_body > "$CURR_FILE"; then
+        print "Fetch error; will retry in ${INTERVAL}s..." >&2
+        sleep "$INTERVAL"
+        continue
+    fi
+
+    curr_hash=$(cat "$CURR_FILE" | hash_of)
+
+    if [[ "$curr_hash" != "$baseline_hash" ]]; then
+        print "Change detected! Generating diff..."
+
+        # Choose diff options
+        DIFF_CMD=(diff -u)
+        if $SHOW_COLOR && diff --help 2>&1 | grep -q -- '--color'; then
+            DIFF_CMD+=(--color=always)
+        fi
+
+        # Show a unified diff with labels
+        "${DIFF_CMD[@]}" --label "OLD ($baseline_hash)" --label "NEW ($curr_hash)" "$PREV_FILE" "$CURR_FILE" || true
+
+        break
+    fi
+
+    sleep "$INTERVAL"
+done
