@@ -95,7 +95,7 @@ trap cleanup EXIT INT TERM
 
 fetch_body() {
     # stdout: body
-    curl -fsS --max-time "$TIMEOUT" -L -A "$USERAGENT" "$URL" | xmllint --html --recover --xpath '//body' - 2>/dev/null
+    curl -fsS --max-time "$TIMEOUT" -L -A "$USERAGENT" "$URL" | xmllint --html --format --recover --xpath '//body//*[not(self::script or self::style)]/text() | //body/text()' - 2>/dev/null
 }
 
 hash_of() {

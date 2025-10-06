@@ -15,7 +15,7 @@ ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/iCloud Drive"
 
 # Set hostname
 vared -p "Computer name: " -c name
-LOCALHOSTNAME=$(echo $name | sed -e "y/ç' /c--/")
+LOCALHOSTNAME=$(echo $name | sed -e "y/ç'’ /c---/")
 sudo scutil --set ComputerName "$name"
 sudo scutil --set HostName "$name"
 sudo scutil --set LocalHostName "$LOCALHOSTNAME"
