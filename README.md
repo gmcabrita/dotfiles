@@ -42,8 +42,6 @@
 
 ## Post-install script setup
 
-- https://github.com/Gaulomatic/AirPodsSanity
-  - Configure it
 - Chrome
   - Configure 1Password
     - Show autofill menu on field focus: No
