@@ -1,5 +1,6 @@
 .index.yml
 .ruby-lsp/
+.expert/
 .jj/
 .swc/
 .DS_Store/
