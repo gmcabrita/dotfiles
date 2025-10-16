@@ -7,6 +7,12 @@
 // custom settings, run the `open default settings` command
 // from the command palette or from `Zed` application menu.
 {
+  "notification_panel": {
+    "button": false
+  },
+  "collaboration_panel": {
+    "button": true
+  },
   "agent_buffer_font_size": 17.0,
   "enable_language_server": true,
   "go_to_definition_fallback": "none",
@@ -32,6 +38,7 @@
   },
   "extend_comment_on_newline": false,
   "agent": {
+    "button": true,
     "always_allow_tool_actions": true,
     "profiles": {
       "minimal": {
@@ -106,6 +113,7 @@
     "edit_prediction_provider": "copilot"
   },
   "terminal": {
+    "button": true,
     "dock": "right",
     "cursor_shape": "block",
     "blinking": "off",
