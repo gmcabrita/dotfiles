@@ -174,6 +174,7 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               zig@latest \
               zls@latest \
               watchexec@latest \
+              rust@latest \
               gleam@latest
 
 mix local.hex --force
