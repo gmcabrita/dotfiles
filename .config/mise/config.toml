@@ -1,0 +1,21 @@
+[tools]
+go = "latest"
+ruby = "latest"
+zig = "latest"
+pnpm = "latest"
+yarn = "latest"
+bun = "latest"
+node = "25"
+python = "latest"
+elixir = "latest"
+erlang = "latest"
+watchexec = "latest"
+lua = "latest"
+openresty = "latest"
+zls = "latest"
+deno = "latest"
+gleam = "latest"
+rust = "latest"
+
+[settings]
+idiomatic_version_file_enable_tools = ["rust"]

@@ -24,6 +24,9 @@ cp .config/ghostty/* $HOME/.config/ghostty
 mkdir -p $HOME/.config/zed
 cp .config/zed/* $HOME/.config/zed
 
+mkdir -p $HOME/.config/mise
+cp .config/mise/* $HOME/.config/mise
+
 mkdir -p $HOME/.config/jj
 cp .config/jj/* $HOME/.config/jj
 
