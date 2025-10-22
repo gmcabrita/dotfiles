@@ -208,6 +208,7 @@
     "lua": true,
     "make": true,
     "nginx": true,
+    "pkl": true,
     "proto": true,
     "rainbow-csv": true,
     "ruby": true,
@@ -217,8 +218,8 @@
     "terraform": true,
     "toml": true,
     "typst": true,
-    "xml": true,
     "xcode-themes": true,
+    "xml": true,
     "zedokai": true,
     "zig": true
   },
