@@ -256,3 +256,18 @@ function sppwloop() {
     sleep 1;
   done
 }
+
+function mkcd () {
+  \mkdir -p "$1"
+  cd "$1"
+}
+
+function tempe () {
+  cd "$(mktemp -d)"
+  chmod -R 0700 .
+  if [[ $# -eq 1 ]]; then
+    \mkdir -p "$1"
+    cd "$1"
+    chmod -R 0700 .
+  fi
+}
