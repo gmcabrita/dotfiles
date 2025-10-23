@@ -11,7 +11,7 @@
     "button": false
   },
   "collaboration_panel": {
-    "button": true
+    "button": false
   },
   "agent_buffer_font_size": 17.0,
   "enable_language_server": true,
@@ -38,7 +38,7 @@
   },
   "extend_comment_on_newline": false,
   "agent": {
-    "button": true,
+    "button": false,
     "always_allow_tool_actions": true,
     "inline_assistant_model": {
       "provider": "openai",
@@ -53,8 +53,8 @@
     "edit_prediction_provider": "copilot"
   },
   "terminal": {
-    "button": true,
-    "dock": "right",
+    "button": false,
+    "dock": "bottom",
     "cursor_shape": "block",
     "blinking": "off",
     "font_family": "JetBrains Mono NL",

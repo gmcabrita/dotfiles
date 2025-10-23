@@ -21,5 +21,11 @@
     "bindings": {
       "cmd-ctrl-enter": ["workspace::SendKeystrokes", "cmd-alt-e ctrl-enter"]
     }
+  },
+  {
+    "context": "Workspace",
+    "bindings": {
+      "ctrl-`": null // "terminal_panel::Toggle"
+    }
   }
 ]
