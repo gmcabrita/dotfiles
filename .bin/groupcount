@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+uniq -c | sort -nr
