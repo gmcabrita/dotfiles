@@ -169,6 +169,8 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               python@latest \
               watchexec@latest \
               rust@latest \
+              erlang@latest \
+              elixir@latest \
               hk@latest \
               fnox@latest \
               cargo:t-cmd@latest
