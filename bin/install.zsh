@@ -177,7 +177,8 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               rust@latest \
               gleam@latest \
               hk@latest \
-              fnox@latest
+              fnox@latest \
+              cargo:t-cmd@latest
 
 mix local.hex --force
 
