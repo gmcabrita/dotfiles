@@ -5,7 +5,7 @@ zig = "latest"
 pnpm = "latest"
 yarn = "latest"
 bun = "latest"
-node = "25"
+node = "lts"
 python = "latest"
 elixir = "latest"
 erlang = "latest"
@@ -17,6 +17,8 @@ deno = "latest"
 gleam = "latest"
 rust = "latest"
 "cargo:t-cmd" = "latest"
+fnox = "latest"
+hk = "latest"
 
 [settings]
 idiomatic_version_file_enable_tools = ["rust"]
