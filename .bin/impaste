@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 
 # Generate a unique temporary filename
 tempfile=$(mktemp -t clipboard.XXXXXXXXXX.png) || { echo "ERROR: Failed to create temp file."; exit 1; }

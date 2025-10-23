@@ -1,6 +1,6 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 
-source bin/copy-dotfiles.zsh
+source bin/copy-dotfiles.sh
 
 mkdir ~/.zfunc
 
@@ -15,7 +15,8 @@ ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/iCloud Drive"
 
 # Set hostname
 vared -p "Computer name: " -c name
-LOCALHOSTNAME=$(echo $name | sed -e "y/ç'’ /c---/")
+# shellcheck disable=SC2154
+LOCALHOSTNAME=$(echo "$name" | sed -e "y/ç'’ /c---/")
 sudo scutil --set ComputerName "$name"
 sudo scutil --set HostName "$name"
 sudo scutil --set LocalHostName "$LOCALHOSTNAME"
@@ -147,7 +148,7 @@ sudo sysctl kern.maxfiles=64000 kern.maxfilesperproc=28000
 
 brew bundle install --cleanup --file=~/.config/Brewfile
 
-$(brew --prefix)/opt/fzf/install
+"$(brew --prefix)/opt/fzf/install"
 
 # Setup brew autoupdate (every 12 hours)
 brew autoupdate start 43200

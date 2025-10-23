@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-quality=24
 input=
 output=
 overwrite=
@@ -8,10 +7,6 @@ ffmpeg=ffmpeg
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    -q)
-      quality="$2"
-      shift
-      ;;
     -y)
       overwrite="-y"
       ;;
@@ -27,7 +22,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "$input" ]; then
-  echo "Usage: $0 [-q quality] input output"
+  echo "Usage: $0 input output"
   exit 1
 fi
 
@@ -37,7 +32,7 @@ fi
 
 if [ "$input" = "$output" ]; then
   echo "Input and output files must be different"
-  read -p "Overwrite $(basename $input)? [y/N] " i
+  read -r -p "Overwrite $(basename "$input")? [y/N] " i
   if [ "$i" != "y" ]; then
     exit 1
   fi

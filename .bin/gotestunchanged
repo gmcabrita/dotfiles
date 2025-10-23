@@ -13,4 +13,4 @@ set -e
   sort |
   uniq |
   tr '\n' ' ' |
-  xargs go test --failfast -cover $*
+  xargs go test --failfast -cover "$@"

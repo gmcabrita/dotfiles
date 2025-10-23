@@ -37,7 +37,7 @@ fi
 
 if [ "$input" = "$output" ]; then
   echo "Input and output files must be different"
-  read -p "Overwrite $(basename $input)? [y/N] " i
+  read -r -p "Overwrite $(basename "$input")? [y/N] " i
   if [ "$i" != "y" ]; then
     exit 1
   fi

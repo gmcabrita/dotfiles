@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-git --no-pager diff $(git rev-parse --abbrev-ref origin/HEAD 2>/dev/null) | code-review
+git --no-pager diff "$(git rev-parse --abbrev-ref origin/HEAD 2>/dev/null)" | code-review
