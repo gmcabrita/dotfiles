@@ -22,44 +22,5 @@
     "command": "bin/rspec",
     "args": ["--fail-fast", "$ZED_FILE"],
     "reveal": "no_focus"
-  },
-  {
-    "label": "zig: build",
-    "command": "zig",
-    "args": ["build"],
-    "cwd": "$ZED_DIRNAME",
-    "tags": ["zig-build"],
-    "reveal": "no_focus"
-  },
-  {
-    "label": "zig: test suite",
-    "command": "zig",
-    "args": ["build", "test"],
-    "cwd": "$ZED_DIRNAME",
-    "reveal": "no_focus"
-  },
-  {
-    "label": "zig: test file",
-    "command": "zig",
-    "args": ["test", "$ZED_FILENAME"],
-    "cwd": "$ZED_DIRNAME",
-    "tags": ["zig-test"],
-    "reveal": "no_focus"
-  },
-  {
-    "label": "zig: test line",
-    "command": "zig",
-    "args": ["test", "$ZED_FILENAME", "--test-filter", "$ZED_SYMBOL"],
-    "cwd": "$ZED_DIRNAME",
-    "tags": ["zig-test"],
-    "reveal": "no_focus"
-  },
-  {
-    "label": "zig: run",
-    "command": "zig",
-    "args": ["run", "$ZED_FILENAME"],
-    "cwd": "$ZED_DIRNAME",
-    "tags": ["zig-run"],
-    "reveal": "no_focus"
   }
 ]
