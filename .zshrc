@@ -185,8 +185,7 @@ function update-programming-languages() {
   mise plugins up
   mise up --bump
   mise reshim
-  pip install "reladiff[all]" "shandy-sqlfmt[jinjafmt]"
-  mix local.hex --force
+  pip install "reladiff[all]"
 }
 
 function update-everything() {

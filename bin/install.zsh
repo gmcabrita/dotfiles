@@ -154,7 +154,6 @@ brew bundle install --cleanup --file=~/.config/Brewfile
 brew autoupdate start 43200
 
 # Programming language stuff
-mise plugin install yarn
 mise plugin install pnpm
 ERL_AFLAGS="-kernel shell_history enabled" \
 JEMALLOC_LIBS="-L$(brew --prefix jemalloc)/lib -ljemalloc" \
@@ -164,19 +163,12 @@ LDFLAGS="-L$(brew --prefix jemalloc)/lib -L$(brew --prefix gmp)/lib -L$(xcrun --
 PKG_CONFIG_PATH="$(brew --prefix gmp)/lib/pkgconfig:$(brew --prefix jemalloc)/lib/pkgconfig:$PKG_CONFIG_PATH" \
 RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
   mise use -g node@lts \
-              bun@latest \
               pnpm@latest \
-              yarn@latest \
               ruby@latest \
               go@latest \
               python@latest \
-              erlang@latest \
-              elixir@latest \
-              zig@latest \
-              zls@latest \
               watchexec@latest \
               rust@latest \
-              gleam@latest \
               hk@latest \
               fnox@latest \
               cargo:t-cmd@latest
@@ -184,4 +176,4 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
 mise settings add idiomatic_version_file_enable_tools rust
 mix local.hex --force
 
-pip install "reladiff[all]" "shandy-sqlfmt[jinjafmt]"
+pip install "reladiff[all]"
