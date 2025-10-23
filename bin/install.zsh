@@ -180,6 +180,7 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               fnox@latest \
               cargo:t-cmd@latest
 
+mise settings add idiomatic_version_file_enable_tools rust
 mix local.hex --force
 
 pip install "reladiff[all]" "shandy-sqlfmt[jinjafmt]"
