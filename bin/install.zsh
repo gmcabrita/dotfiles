@@ -158,9 +158,9 @@ mise plugin install pnpm
 ERL_AFLAGS="-kernel shell_history enabled" \
 JEMALLOC_LIBS="-L$(brew --prefix jemalloc)/lib -ljemalloc" \
 JEMALLOC_CFLAGS="-I$(brew --prefix jemalloc)/include" \
-CPPFLAGS="-I$(brew --prefix jemalloc)/include -I$(brew --prefix gmp)/include -I$(xcrun --show-sdk-path)/usr/include -I$(brew --prefix sqlite)/include" \
-LDFLAGS="-L$(brew --prefix jemalloc)/lib -L$(brew --prefix gmp)/lib -L$(xcrun --show-sdk-path)/usr/lib -L$(brew --prefix sqlite)/lib" \
-PKG_CONFIG_PATH="$(brew --prefix gmp)/lib/pkgconfig:$(brew --prefix jemalloc)/lib/pkgconfig:$PKG_CONFIG_PATH" \
+CPPFLAGS="-I$(brew --prefix openssl@3)/include -I$(brew --prefix jemalloc)/include -I$(brew --prefix gmp)/include -I$(xcrun --show-sdk-path)/usr/include -I$(brew --prefix sqlite)/include"F \
+LDFLAGS="-L$(brew --prefix openssl@3)/lib -L$(brew --prefix jemalloc)/lib -L$(brew --prefix gmp)/lib -L$(xcrun --show-sdk-path)/usr/lib -L$(brew --prefix sqlite)/lib" \
+PKG_CONFIG_PATH="$(brew --prefix openssl@3)/lib/pkgconfig:$(brew --prefix gmp)/lib/pkgconfig:$(brew --prefix jemalloc)/lib/pkgconfig:$PKG_CONFIG_PATH" \
 RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
   mise use -g node@lts \
               pnpm@latest \
@@ -173,8 +173,8 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               elixir@latest \
               hk@latest \
               fnox@latest \
-              cargo:t-cmd@latest
-              cargo:hurlfmt@latest \
+              cargo:t-cmd@latest \
+              cargo:hurlfmt@latest
 
 mise settings add idiomatic_version_file_enable_tools rust
 mix local.hex --force
