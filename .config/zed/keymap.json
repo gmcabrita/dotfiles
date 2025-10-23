@@ -25,7 +25,8 @@
   {
     "context": "Workspace",
     "bindings": {
-      "ctrl-`": null // "terminal_panel::Toggle"
+      "ctrl-`": null, // "terminal_panel::Toggle",
+      "cmd-shift-b": null // "outline_panel::ToggleFocus"
     }
   }
 ]
