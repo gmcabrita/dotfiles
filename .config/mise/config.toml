@@ -16,6 +16,7 @@ zls = "latest"
 deno = "latest"
 gleam = "latest"
 rust = "latest"
+"cargo:t-cmd" = "latest"
 
 [settings]
 idiomatic_version_file_enable_tools = ["rust"]
