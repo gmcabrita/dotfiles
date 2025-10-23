@@ -1,42 +1,16 @@
-font-size = 17
-font-family = JetBrains Mono
-font-feature = -calt
-background-opacity = 1
 background-blur-radius = 20
-macos-non-native-fullscreen = visible-menu
-mouse-hide-while-typing = false
+background-opacity = 1
 cursor-style = block
 cursor-style-blink = false
-shell-integration-features = no-cursor
-macos-titlebar-style = tabs
-scrollback-limit=100000000
-window-width = 10000
-window-height = 10000
-
-theme = Gruvbox Dark Hard
-
-# rsms-dark
-# palette = 0=#333332
-# palette = 1=#ff968c
-# palette = 2=#61957f
-# palette = 3=#ffc591
-# palette = 4=#8db4d4
-# palette = 5=#de9bc8
-# palette = 6=#7bb099
-# palette = 7=#d1d1d1
-# palette = 8=#4c4c4b
-# palette = 9=#ffafa5
-# palette = 10=#7aae98
-# palette = 11=#ffdeaa
-# palette = 12=#a6cded
-# palette = 13=#f7b4e1
-# palette = 14=#94c9b2
-# palette = 15=#eaeaea
-# background = #1a1a19
-# foreground = #d1d1d1
-# cursor-color = #d1d1d1
-# cursor-text = #1a1a19
-# selection-background = #323231
-# selection-foreground = #d1d1d1
-
+font-family = JetBrains Mono
+font-feature = -calt
+font-size = 17
 keybind = cmd+shift+j=write_screen_file:open
+macos-non-native-fullscreen = visible-menu
+macos-titlebar-style = tabs
+mouse-hide-while-typing = false
+scrollback-limit=100000000
+shell-integration-features = no-cursor
+theme = Gruvbox Dark Hard
+window-height = 10000
+window-width = 10000

@@ -40,73 +40,13 @@
   "agent": {
     "button": true,
     "always_allow_tool_actions": true,
-    "profiles": {
-      "minimal": {
-        "name": "Minimal",
-        "tools": {
-          "web_search": true
-        },
-        "enable_all_context_servers": false,
-        "context_servers": {}
-      },
-      "write": {
-        "name": "Write",
-        "tools": {
-          "web_search": true,
-          "create_directory": true,
-          "terminal": true,
-          "batch_tool": true,
-          "code_symbols": true,
-          "copy_path": true,
-          "create_file": true,
-          "delete_path": true,
-          "diagnostics": true,
-          "edit_file": true,
-          "fetch": true,
-          "list_directory": true,
-          "move_path": true,
-          "now": true,
-          "find_path": true,
-          "read_file": true,
-          "grep": true,
-          "symbol_info": true,
-          "thinking": true,
-          "open": true
-        },
-        "enable_all_context_servers": true,
-        "context_servers": {}
-      },
-      "ask": {
-        "name": "Ask",
-        "tools": {
-          "open": true,
-          "create_directory": false,
-          "copy_path": false,
-          "code_symbols": true,
-          "web_search": true,
-          "terminal": false,
-          "diagnostics": true,
-          "fetch": true,
-          "list_directory": true,
-          "now": true,
-          "find_path": true,
-          "read_file": true,
-          "grep": true,
-          "thinking": true,
-          "symbol_info": true
-        },
-        "enable_all_context_servers": true,
-        "context_servers": {}
-      }
-    },
     "inline_assistant_model": {
-      "provider": "anthropic",
-      "model": "claude-opus-4-1-latest"
+      "provider": "openai",
+      "model": "gpt-5-mini"
     },
-    "default_profile": "write",
     "default_model": {
-      "provider": "anthropic",
-      "model": "claude-opus-4-1-latest"
+      "provider": "openai",
+      "model": "gpt-5"
     }
   },
   "features": {
@@ -147,7 +87,9 @@
   "format_on_save": "on",
   "formatter": "auto",
   "ensure_final_newline_on_save": true,
-  "autosave": "off",
+  "autosave": {
+    "after_delay": { "milliseconds": 60 }
+  },
   "auto_update": true,
   "ui_font_family": "JetBrains Mono NL",
   "ui_font_features": {
@@ -193,6 +135,7 @@
     "show": true
   },
   "auto_install_extensions": {
+    "alabaster": true,
     "cue": true,
     "docker-compose": true,
     "dockerfile": true,
