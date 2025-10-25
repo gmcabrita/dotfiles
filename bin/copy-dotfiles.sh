@@ -33,8 +33,5 @@ cp -r ".config/"* "$HOME/.config"
 mkdir -p "$HOME/Library/Application Support/go/telemetry"
 cp "Library/Application Support/go/telemetry/"* "$HOME/Library/Application Support/go/telemetry"
 
-mkdir -p "$HOME/Library/Application Support/Sublime Text"
-cp -rf "Library/Application Support/Sublime Text" "$HOME/Library/Application Support"
-
 mkdir -p "$HOME/Library/Application Support/mods"
 cp "Library/Application Support/mods/"* "$HOME/Library/Application Support/mods"
