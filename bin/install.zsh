@@ -163,6 +163,7 @@ LDFLAGS="-L$(brew --prefix openssl@3)/lib -L$(brew --prefix jemalloc)/lib -L$(br
 PKG_CONFIG_PATH="$(brew --prefix openssl@3)/lib/pkgconfig:$(brew --prefix gmp)/lib/pkgconfig:$(brew --prefix jemalloc)/lib/pkgconfig:$PKG_CONFIG_PATH" \
 RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
   mise use -g node@lts \
+              bun@lts \
               pnpm@latest \
               ruby@latest \
               go@latest \
@@ -180,3 +181,5 @@ mise settings add idiomatic_version_file_enable_tools rust
 mix local.hex --force
 
 pip install "reladiff[all]"
+curl -fsSL https://ampcode.com/install.sh | bash
+mkdir /Users/gmcabrita/.config/amp
