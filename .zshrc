@@ -187,6 +187,7 @@ function update-programming-languages() {
   mise reshim
   pip install "reladiff[all]"
   mix local.hex --force
+  amp update
 }
 
 function update-everything() {
