@@ -106,18 +106,18 @@ hash_of() {
     fi
 }
 
-print "Watching: $URL"
-print "Interval: ${INTERVAL}s, Timeout: ${TIMEOUT}s"
-print "User-Agent: $USERAGENT"
+echo "Watching: $URL"
+echo "Interval: ${INTERVAL}s, Timeout: ${TIMEOUT}s"
+echo "User-Agent: $USERAGENT"
 
 # Acquire baseline body and hash
 baseline_hash=""
 while [[ -z "$baseline_hash" ]]; do
     if fetch_body > "$PREV_FILE"; then
         baseline_hash=$(cat "$PREV_FILE" | hash_of)
-        print "Baseline acquired: $baseline_hash"
+        echo "Baseline acquired: $baseline_hash"
     else
-        print "Initial fetch failed; retrying in ${INTERVAL}s..." >&2
+        echo "Initial fetch failed; retrying in ${INTERVAL}s..." >&2
         sleep "$INTERVAL"
     fi
 done
@@ -125,7 +125,7 @@ done
 # Poll loop
 while true; do
     if ! fetch_body > "$CURR_FILE"; then
-        print "Fetch error; will retry in ${INTERVAL}s..." >&2
+        echo "Fetch error; will retry in ${INTERVAL}s..." >&2
         sleep "$INTERVAL"
         continue
     fi
@@ -133,7 +133,7 @@ while true; do
     curr_hash=$(cat "$CURR_FILE" | hash_of)
 
     if [[ "$curr_hash" != "$baseline_hash" ]]; then
-        print "Change detected! Generating diff..."
+        echo "Change detected! Generating diff..."
 
         # Choose diff options
         DIFF_CMD=(diff -u)
