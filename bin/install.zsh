@@ -184,6 +184,5 @@ mise settings add idiomatic_version_file_enable_tools rust
 mise settings set python.uv_venv_auto true
 mix local.hex --force
 
-pip install "reladiff[all]"
 curl -fsSL https://ampcode.com/install.sh | bash
 mkdir /Users/gmcabrita/.config/amp

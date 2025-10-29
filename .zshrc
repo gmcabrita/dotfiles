@@ -185,7 +185,6 @@ function update-programming-languages() {
   mise plugins up
   mise up --bump
   mise reshim
-  pip install "reladiff[all]"
   mix local.hex --force
   amp update
 }
