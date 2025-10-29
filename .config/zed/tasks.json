@@ -10,39 +10,12 @@
     "args": ["$ZED_FILE"],
     "reveal": "no_focus"
   },
-  [
-    {
-      "label": "ruby: test suite",
-      "command": "bin/rspec",
-      "reveal": "no_focus"
-    },
-    {
-      "label": "ruby: test file",
-      "command": "bin/rspec",
-      "args": ["$ZED_FILE"],
-      "reveal": "no_focus"
-    },
-    {
-      "label": "ruby: test file (only failures)",
-      "command": "bin/rspec",
-      "args": ["$ZED_FILE", "--only-failures"],
-      "reveal": "no_focus"
-    },
-    {
-      "label": "ruby: test line",
-      "command": "bin/rspec",
-      "args": ["$ZED_FILE:$ZED_ROW"],
-      "tags": ["ruby-test"],
-      "reveal": "no_focus"
-    },
-    {
-      "label": "ruby: test file, fail fast",
-      "command": "bin/rspec",
-      "args": ["--fail-fast", "$ZED_FILE"],
-      "reveal": "no_focus"
-    }
-  ]
-
+  {
+    "label": "ruby: test file (only failures)",
+    "command": "bin/rspec",
+    "args": ["$ZED_FILE", "--only-failures"],
+    "reveal": "no_focus"
+  },
   {
     "label": "ruby: test line",
     "command": "bin/rspec",
