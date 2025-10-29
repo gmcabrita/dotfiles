@@ -177,7 +177,8 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               cargo:t-cmd@latest \
               cargo:hurlfmt@latest \
               zig@latest \
-              zls@latest
+              zls@latest \
+              uv@latest
 
 mise settings add idiomatic_version_file_enable_tools rust
 mix local.hex --force
