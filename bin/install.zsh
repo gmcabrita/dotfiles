@@ -173,6 +173,7 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               erlang@latest \
               elixir@latest \
               hk@latest \
+              pkl@latest \
               fnox@latest \
               cargo:t-cmd@latest \
               cargo:hurlfmt@latest \
