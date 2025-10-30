@@ -164,6 +164,18 @@ function todo() {
     -nRo 'TODO.*:.*\|FIXME.*:.*\|HACK.*:.*\|OPTIMIZE.*:.*' .
 }
 
+function nocheckin() {
+  grep \
+    --exclude-dir=public \
+    --exclude-dir=tmp \
+    --exclude-dir=vendor \
+    --exclude-dir=node_modules \
+    --exclude=\*.log \
+    --text \
+    --color \
+    -nRoEi 'NOCHECKIN.*:?.*' .
+}
+
 function convert_mp4_to_mov() {
   rm "$1.mov"
   touch -r "$1.mp4" "$1.mov"

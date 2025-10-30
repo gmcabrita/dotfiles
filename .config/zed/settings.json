@@ -762,6 +762,12 @@
       },
       "tab_size": 2
     },
+    "Python": {
+      "tab_size": 4
+    },
+    "Pkl": {
+      "tab_size": 4
+    },
     "CSS": {
       "language_servers": ["tailwindcss-language-server"]
     },
