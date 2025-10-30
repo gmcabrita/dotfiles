@@ -153,27 +153,15 @@ function egm() {
 }
 
 function todo() {
-  grep \
-    --exclude-dir=public \
-    --exclude-dir=tmp \
-    --exclude-dir=vendor \
-    --exclude-dir=node_modules \
-    --exclude=\*.log \
-    --text \
-    --color \
-    -nRo 'TODO.*:.*\|FIXME.*:.*\|HACK.*:.*\|OPTIMIZE.*:.*' .
+  rg --color=always -n -a -o \
+    -g '!public/**' -g '!tmp/**' -g '!vendor/**' -g '!node_modules/**' -g '!**/*.log' \
+    'TODO.*:.*|FIXME.*:.*|HACK.*:.*|OPTIMIZE.*:.*'
 }
 
 function nocheckin() {
-  grep \
-    --exclude-dir=public \
-    --exclude-dir=tmp \
-    --exclude-dir=vendor \
-    --exclude-dir=node_modules \
-    --exclude=\*.log \
-    --text \
-    --color \
-    -nRoEi 'NOCHECKIN.*:?.*' .
+  rg --color=always -n -a -o -i \
+    -g '!public/**' -g '!tmp/**' -g '!vendor/**' -g '!node_modules/**' -g '!**/*.log' \
+    'NOCHECKIN.*:?.*'
 }
 
 function convert_mp4_to_mov() {
