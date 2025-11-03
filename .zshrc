@@ -118,6 +118,9 @@ alias pager='less -cRS'
 
 alias marked="open -a Marked"
 
+alias vi="nvim"
+alias vim="nvim"
+
 #### Functions
 
 function tailscale() {
