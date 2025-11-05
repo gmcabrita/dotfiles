@@ -93,3 +93,4 @@
     - Remove items from the Trash after 30 days
     - Keep folders on top when sorting by name
     - When performing a search: Search the Current Folder
+- https://nexte.st/docs/installation/macos/#gatekeeper
