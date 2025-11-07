@@ -6,7 +6,9 @@ font-family = JetBrains Mono
 font-feature = -calt
 font-size = 17
 keybind = cmd+shift+j=write_screen_file:open
+keybind = command+enter=unbind
 macos-non-native-fullscreen = visible-menu
+macos-option-as-alt = false
 macos-titlebar-style = tabs
 mouse-hide-while-typing = false
 scrollback-limit=100000000
