@@ -131,6 +131,41 @@ function g() {
   git "$@"
 }
 
+function t() {
+  gtime -v "$@" 2>&1 | awk '
+      function fmt_2dec_or_int(val,    r) {
+          r = sprintf("%.2f", val) + 0
+          s = sprintf("%.2f", r)
+          sub(/\.00$/, "", s)
+          sub(/\.0$/,  "", s)
+          return s
+      }
+      function humanize_kib(kb,    units, i, val, v) {
+          units[0]="KiB"; units[1]="MiB"; units[2]="GiB"; units[3]="TiB"
+          val = kb + 0
+          i = 0
+          while (val >= 1024 && i < 3) { val /= 1024; i++ }
+          v = fmt_2dec_or_int(val)
+          return sprintf("%s %s", v, units[i])
+      }
+
+      /\(kbytes\)/ {
+          line = $0
+          if (match(line, /[0-9]+([.][0-9]+)?[[:space:]]*$/)) {
+              lhs = substr(line, 1, RSTART - 1)
+              num = substr(line, RSTART, RLENGTH)
+              gsub(/^[[:space:]]+|[[:space:]]+$/, "", num)
+              kb = num + 0
+              gsub(/ \(kbytes\)/, "", lhs)
+              printf "%s%s\n", lhs, humanize_kib(kb)
+              next
+          }
+      }
+
+      { print }
+  '
+}
+
 function e() {
   $EDITOR "$@"
 }

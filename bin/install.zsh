@@ -175,7 +175,6 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               hk@latest \
               pkl@latest \
               fnox@latest \
-              cargo:t-cmd@latest \
               cargo:hurlfmt@latest \
               cargo:oha@latest \
               zig@latest \
