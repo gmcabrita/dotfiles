@@ -162,28 +162,29 @@ CPPFLAGS="-I$(brew --prefix openssl@3)/include -I$(brew --prefix jemalloc)/inclu
 LDFLAGS="-L$(brew --prefix openssl@3)/lib -L$(brew --prefix jemalloc)/lib -L$(brew --prefix gmp)/lib -L$(xcrun --show-sdk-path)/usr/lib -L$(brew --prefix sqlite)/lib" \
 PKG_CONFIG_PATH="$(brew --prefix openssl@3)/lib/pkgconfig:$(brew --prefix gmp)/lib/pkgconfig:$(brew --prefix jemalloc)/lib/pkgconfig:$PKG_CONFIG_PATH" \
 RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
-  mise use -g node@lts \
-              bun@latest \
-              pnpm@latest \
-              ruby@latest \
-              go@latest \
-              python@latest \
-              watchexec@latest \
-              rust@latest \
-              erlang@latest \
-              elixir@latest \
-              hk@latest \
-              pkl@latest \
-              fnox@latest \
+  mise use -g bun@latest \
               cargo:hurlfmt@latest \
               cargo:oha@latest \
+              elixir@latest \
+              erlang@latest \
+              fnox@latest \
+              go@latest \
+              hk@latest \
+              node@lts \
+              pkl@latest \
+              pnpm@latest \
+              python@latest \
+              ruby@latest \
+              rust@latest \
+              uv@latest \
+              watchexec@latest \
               zig@latest \
-              zls@latest \
-              uv@latest
+              zls@latest
 
 mise settings add idiomatic_version_file_enable_tools rust
 mise settings set python.uv_venv_auto true
 mix local.hex --force
+opam init --enable-completion
 
 curl -fsSL https://ampcode.com/install.sh | bash
 mkdir /Users/gmcabrita/.config/amp
