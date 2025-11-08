@@ -185,6 +185,7 @@ mise settings add idiomatic_version_file_enable_tools rust
 mise settings set python.uv_venv_auto true
 mix local.hex --force
 opam init --enable-completion
+opam install dune utop ocamlformat odoc odig ocaml-lsp-server merlin -y
 
 curl -fsSL https://ampcode.com/install.sh | bash
 mkdir /Users/gmcabrita/.config/amp

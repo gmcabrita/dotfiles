@@ -226,6 +226,7 @@ function update-programming-languages() {
   mise reshim
   mix local.hex --force
   amp update
+  opam upgrade
 }
 
 function update-everything() {
