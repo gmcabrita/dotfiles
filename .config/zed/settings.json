@@ -154,6 +154,7 @@
     "lua": true,
     "make": true,
     "nginx": true,
+    "ocaml": true,
     "pkl": true,
     "proto": true,
     "rainbow-csv": true,
