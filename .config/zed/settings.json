@@ -164,6 +164,7 @@
     "templ": true,
     "terraform": true,
     "toml": true,
+    "tsgo": true,
     "typst": true,
     "xcode-themes": true,
     "xml": true,
@@ -795,10 +796,10 @@
       "format_on_save": "off"
     },
     "TypeScript": {
-      "language_servers": ["!typescript-language-server", "!eslint", "vtsls", "..."]
+      "language_servers": ["!typescript-language-server", "!eslint", "tsgo", "vtsls", "..."]
     },
     "JavaScript": {
-      "language_servers": ["!typescript-language-server", "!eslint", "vtsls", "..."]
+      "language_servers": ["!typescript-language-server", "!eslint", "tsgo", "vtsls", "..."]
     },
     "Zig": {
       "tab_size": 4
