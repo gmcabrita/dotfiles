@@ -15,8 +15,8 @@ mkdir -p "$HOME/Developer"
 mkdir -p "$HOME/.psql/queries"
 cp ".psql/queries/"* "$HOME/.psql/queries"
 
-mkdir -p "$HOME/.bin"
-cp ".bin/"* "$HOME/.bin"
+mkdir -p "$HOME/.local"
+cp ".local/"* "$HOME/.local"
 
 mkdir -p "$HOME/.config/ghostty"
 cp ".config/ghostty/"* "$HOME/.config/ghostty"
