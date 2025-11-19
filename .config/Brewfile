@@ -4,6 +4,7 @@ tap "wader/tap"
 
 cask "1password"
 cask "1password-cli"
+cask "claude-code"
 cask "discord"
 cask "font-inter"
 cask "font-jetbrains-mono"
