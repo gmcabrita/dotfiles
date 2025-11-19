@@ -1,7 +1,8 @@
-ruby-lsp
-vernier
-profile-viewer
 benchmark-ips
-memory_profiler
 debug
+memory_profiler
+profile-viewer
+ruby-lsp
 stackprof
+tty-prompt
+vernier

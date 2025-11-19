@@ -131,6 +131,10 @@ function g() {
   git "$@"
 }
 
+function claudeyolo() {
+  claude --dangerously-skip-permissions "$@"
+}
+
 function t() {
   gtime -v "$@" 2>&1 | awk '
       function fmt_2dec_or_int(val,    r) {
