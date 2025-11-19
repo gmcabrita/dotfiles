@@ -179,6 +179,11 @@
   },
   "language_servers": ["!eslint", "..."],
   "lsp": {
+    "expert": {
+      "binary": {
+        "arguments": ["--stdio"]
+      }
+    },
     "zls": {
       "settings": {
         "enable_build_on_save": true,
