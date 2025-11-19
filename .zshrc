@@ -226,7 +226,6 @@ function update-programming-languages() {
   mise reshim
   mix local.hex --force
   amp update
-  opam upgrade
   /usr/bin/python3 -m pip install --upgrade --user git+https://github.com/Mic92/strace-macos
   cp "$(/usr/bin/python3 -m site --user-base)/bin/strace" ~/.local/bin/strace
 }
