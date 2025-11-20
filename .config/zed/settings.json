@@ -169,7 +169,8 @@
     "xcode-themes": true,
     "xml": true,
     "zedokai": true,
-    "zig": true
+    "zig": true,
+    "ziggy": true
   },
   "file_types": {
     "Just": ["Justfile"],
