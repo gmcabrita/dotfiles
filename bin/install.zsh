@@ -169,6 +169,7 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               erlang@latest \
               fnox@latest \
               github:kristoff-it/ziggy@0.0.1 \
+              gleam@latest \
               go@latest \
               hk@latest \
               node@lts \
