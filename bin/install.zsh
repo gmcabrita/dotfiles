@@ -104,6 +104,9 @@ defaults write com.apple.finder FXPreferredViewStyle -string "clmv"
 # Keep folders on top when sorting by name
 defaults write com.apple.finder _FXSortFoldersFirst -bool true
 
+# Hide desktop icons
+defaults write com.apple.finder CreateDesktop false
+
 # Expanded Save and Print dialogs by default
 defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
 defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
