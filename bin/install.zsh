@@ -183,8 +183,6 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
 
 mise settings add idiomatic_version_file_enable_tools rust
 mise settings set python.uv_venv_auto true
-/usr/bin/python3 -m pip install --user git+https://github.com/Mic92/strace-macos
-cp "$(/usr/bin/python3 -m site --user-base)/bin/strace" ~/.local/bin/strace
 
 curl -fsSL https://ampcode.com/install.sh | bash
 mkdir /Users/gmcabrita/.config/amp

@@ -229,10 +229,7 @@ function update-programming-languages() {
   mise up --bump
   mise reshim
   mix local.hex --force
-  rm -rf "$HOME/Library/Application Support/Zed/extensions/work/elixir"/expert-*
   amp update
-  /usr/bin/python3 -m pip install --upgrade --user git+https://github.com/Mic92/strace-macos
-  cp "$(/usr/bin/python3 -m site --user-base)/bin/strace" ~/.local/bin/strace
 }
 
 function update-everything() {
