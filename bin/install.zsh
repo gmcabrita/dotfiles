@@ -168,11 +168,8 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
   mise use -g bun@latest \
               cargo:hurlfmt@latest \
               cargo:oha@latest \
-              elixir@latest \
-              erlang@latest \
+              deno@latest \
               fnox@latest \
-              github:kristoff-it/ziggy@0.0.1 \
-              gleam@latest \
               go@latest \
               hk@latest \
               node@lts \
@@ -182,13 +179,10 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               ruby@latest \
               rust@latest \
               uv@latest \
-              watchexec@latest \
-              zig@latest \
-              zls@latest
+              watchexec@latest
 
 mise settings add idiomatic_version_file_enable_tools rust
 mise settings set python.uv_venv_auto true
-mix local.hex --force
 /usr/bin/python3 -m pip install --user git+https://github.com/Mic92/strace-macos
 cp "$(/usr/bin/python3 -m site --user-base)/bin/strace" ~/.local/bin/strace
 
