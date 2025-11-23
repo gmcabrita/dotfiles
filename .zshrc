@@ -228,7 +228,6 @@ function update-programming-languages() {
   mise plugins up
   mise up --bump
   mise reshim
-  mix local.hex --force
   amp update
 }
 
