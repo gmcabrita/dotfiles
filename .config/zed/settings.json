@@ -7,6 +7,11 @@
 // custom settings, run the `open default settings` command
 // from the command palette or from `Zed` application menu.
 {
+  "agent_ui_font_size": 17.0,
+  "ui_font_weight": 400.0,
+  "ui_font_size": 16.0,
+  "buffer_line_height": "comfortable",
+  "buffer_font_weight": 400.0,
   "outline_panel": {
     "button": false
   },
@@ -56,12 +61,13 @@
     "edit_prediction_provider": "copilot"
   },
   "terminal": {
+    "font_weight": 400.0,
     "button": false,
     "dock": "bottom",
     "cursor_shape": "block",
     "blinking": "off",
     "font_family": "JetBrains Mono NL",
-    "font_size": 17
+    "font_size": 17.0
   },
   "experimental.theme_overrides": {
     "players": [
@@ -99,7 +105,7 @@
     "calt": false
   },
   "buffer_font_family": "JetBrains Mono NL",
-  "buffer_font_size": 17,
+  "buffer_font_size": 17.0,
   "buffer_font_features": {
     "calt": false
   },
