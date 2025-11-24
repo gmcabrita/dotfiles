@@ -9,6 +9,7 @@ cp .psqlrc "$HOME/"
 cp .editrc "$HOME/"
 cp .sqliterc "$HOME/"
 cp .iex.exs "$HOME/"
+cp .npmrc "$HOME/"
 
 mkdir -p "$HOME/Developer"
 
