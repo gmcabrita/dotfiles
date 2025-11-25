@@ -1,5 +1,6 @@
 benchmark-ips
 debug
+gem-why
 memory_profiler
 profile-viewer
 ruby-lsp
