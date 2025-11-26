@@ -145,7 +145,7 @@ function profile-zsh() {
 }
 
 function benchmark-zsh() {
-  hyperfine --warmup 10 "zsh -i -c exit"
+  hyperfine --warmup 10 "zsh -i -c 'exit 0'"
 }
 
 function tailscale() {
