@@ -1,3 +1,4 @@
 {
-  "apiKeyHelper": "~/.claude/anthropic_key.sh"
+  "apiKeyHelper": "~/.claude/anthropic_key.sh",
+  "model": "opus"
 }

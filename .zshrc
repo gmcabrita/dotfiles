@@ -1,12 +1,18 @@
-PATH="$HOME/.local/bin:/opt/homebrew/opt/sqlite/bin:/opt/homebrew/opt/libpq/bin:/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH"
+[[ $ZPROF == 1 ]] && zmodload zsh/zprof
+
+# Cache expensive lookups
+HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
+MACOS_SDK_PATH="${MACOS_SDK_PATH:-$(xcrun --show-sdk-path 2>/dev/null)}"
+
+PATH="$HOME/.local/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$HOMEBREW_PREFIX/opt/gnu-tar/libexec/gnubin:$PATH"
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export HK_MISE=1
 export MIX_OS_DEPS_COMPILE_PARTITION_COUNT=$(sysctl -n hw.perflevel0.logicalcpu 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || nproc --all 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
-export JEMALLOC_LIBS="-L$(brew --prefix jemalloc)/lib -ljemalloc"
-export JEMALLOC_CFLAGS="-I$(brew --prefix jemalloc)/include"
-export CPPFLAGS="-I$(brew --prefix openssl@3)/include -I$(brew --prefix jemalloc)/include -I$(brew --prefix gmp)/include -I$(xcrun --show-sdk-path)/usr/include -I$(brew --prefix sqlite)/include"F
-export LDFLAGS="-L$(brew --prefix openssl@3)/lib -L$(brew --prefix jemalloc)/lib -L$(brew --prefix gmp)/lib -L$(xcrun --show-sdk-path)/usr/lib -L$(brew --prefix sqlite)/lib"
-export PKG_CONFIG_PATH="$(brew --prefix openssl@3)/lib/pkgconfig:$(brew --prefix gmp)/lib/pkgconfig:$(brew --prefix jemalloc)/lib/pkgconfig:$PKG_CONFIG_PATH"
+export JEMALLOC_LIBS="-L$HOMEBREW_PREFIX/opt/jemalloc/lib -ljemalloc"
+export JEMALLOC_CFLAGS="-I$HOMEBREW_PREFIX/opt/jemalloc/include"
+export CPPFLAGS="-I$HOMEBREW_PREFIX/opt/openssl@3/include -I$HOMEBREW_PREFIX/opt/jemalloc/include -I$HOMEBREW_PREFIX/opt/gmp/include -I$MACOS_SDK_PATH/usr/include -I$HOMEBREW_PREFIX/opt/sqlite/include"
+export LDFLAGS="-L$HOMEBREW_PREFIX/opt/openssl@3/lib -L$HOMEBREW_PREFIX/opt/jemalloc/lib -L$HOMEBREW_PREFIX/opt/gmp/lib -L$MACOS_SDK_PATH/usr/lib -L$HOMEBREW_PREFIX/opt/sqlite/lib"
+export PKG_CONFIG_PATH="$HOMEBREW_PREFIX/opt/openssl@3/lib/pkgconfig:$HOMEBREW_PREFIX/opt/gmp/lib/pkgconfig:$HOMEBREW_PREFIX/opt/jemalloc/lib/pkgconfig:$PKG_CONFIG_PATH"
 export RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc"
 export BUNDLE_IGNORE_FUNDING_REQUESTS=YES
 export PGGSSENCMODE=disable
@@ -64,19 +70,23 @@ unsetopt HIST_VERIFY
 
 #### Completions
 
-fpath+="$(brew --prefix)/share/zsh/site-functions"
+fpath+="$HOMEBREW_PREFIX/share/zsh/site-functions"
 fpath+="$HOME/.zfunc"
-autoload -Uz compinit && compinit
+autoload -Uz compinit
+if [[ ! -f ~/.zcompdump ]] || [[ $(find ~/.zcompdump -mtime +1 2>/dev/null) ]]; then
+  compinit
+else
+  compinit -C
+fi
 zmodload zsh/complist
 zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 
-eval "$(mise activate zsh)"
+export PATH="$HOME/.local/share/mise/shims:$PATH"
 
-source /opt/homebrew/opt/git-extras/share/git-extras/git-extras-completion.zsh
-source "$(brew --prefix)/share/google-cloud-sdk/path.zsh.inc"
-source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
-source <(jj util completion zsh)
+source $HOMEBREW_PREFIX/opt/git-extras/share/git-extras/git-extras-completion.zsh
+source "$HOMEBREW_PREFIX/share/google-cloud-sdk/path.zsh.inc"
+source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
 eval "$(zoxide init zsh)"
 
 #### Keybinds
@@ -122,6 +132,21 @@ alias vi="nvim"
 alias vim="nvim"
 
 #### Functions
+
+# Lazy-load jj completion
+function jj() {
+  unfunction jj
+  # source <(command jj util completion zsh)
+  command jj "$@"
+}
+
+function profile-zsh() {
+  ZPROF=1 zsh -i -c exit
+}
+
+function benchmark-zsh() {
+  hyperfine --warmup 10 "zsh -i -c exit"
+}
 
 function tailscale() {
  /Applications/Tailscale.app/Contents/MacOS/Tailscale "$@"
@@ -308,3 +333,5 @@ function tempe () {
     chmod -R 0700 .
   fi
 }
+
+[[ $ZPROF == 1 ]] && zprof
