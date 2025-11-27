@@ -334,4 +334,8 @@ function tempe () {
   fi
 }
 
+function oplogin() {
+  eval $(op signin)
+}
+
 [[ $ZPROF == 1 ]] && zprof
