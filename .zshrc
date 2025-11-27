@@ -338,4 +338,12 @@ function oplogin() {
   eval $(op signin)
 }
 
+function sound-done() {
+  (afplay /System/Library/Sounds/Submarine.aiff &>/dev/null &)
+}
+
+function sound-prompt() {
+  (afplay /System/Library/Sounds/Ping.aiff &>/dev/null &)
+}
+
 [[ $ZPROF == 1 ]] && zprof
