@@ -27,7 +27,9 @@
   - Input Sources > Edit
     - Disable everything
 - Trackpad:
+  - Disable "Tap to click"
   - Disable "Look up & data detectors"
+  - Disable all gestures
 - Desktop & Dock
   - Window Tiling
     - Disable "Tiled windows have margins"
