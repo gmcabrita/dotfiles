@@ -17,6 +17,7 @@ export RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc"
 export BUNDLE_IGNORE_FUNDING_REQUESTS=YES
 export PGGSSENCMODE=disable
 export EDITOR="zed"
+export RAILS_EDITOR="zed"
 # Useful for multiline editing in iex using Esc+O (https://bsky.app/profile/bobbby.online/post/3llwpqtwwf22r)
 export VISUAL="zed -n -w"
 export PSQL_EDITOR="zed -n -w"
