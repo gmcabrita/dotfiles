@@ -49,8 +49,8 @@
     "button": false,
     "always_allow_tool_actions": true,
     "inline_assistant_model": {
-      "provider": "openai",
-      "model": "gpt-5-mini"
+      "provider": "anthropic",
+      "model": "claude-opus-4-5-thinking-latest"
     },
     "default_model": {
       "provider": "openai",
