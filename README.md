@@ -4,6 +4,7 @@
 
 - `cp ~/.zsh_history ~/iCloud\ Drive/Software/.zsh_history`
 - Export Raycast settings
+- Export uBlock Origin Lite settings
 
 ## Pre-install script setup
 
@@ -56,6 +57,7 @@
     - Show autofill menu on field focus: No
     - Sign in automatically after autofill: No
   - uBlacklist import from Google Drive
+  - Import uBlock Origin Lite settings
 - 1Password
 - `gh auth login`
   - Add ssh key as gpg key
