@@ -21,7 +21,14 @@
 - Keyboard:
   - Swap fn and ctrl
   - Press globe key to: "Do nothing"
+  - Disable everything in Accessibility
+  - Disable everything in Spotlight
+  - Disable everything in Mission Control except:
+    - Mission Control
+    - Application windows
   - App Shortcuts
+    - All Applications
+      - Show Fonts = `Hyperkey + F12`
     - Apple Notes
       - Note List Search... = `⌘ P`
   - Input Sources > Edit
