@@ -39,8 +39,8 @@ source "$HOME/.env"
 set +a
 
 # fzf: load key-bindings immediately, lazy-load completion
-if [[ ! "$PATH" == */opt/homebrew/opt/fzf/bin* ]]; then
-  PATH="${PATH:+${PATH}:}/opt/homebrew/opt/fzf/bin"
+if [[ ! "$PATH" == *$HOMEBREW_PREFIX/opt/fzf/bin* ]]; then
+  PATH="${PATH:+${PATH}:}$HOMEBREW_PREFIX/opt/fzf/bin"
 fi
 source ~/.zsh_cache/fzf-key-bindings.zsh
 
@@ -102,7 +102,7 @@ function __init_completions() {
   bindkey -M menuselect '^[[Z' reverse-menu-complete
   # Load deferred completions
   source $HOMEBREW_PREFIX/opt/git-extras/share/git-extras/git-extras-completion.zsh
-  source "/opt/homebrew/opt/fzf/shell/completion.zsh"
+  source "$HOMEBREW_PREFIX/opt/fzf/shell/completion.zsh"
 }
 
 # Defer compinit until first tab press
