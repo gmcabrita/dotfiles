@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+cp .hushlogin "$HOME/"
 cp .gitconfig "$HOME/"
 cp .gitignore "$HOME/"
 cp .githelpers "$HOME/"

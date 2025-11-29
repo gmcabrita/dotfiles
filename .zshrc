@@ -254,6 +254,15 @@ function update-programming-languages() {
 
 function update-everything() {
   brew update && brew bundle install --cleanup --file=~/.config/Brewfile && brew upgrade && update-programming-languages
+
+  echo "Remember that these exist:"
+  echo "\tdoggo            DNS Client"
+  echo "\toha              HTTP load generator"
+  echo "\tspacer           Utility for adding spacers when command output stops"
+  echo "\tt                Time program (Clocks, RSS, Context Switches)"
+  echo "\ttspin            Log file highlighter"
+  echo "\tbenchmark-zsh    Benchmark ZSH startup"
+  echo "\tprofile-zsh      Profile ZSH startup"
 }
 
 function nosleep() {
