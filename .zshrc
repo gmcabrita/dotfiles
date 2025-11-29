@@ -295,7 +295,6 @@ function update-programming-languages() {
   mise plugins up
   mise up --bump
   mise reshim
-  amp update
 }
 
 function update-everything() {
