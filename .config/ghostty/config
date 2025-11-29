@@ -8,6 +8,7 @@ font-feature = -calt, -liga, -dlig
 font-size = 17
 keybind = cmd+shift+j=write_screen_file:open
 keybind = command+enter=unbind
+keybind = shift+enter=text:\x1b\r
 macos-non-native-fullscreen = visible-menu
 macos-option-as-alt = false
 macos-titlebar-style = tabs
