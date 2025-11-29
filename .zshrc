@@ -7,7 +7,7 @@ MACOS_SDK_PATH="${MACOS_SDK_PATH:-$(xcrun --show-sdk-path 2>/dev/null)}"
 PATH="$HOME/.local/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$HOMEBREW_PREFIX/opt/gnu-tar/libexec/gnubin:$PATH"
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export HK_MISE=1
-export MIX_OS_DEPS_COMPILE_PARTITION_COUNT=$(sysctl -n hw.perflevel0.logicalcpu 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || nproc --all 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
+# export MIX_OS_DEPS_COMPILE_PARTITION_COUNT=$(sysctl -n hw.perflevel0.logicalcpu 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || nproc --all 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
 export JEMALLOC_LIBS="-L$HOMEBREW_PREFIX/opt/jemalloc/lib -ljemalloc"
 export JEMALLOC_CFLAGS="-I$HOMEBREW_PREFIX/opt/jemalloc/include"
 export CPPFLAGS="-I$HOMEBREW_PREFIX/opt/openssl@3/include -I$HOMEBREW_PREFIX/opt/jemalloc/include -I$HOMEBREW_PREFIX/opt/gmp/include -I$MACOS_SDK_PATH/usr/include -I$HOMEBREW_PREFIX/opt/sqlite/include"
@@ -69,26 +69,58 @@ setopt SHARE_HISTORY
 # Execute commands using history (e.g.: using !$) immediatel:
 unsetopt HIST_VERIFY
 
-#### Completions
+#### Completions (lazy-loaded on first tab)
 
 fpath+="$HOMEBREW_PREFIX/share/zsh/site-functions"
 fpath+="$HOME/.zfunc"
-autoload -Uz compinit
-if [[ ! -f ~/.zcompdump ]] || [[ $(find ~/.zcompdump -mtime +1 2>/dev/null) ]]; then
-  compinit
-else
-  compinit -C
-fi
-zmodload zsh/complist
-zstyle ':completion:*' menu select
-zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+
+function __init_completions() {
+  unfunction __init_completions
+  autoload -Uz compinit
+  if [[ ! -f ~/.zcompdump ]] || [[ $(find ~/.zcompdump -mtime +1 2>/dev/null) ]]; then
+    compinit
+    zcompile ~/.zcompdump
+  else
+    compinit -C
+  fi
+  [[ ~/.zcompdump.zwc -nt ~/.zcompdump ]] || zcompile ~/.zcompdump
+  zmodload zsh/complist
+  zstyle ':completion:*' menu select
+  zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+  bindkey -M menuselect '^[[Z' reverse-menu-complete
+}
+
+# Defer compinit until first tab press
+function __expand_or_complete_with_init() {
+  __init_completions
+  bindkey '^I' expand-or-complete
+  zle expand-or-complete
+}
+zle -N __expand_or_complete_with_init
+bindkey '^I' __expand_or_complete_with_init
 
 export PATH="$HOME/.local/share/mise/shims:$PATH"
 
 source $HOMEBREW_PREFIX/opt/git-extras/share/git-extras/git-extras-completion.zsh
 source "$HOMEBREW_PREFIX/share/google-cloud-sdk/path.zsh.inc"
-source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
-eval "$(zoxide init zsh)"
+# Cache zoxide init (regenerate with: zoxide init zsh > ~/.zoxide.zsh)
+source ~/.zoxide.zsh
+
+function gcloud() {
+  unfunction gcloud gsutil bq
+  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
+  command gcloud "$@"
+}
+function gsutil() {
+  unfunction gcloud gsutil bq
+  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
+  command gsutil "$@"
+}
+function bq() {
+  unfunction gcloud gsutil bq
+  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
+  command bq "$@"
+}
 
 #### Keybinds
 
@@ -98,7 +130,6 @@ bindkey '^[[1;3D' backward-word # option-left
 bindkey '^[[1;3C' forward-word # option-right
 bindkey '^[[1;9D' beginning-of-line # cmd-left
 bindkey '^[[1;9C' end-of-line # cmd-right
-bindkey -M menuselect '^[[Z' reverse-menu-complete
 
 #### Prompt
 
