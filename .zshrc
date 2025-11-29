@@ -2,7 +2,15 @@
 
 # Cache expensive lookups
 HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
-MACOS_SDK_PATH="${MACOS_SDK_PATH:-$(xcrun --show-sdk-path 2>/dev/null)}"
+# Cache xcrun result to avoid fork on every shell startup (~5ms savings)
+if [[ -z "$MACOS_SDK_PATH" ]]; then
+  if [[ -f ~/.cache/macos_sdk_path ]]; then
+    MACOS_SDK_PATH="$(<~/.cache/macos_sdk_path)"
+  else
+    MACOS_SDK_PATH="$(xcrun --show-sdk-path 2>/dev/null)"
+    mkdir -p ~/.cache && printf '%s' "$MACOS_SDK_PATH" > ~/.cache/macos_sdk_path
+  fi
+fi
 
 PATH="$HOME/.local/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$HOMEBREW_PREFIX/opt/gnu-tar/libexec/gnubin:$PATH"
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
@@ -30,7 +38,11 @@ set -a
 source "$HOME/.env"
 set +a
 
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# fzf: load key-bindings immediately, lazy-load completion
+if [[ ! "$PATH" == */opt/homebrew/opt/fzf/bin* ]]; then
+  PATH="${PATH:+${PATH}:}/opt/homebrew/opt/fzf/bin"
+fi
+source ~/.zsh_cache/fzf-key-bindings.zsh
 
 #### History
 
@@ -88,6 +100,9 @@ function __init_completions() {
   zstyle ':completion:*' menu select
   zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
   bindkey -M menuselect '^[[Z' reverse-menu-complete
+  # Load deferred completions
+  source $HOMEBREW_PREFIX/opt/git-extras/share/git-extras/git-extras-completion.zsh
+  source "/opt/homebrew/opt/fzf/shell/completion.zsh"
 }
 
 # Defer compinit until first tab press
@@ -101,8 +116,8 @@ bindkey '^I' __expand_or_complete_with_init
 
 export PATH="$HOME/.local/share/mise/shims:$PATH"
 
-source $HOMEBREW_PREFIX/opt/git-extras/share/git-extras/git-extras-completion.zsh
-source "$HOMEBREW_PREFIX/share/google-cloud-sdk/path.zsh.inc"
+# gcloud path (inlined from path.zsh.inc)
+export PATH="$HOMEBREW_PREFIX/share/google-cloud-sdk/bin:$PATH"
 # Cache zoxide init (regenerate with: zoxide init zsh > ~/.zoxide.zsh)
 source ~/.zoxide.zsh
 
