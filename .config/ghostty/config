@@ -12,9 +12,8 @@ keybind = shift+enter=text:\x1b\r
 macos-non-native-fullscreen = visible-menu
 macos-option-as-alt = false
 macos-titlebar-style = tabs
+maximize = true
 mouse-hide-while-typing = false
 scrollback-limit=100000000
 shell-integration-features = no-cursor
 theme = Gruvbox Dark Hard
-window-height = 10000
-window-width = 10000
