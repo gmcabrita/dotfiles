@@ -7,3 +7,4 @@
 .zig-cache/
 zig-out/
 .DS_Store
+scratchpad.txt
