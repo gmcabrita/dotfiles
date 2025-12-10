@@ -32,6 +32,9 @@ cp ".config/zed/"* "$HOME/.config/zed"
 mkdir -p "$HOME/.config/jj"
 cp ".config/jj/"* "$HOME/.config/jj"
 
+mkdir -p "$HOME/.config/qBittorrent"
+cp ".config/qBittorrent/"* "$HOME/.config/qBittorrent"
+
 mkdir -p "$HOME/.config"
 cp -r ".config/"* "$HOME/.config"
 
