@@ -204,10 +204,6 @@ function g() {
   git "$@"
 }
 
-function but() {
-  /Applications/GitButler.app/Contents/MacOS/gitbutler-tauri $@
-}
-
 function claudeyolo() {
   claude --dangerously-skip-permissions "$@"
 }
