@@ -2,6 +2,7 @@ benchmark-ips
 debug
 gem-why
 memory_profiler
+openssl
 profile-viewer
 ruby-lsp
 stackprof
