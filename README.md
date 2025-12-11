@@ -72,13 +72,8 @@
   - Disable spotlight
   - Import config from iCloud Drive (or login if we still have Pro)
 - Zoom
+- Tailscale
 - Setapp + apps
-  - CleanShot X
-  - TablePlus
-  - Soulver
-  - CleanMyMac X
-    - Import config from iCloud Drive
-  - Proxyman
 - https://twitter.com/thorstenball/status/1736679960784310775
   - Keep "Wake for network access" on because of Plex
 - Copy zsh history from icloud
@@ -109,5 +104,3 @@
     - Keep folders on top when sorting by name
     - When performing a search: Search the Current Folder
 - https://nexte.st/docs/installation/macos/#gatekeeper
-- `gh repo clone rockorager/zigdoc`
-  - `zig build install -Doptimize=ReleaseFast --prefix $HOME/.local`
