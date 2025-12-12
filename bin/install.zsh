@@ -170,6 +170,7 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
   mise use -g bun@latest \
               cargo:hurlfmt@latest \
               cargo:oha@latest \
+              github:soulverteam/Soulver-CLI
               deno@latest \
               fnox@latest \
               go@latest \
