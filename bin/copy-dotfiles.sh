@@ -20,6 +20,9 @@ cp ".psql/queries/"* "$HOME/.psql/queries"
 mkdir -p "$HOME/.local"
 cp -r ".local/"* "$HOME/.local"
 
+mkdir -p "$HOME/.ssh"
+cp -r ".ssh/"* "$HOME/.ssh"
+
 mkdir -p "$HOME/.claude"
 cp -r ".claude/"* "$HOME/.claude"
 

@@ -63,6 +63,8 @@ defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool false
 # Disable text replacements
 defaults write NSGlobalDomain NSUserDictionaryReplacementItems -array
 
+sudo sed -i.bak 's/^#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+
 # Set Zed as the default editor for plaintext files
 defaults write com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers -array-add \
   '{LSHandlerContentType=public.plain-text;LSHandlerRoleAll=dev.zed.Zed;}' \
