@@ -78,6 +78,7 @@
   - Keep "Wake for network access" on because of Plex
 - Copy zsh history from icloud
   - `cp ~/iCloud\ Drive/Software/.zsh_history ~/.zsh_history`
+- Download and install [qBittorrent](https://www.qbittorrent.org/download)
 - Copy qBittorrent data from icloud
   - `mkdir -p ~/Library/Application\ Support/qBittorrent/`
   - `cp -r ~/iCloud\ Drive/Software/qBittorrent ~/Library/Application\ Support/qBittorrent/`
