@@ -310,7 +310,7 @@ function update-everything() {
 
   echo "Remember that these exist:"
   echo "\tdoggo            DNS Client"
-  echo "\tgsa              Analyze the size of Go binaries
+  echo "\tgsa              Analyze the size of Go binaries"
   echo "\toha              HTTP load generator"
   echo "\tspacer           Utility for adding spacers when command output stops"
   echo "\tt                Time program (Clocks, RSS, Context Switches)"
