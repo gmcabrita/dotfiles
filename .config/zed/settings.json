@@ -147,6 +147,8 @@
     "docker-compose": true,
     "dockerfile": true,
     "earthfile": true,
+    "elixir": true,
+    "erlang": true,
     "git-firefly": true,
     "html": true,
     "log": true,

@@ -16,7 +16,7 @@ PATH="$HOME/.local/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/libp
 export HOMEBREW_CLEANUP_MAX_AGE_DAYS=30
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export HK_MISE=1
-# export MIX_OS_DEPS_COMPILE_PARTITION_COUNT=$(sysctl -n hw.perflevel0.logicalcpu 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || nproc --all 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
+export MIX_OS_DEPS_COMPILE_PARTITION_COUNT=$(sysctl -n hw.perflevel0.logicalcpu 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || nproc --all 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
 export JEMALLOC_LIBS="-L$HOMEBREW_PREFIX/opt/jemalloc/lib -ljemalloc"
 export JEMALLOC_CFLAGS="-I$HOMEBREW_PREFIX/opt/jemalloc/include"
 export CPPFLAGS="-I$HOMEBREW_PREFIX/opt/openssl@3/include -I$HOMEBREW_PREFIX/opt/jemalloc/include -I$HOMEBREW_PREFIX/opt/gmp/include -I$MACOS_SDK_PATH/usr/include -I$HOMEBREW_PREFIX/opt/sqlite/include"
@@ -285,6 +285,11 @@ function convert_mp4_to_mov() {
   ffmpeg -i "$1.mp4" -movflags use_metadata_tags -map_metadata 0 -f mov "$1.mov"
 }
 
+function livebook-install() {
+  mix do local.rebar --force, local.hex --force
+  mix escript.install hex livebook
+}
+
 function git-fetch-all-repos() {
   find . -type d -depth 1 -exec git --git-dir={}/.git --work-tree=$PWD/{} pull --all \;
   find . -type d -depth 1 -exec git --git-dir={}/.git --work-tree=$PWD/{} fetch origin master:master \;
@@ -296,6 +301,8 @@ function update-programming-languages() {
   mise plugins up
   mise up --bump
   mise reshim
+  mix local.hex --force
+  rm -rf "$HOME/Library/Application Support/Zed/extensions/work/elixir"/expert-*
 }
 
 function update-everything() {
