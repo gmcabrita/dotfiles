@@ -305,6 +305,10 @@ function update-programming-languages() {
   rm -rf "$HOME/Library/Application Support/Zed/extensions/work/elixir"/expert-*
 }
 
+function timestamps() {
+  ts '[%Y-%m-%d %H:%M:%.S]'
+}
+
 function update-everything() {
   brew update && brew bundle install --cleanup --file=~/.config/Brewfile && brew upgrade && update-programming-languages
 
