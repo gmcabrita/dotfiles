@@ -8,3 +8,4 @@
 zig-out/
 .DS_Store
 scratchpad.*
+.claude/

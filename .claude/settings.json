@@ -22,5 +22,17 @@
         ]
       }
     ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "excludedCommands": ["docker"],
+    "network": {
+      "allowUnixSockets": ["/var/run/docker.sock"],
+      "allowLocalBinding": true
+    }
+  },
+  "permissions": {
+    "deny": ["Read(.envrc)", "Read(.env.local)", "Read(.env)"]
   }
 }
