@@ -8,4 +8,4 @@
 zig-out/
 .DS_Store
 scratchpad.*
-.claude/
+**/.claude/settings.local.json
