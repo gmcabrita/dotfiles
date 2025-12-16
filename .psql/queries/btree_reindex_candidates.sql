@@ -142,7 +142,7 @@ select
 from step4
 where
     step4.bloat_pct is not null
-    and step4.bloat_pct > 20.0
+    and step4.bloat_pct > 25.0
     and step4.bloat_size is not null
     and step4.bloat_size >= (10 ^ 9)::numeric
 order by step4.bloat_size desc
