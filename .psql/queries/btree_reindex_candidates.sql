@@ -190,6 +190,6 @@ from (
   where nspname <> 'pg_catalog'
 ) as bloated_indexes
 where
-  bloat_pct > 25 -- More than 30% bloat
+  bloat_pct > 25 -- More than 25% bloat
   and bloat_size > 2147483648 -- More than 2 GiB bloat
 order by bloat_size desc, bloat_pct desc;
