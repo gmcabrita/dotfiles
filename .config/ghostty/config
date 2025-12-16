@@ -3,7 +3,7 @@ background-blur-radius = 20
 background-opacity = 1
 cursor-style = block
 cursor-style-blink = false
-font-family = JetBrains Mono NL
+font-family = Google Sans Code
 font-feature = -calt, -liga, -dlig
 font-size = 17
 keybind = cmd+shift+j=write_screen_file:paste
