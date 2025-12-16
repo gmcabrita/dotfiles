@@ -68,5 +68,3 @@ select
 \set vacuum_activity `cat ~/.psql/queries/vacuum_activity.sql`
 
 \unset QUIET
-
-set lock_timeout = '5s';
