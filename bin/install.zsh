@@ -188,3 +188,4 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
 mise settings add idiomatic_version_file_enable_tools rust
 mise settings set python.uv_venv_auto true
 mix local.hex --force
+deno install -grAf jsr:@valtown/vt
