@@ -43,7 +43,6 @@ select
 \set connection_total_memory_overhead `cat ~/.psql/queries/connection_total_memory_overhead.sql`
 \set databases `cat ~/.psql/queries/databases.sql`
 \set hot_update_ratio `cat ~/.psql/queries/hot_update_ratio.sql`
-\set index_bloat_ratio `cat ~/.psql/queries/index_bloat_ratio.sql`
 \set index_monitoring `cat ~/.psql/queries/index_monitoring.sql`
 \set invalid_indexes `cat ~/.psql/queries/invalid_indexes.sql`
 \set io_cache_hit_ratio `cat ~/.psql/queries/io_cache_hit_ratio.sql`
