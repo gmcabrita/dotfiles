@@ -7,8 +7,9 @@ if [[ -z "$MACOS_SDK_PATH" ]]; then
   if [[ -f ~/.cache/macos_sdk_path ]]; then
     MACOS_SDK_PATH="$(<~/.cache/macos_sdk_path)"
   else
-    MACOS_SDK_PATH="$(xcrun --show-sdk-path 2>/dev/null)"
-    mkdir -p ~/.cache && printf '%s' "$MACOS_SDK_PATH" > ~/.cache/macos_sdk_path
+    mkdir -p ~/.cache
+    xcrun --show-sdk-path 2>/dev/null > ~/.cache/macos_sdk_path
+    MACOS_SDK_PATH="$(<~/.cache/macos_sdk_path)"
   fi
 fi
 
