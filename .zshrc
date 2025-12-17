@@ -414,4 +414,18 @@ function sound-prompt() {
   (afplay /System/Library/Sounds/Ping.aiff &>/dev/null &)
 }
 
+function vtsync() {
+  z ~/Developer/vt
+  for val in $(vt list --all | tr -d '\r' | perl -pe 's/\e\[?.*?[\@-~]//g' | awk '/^[0-9]/ {print $2}'); do
+    if [ -d "$val" ]; then
+      echo "🔄 Updating $val..."
+      (cd "$val" && printf "y\n" | vt pull)
+    else
+      echo "⬇️  Cloning $val..."
+      printf "y\n" | vt clone "$val"
+    fi
+  done
+
+}
+
 [[ $ZPROF == 1 ]] && zprof
