@@ -302,7 +302,7 @@ function update-programming-languages() {
   mise up --bump
   mise reshim
   mix local.hex --force
-  rm -rf "$HOME/Library/Application Support/Zed/extensions/work/elixir"/expert-*
+  rm -rf "$HOME/Library/Application Support/Zed/extensions/work/elixir"/expert-*(N)
 }
 
 function timestamps() {
