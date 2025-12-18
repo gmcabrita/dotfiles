@@ -311,7 +311,11 @@ function timestamps() {
 }
 
 function update-everything() {
-  brew update && brew bundle install --cleanup --file=~/.config/Brewfile && brew upgrade && update-programming-languages
+  brew update
+  brew bundle install --cleanup --file=~/.config/Brewfile
+  brew upgrade
+  update-programming-languages
+  rm -f ~/.cache/macos_sdk_path
 
   echo "Remember that these exist:"
   echo "\tdoggo            DNS Client"
