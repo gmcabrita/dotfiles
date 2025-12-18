@@ -106,3 +106,5 @@
     - When performing a search: Search the Current Folder
 - https://nexte.st/docs/installation/macos/#gatekeeper
 - Enable "Remote Login" (user only, disable full disk access)
+- `gh repo clone rockorager/zigdoc`
+  - `zig build install -Doptimize=ReleaseFast --prefix $HOME/.local`

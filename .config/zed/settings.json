@@ -13,13 +13,13 @@
   "buffer_line_height": "comfortable",
   "buffer_font_weight": 400.0,
   "outline_panel": {
-    "button": false
+    "button": false,
   },
   "notification_panel": {
-    "button": false
+    "button": false,
   },
   "collaboration_panel": {
-    "button": false
+    "button": false,
   },
   "agent_buffer_font_size": 17.0,
   "enable_language_server": true,
@@ -35,14 +35,14 @@
     "**/.classpath",
     "**/.settings",
     "**/.zig-cache",
-    "**/zig-out"
+    "**/zig-out",
   ],
   "tabs": {
     "file_icons": false,
-    "git_status": true
+    "git_status": true,
   },
   "preview_tabs": {
-    "enabled": false
+    "enabled": false,
   },
   "extend_comment_on_newline": false,
   "agent": {
@@ -50,15 +50,15 @@
     "always_allow_tool_actions": true,
     "inline_assistant_model": {
       "provider": "anthropic",
-      "model": "claude-opus-4-5-thinking-latest"
+      "model": "claude-opus-4-5-thinking-latest",
     },
     "default_model": {
       "provider": "openai",
-      "model": "gpt-5"
-    }
+      "model": "gpt-5",
+    },
   },
   "features": {
-    "edit_prediction_provider": "copilot"
+    "edit_prediction_provider": "copilot",
   },
   "terminal": {
     "font_weight": 400.0,
@@ -67,21 +67,21 @@
     "cursor_shape": "block",
     "blinking": "off",
     "font_family": "Google Sans Code",
-    "font_size": 17.0
+    "font_size": 17.0,
   },
   "experimental.theme_overrides": {
     "players": [
       {
-        "cursor": "#908376"
-      }
-    ]
+        "cursor": "#908376",
+      },
+    ],
   },
   "scrollbar": {
-    "show": "always"
+    "show": "always",
   },
   "toolbar": {
     "breadcrumbs": true,
-    "quick_actions": true
+    "quick_actions": true,
   },
   "on_last_window_closed": "quit_app",
   "use_autoclose": false,
@@ -91,23 +91,23 @@
   "vim_mode": false,
   "project_panel": {
     "dock": "right",
-    "git_status": true
+    "git_status": true,
   },
   "format_on_save": "on",
   "formatter": "auto",
   "ensure_final_newline_on_save": true,
   "autosave": {
-    "after_delay": { "milliseconds": 60 }
+    "after_delay": { "milliseconds": 60 },
   },
   "auto_update": true,
   "ui_font_family": "Google Sans Code",
   "ui_font_features": {
-    "calt": false
+    "calt": false,
   },
   "buffer_font_family": "Google Sans Code",
   "buffer_font_size": 17.0,
   "buffer_font_features": {
-    "calt": false
+    "calt": false,
   },
   "cursor_shape": "block",
   "cursor_blink": false,
@@ -115,8 +115,8 @@
     "git_gutter": "tracked_files",
     "inline_blame": {
       "enabled": true,
-      "show_commit_summary": true
-    }
+      "show_commit_summary": true,
+    },
   },
   "hard_tabs": false,
   "tab_size": 2,
@@ -128,7 +128,7 @@
   "show_edit_predictions": true,
   "edit_predictions": {
     "mode": "subtle",
-    "enabled_in_text_threads": false
+    "enabled_in_text_threads": false,
   },
   "show_completions_on_input": true,
   "show_completion_documentation": true,
@@ -137,11 +137,11 @@
     "enabled": false,
     "show_type_hints": true,
     "show_parameter_hints": true,
-    "show_other_hints": true
+    "show_other_hints": true,
   },
   "tab_bar": {
     "show_nav_history_buttons": false,
-    "show": true
+    "show": true,
   },
   "auto_install_extensions": {
     "docker-compose": true,
@@ -162,26 +162,27 @@
     "toml": true,
     "tsgo": true,
     "typst": true,
-    "xml": true
+    "xml": true,
+    "zig": true,
   },
   "file_types": {
     "Just": ["Justfile"],
     "Elixir": ["tmp.*.erl"],
     "JSON": [".prettierrc", ".stylelintrc", ".babelrc"],
-    "HTML": ["*.svg"]
+    "HTML": ["*.svg"],
   },
   "language_servers": ["!eslint", "..."],
   "lsp": {
     "expert": {
       "binary": {
-        "arguments": ["--stdio"]
-      }
+        "arguments": ["--stdio"],
+      },
     },
     "zls": {
       "settings": {
         "enable_build_on_save": true,
-        "build_on_save_step": "check"
-      }
+        "build_on_save_step": "check",
+      },
     },
     "gopls": {
       "initialization_options": {
@@ -192,7 +193,7 @@
         "analyses": {
           "shadow": true,
           "unusedvariable": true,
-          "useany": true
+          "useany": true,
         },
         "completeUnimported": true,
         "experimentalPostfixCompletions": true,
@@ -203,18 +204,18 @@
           "constantValues": true,
           "functionTypeParameters": true,
           "parameterNames": true,
-          "rangeVariableTypes": true
-        }
-      }
+          "rangeVariableTypes": true,
+        },
+      },
     },
     "next-ls": {
       "initialization_options": {
         "experimental": {
           "completions": {
-            "enable": true
-          }
-        }
-      }
+            "enable": true,
+          },
+        },
+      },
     },
     "ruby-lsp": {
       "initialization_options": {
@@ -239,13 +240,13 @@
           "semanticHighlighting": false,
           "signatureHelp": false,
           "typeHierarchy": false,
-          "workspaceSymbol": true
+          "workspaceSymbol": true,
         },
         "featuresConfiguration": {
           "inlayHint": {
             "implicitHashValue": false,
-            "implicitRescue": false
-          }
+            "implicitRescue": false,
+          },
         },
         "indexing": {
           "excludedPatterns": ["**/spec/**/*.rb"],
@@ -733,15 +734,15 @@
             "yajl-ruby",
             "yaml",
             "zeitwerk",
-            "zstd-ruby"
-          ]
-        }
-      }
-    }
+            "zstd-ruby",
+          ],
+        },
+      },
+    },
   },
   "languages": {
     "Git Commit": {
-      "preferred_line_length": 72
+      "preferred_line_length": 72,
     },
     "SQL": {
       "formatter": "prettier",
@@ -755,52 +756,52 @@
             "options": {
               "keywordCase": "lower",
               "dataTypeCase": "lower",
-              "functionCase": "lower"
-            }
-          }
-        ]
+              "functionCase": "lower",
+            },
+          },
+        ],
       },
-      "tab_size": 2
+      "tab_size": 2,
     },
     "Python": {
-      "tab_size": 4
+      "tab_size": 4,
     },
     "Pkl": {
-      "tab_size": 4
+      "tab_size": 4,
     },
     "CSS": {
-      "language_servers": ["tailwindcss-language-server"]
+      "language_servers": ["tailwindcss-language-server"],
     },
     "Ruby": {
       "format_on_save": "on",
-      "language_servers": ["ruby-lsp", "!steep", "!sorbet", "!solargraph", "!rubocop", "..."]
+      "language_servers": ["ruby-lsp", "!steep", "!sorbet", "!solargraph", "!rubocop", "..."],
     },
     "Go": {
-      "hard_tabs": true
+      "hard_tabs": true,
     },
     "Make": {
-      "hard_tabs": true
+      "hard_tabs": true,
     },
     "Just": {
-      "hard_tabs": true
+      "hard_tabs": true,
     },
     "Elixir": {
-      "language_servers": ["expert", "!next-ls", "!lexical", "!elixir-ls", "..."]
+      "language_servers": ["expert", "!next-ls", "!lexical", "!elixir-ls", "..."],
     },
     "HEEX": {
-      "language_servers": ["next-ls", "!lexical", "!elixir-ls", "tailwindcss-ls", "..."]
+      "language_servers": ["next-ls", "!lexical", "!elixir-ls", "tailwindcss-ls", "..."],
     },
     "HTML": {
-      "format_on_save": "off"
+      "format_on_save": "off",
     },
     "TypeScript": {
-      "language_servers": ["!typescript-language-server", "!eslint", "tsgo", "vtsls", "..."]
+      "language_servers": ["!typescript-language-server", "!eslint", "tsgo", "vtsls", "..."],
     },
     "JavaScript": {
-      "language_servers": ["!typescript-language-server", "!eslint", "tsgo", "vtsls", "..."]
+      "language_servers": ["!typescript-language-server", "!eslint", "tsgo", "vtsls", "..."],
     },
     "Zig": {
-      "tab_size": 4
-    }
-  }
+      "tab_size": 4,
+    },
+  },
 }

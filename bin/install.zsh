@@ -183,7 +183,9 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               ruby@latest \
               rust@latest \
               uv@latest \
-              watchexec@latest
+              watchexec@latest \
+              zig@latest \
+              zls@latest
 
 mise settings add idiomatic_version_file_enable_tools rust
 mise settings set python.uv_venv_auto true
