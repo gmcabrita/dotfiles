@@ -39,11 +39,17 @@ cp ".config/jj/"* "$HOME/.config/jj"
 mkdir -p "$HOME/.config/qBittorrent"
 cp ".config/qBittorrent/"* "$HOME/.config/qBittorrent"
 
+mkdir -p "$HOME/.config/opencode"
+cp ".config/opencode/"* "$HOME/.config/opencode"
+
 mkdir -p "$HOME/.config"
 cp -r ".config/"* "$HOME/.config"
 
 mkdir -p "$HOME/.raycast-scripts"
 cp -r ".raycast-scripts/"* "$HOME/.raycast-scripts"
+
+mkdir -p "$HOME/.opencode"
+cp -r ".opencode/"* "$HOME/.opencode"
 
 mkdir -p "$HOME/Library/Application Support/go/telemetry"
 cp "Library/Application Support/go/telemetry/"* "$HOME/Library/Application Support/go/telemetry"
