@@ -39,8 +39,8 @@ cp ".config/jj/"* "$HOME/.config/jj"
 mkdir -p "$HOME/.config/qBittorrent"
 cp ".config/qBittorrent/"* "$HOME/.config/qBittorrent"
 
-mkdir -p "$HOME/.config/opencode"
-cp ".config/opencode/"* "$HOME/.config/opencode"
+mkdir -p "$HOME/.config/opencode/"
+cp -r ".config/opencode/"* "$HOME/.config/opencode"
 
 mkdir -p "$HOME/.config"
 cp -r ".config/"* "$HOME/.config"
