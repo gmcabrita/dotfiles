@@ -346,6 +346,7 @@ function update-everything() {
   echo "\tspacer           Utility for adding spacers when command output stops"
   echo "\tt                Time program (Clocks, RSS, Context Switches)"
   echo "\ttspin            Log file highlighter"
+  echo "\tmo               Deep clean and optimize your Mac"
   echo "\tbenchmark-zsh    Benchmark ZSH startup"
   echo "\tprofile-zsh      Profile ZSH startup"
 }
