@@ -10,7 +10,9 @@
 ## Pre-install script setup
 
 - Privacy & Security:
-  - Enable full disk access for Terminal
+  - Enable "Full Disk Access" for Terminal, Ghostty, Zed
+  - Enable "Developer Tools" for Terminal, Ghostty, Zed
+    - https://nexte.st/docs/installation/macos/#gatekeeper
 - Accessibility:
   - Increase Text size to 16pt for supported apps
 - Display:
@@ -104,7 +106,4 @@
     - Remove items from the Trash after 30 days
     - Keep folders on top when sorting by name
     - When performing a search: Search the Current Folder
-- https://nexte.st/docs/installation/macos/#gatekeeper
 - Enable "Remote Login" (user only, disable full disk access)
-- `gh repo clone rockorager/zigdoc`
-  - `zig build install -Doptimize=ReleaseFast --prefix $HOME/.local`
