@@ -338,7 +338,6 @@ function update-everything() {
   brew upgrade
   update-programming-languages
   rm -f ~/.cache/macos_sdk_path
-  mo clean
 
   echo "Remember that these exist:"
   echo "\tdoggo            DNS Client"
