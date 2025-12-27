@@ -42,6 +42,9 @@ cp ".config/qBittorrent/"* "$HOME/.config/qBittorrent"
 mkdir -p "$HOME/.config/opencode/"
 cp -r ".config/opencode/"* "$HOME/.config/opencode"
 
+mkdir -p "$HOME/.config/mole/"
+cp -r ".config/mole/"* "$HOME/.config/mole"
+
 mkdir -p "$HOME/.config"
 cp -r ".config/"* "$HOME/.config"
 
