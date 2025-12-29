@@ -107,3 +107,5 @@
     - Keep folders on top when sorting by name
     - When performing a search: Search the Current Folder
 - Enable "Remote Login" (user only, disable full disk access)
+  -- `gh repo clone rockorager/zigdoc`
+  - `zig build install -Doptimize=ReleaseFast --prefix $HOME/.local`
