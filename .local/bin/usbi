@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-go run ~/.local/bin/usbi.go
+go run ~/.local/bin/script/usbi.go
