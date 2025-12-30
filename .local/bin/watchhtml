@@ -144,7 +144,19 @@ while true; do
         # Show a unified diff with labels
         "${DIFF_CMD[@]}" --label "OLD ($baseline_hash)" --label "NEW ($curr_hash)" "$PREV_FILE" "$CURR_FILE" || true
 
-        say "change detected" -v zarvox
+        # Loop the alert until user presses Enter or kills the script
+        (
+            while true; do
+                say "change detected" -v zarvox &
+                SAY_PID=$!
+                if read -t 2 -r; then
+                    kill $SAY_PID 2>/dev/null || true
+                    wait $SAY_PID 2>/dev/null || true
+                    break
+                fi
+                wait $SAY_PID 2>/dev/null || true
+            done
+        ) 2>/dev/null
 
         break
     fi
