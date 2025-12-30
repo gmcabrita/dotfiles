@@ -139,8 +139,20 @@ function bq() {
   command bq "$@"
 }
 
+#### Other ZSH Autoloads
+
+autoload -Uz edit-command-line
+zle -N edit-command-line
+
+# zmv '(*).log' '$1.txt'
+# zmv -n -W '*.log' '*.txt'
+# zmv -i -W '*.log' '*.txt'
+autoload zmv
+
 #### Keybinds
 
+bindkey '^x^e' edit-command-line
+bindkey '^_' undo
 bindkey '^[3~' backward-kill-word # option-backspace
 bindkey '^[[3;3~' kill-word # option-fn-backspace
 bindkey '^[[1;3D' backward-word # option-left
@@ -179,6 +191,17 @@ alias marked="open -a Marked"
 
 alias vi="nvim"
 alias vim="nvim"
+
+alias -s json='jless'
+alias -s jsonl='jless'
+alias -s ndjson='jless'
+alias -s gz='(){ if [[ "$1" == *.json.gz || "$1" == *.jsonl.gz || "$1" == *.ndjson.gz ]]; then gunzip -c "$1" | jless; else gunzip -c "$1"; fi }'
+
+alias -g NE='2>/dev/null'
+alias -g DN='> /dev/null'
+alias -g NUL='>/dev/null 2>&1'
+alias -g C='| pbcopy'
+alias -g L='| less'
 
 #### Functions
 
