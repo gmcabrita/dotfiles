@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+curl -s "http://ip-api.com/json/$1" | jq
