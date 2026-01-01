@@ -242,10 +242,6 @@ function benchmark-zsh() {
   hyperfine --warmup 10 "zsh -i -c 'exit 0'"
 }
 
-function tailscale() {
- /Applications/Tailscale.app/Contents/MacOS/Tailscale "$@"
-}
-
 function g() {
   git "$@"
 }

@@ -74,7 +74,7 @@
   - Disable spotlight
   - Import config from iCloud Drive (or login if we still have Pro)
 - Zoom
-- Tailscale
+- [Tailscale](https://pkgs.tailscale.com/stable/#macos)
 - Setapp + apps
 - https://twitter.com/thorstenball/status/1736679960784310775
   - Keep "Wake for network access" on because of Plex
@@ -107,5 +107,3 @@
     - Keep folders on top when sorting by name
     - When performing a search: Search the Current Folder
 - Enable "Remote Login" (user only, disable full disk access)
-  -- `gh repo clone rockorager/zigdoc`
-  - `zig build install -Doptimize=ReleaseFast --prefix $HOME/.local`
