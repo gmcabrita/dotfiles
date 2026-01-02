@@ -174,6 +174,7 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               elixir@latest \
               erlang@latest \
               fnox@latest \
+              github:lexiforest/curl-impersonate \
               go@latest \
               hk@latest \
               node@lts \
