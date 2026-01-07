@@ -3,6 +3,7 @@ background-blur-radius = 20
 background-opacity = 1.0
 cursor-style = block
 cursor-style-blink = false
+custom-shader = ~/.config/ghostty/shaders/cursor.glsl
 font-family = Google Sans Code
 font-feature = -calt, -liga, -dlig
 font-size = 17

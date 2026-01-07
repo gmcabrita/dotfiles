@@ -28,7 +28,7 @@ mkdir -p "$HOME/.claude"
 cp -r ".claude/"* "$HOME/.claude"
 
 mkdir -p "$HOME/.config/ghostty"
-cp ".config/ghostty/"* "$HOME/.config/ghostty"
+cp -r ".config/ghostty/"* "$HOME/.config/ghostty"
 
 mkdir -p "$HOME/.config/zed"
 cp ".config/zed/"* "$HOME/.config/zed"
