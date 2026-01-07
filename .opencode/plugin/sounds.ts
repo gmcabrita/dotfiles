@@ -18,7 +18,7 @@ export const NotificationPlugin = async ({ project, client, $, directory, worktr
         if (await isMainSession(sessionID)) {
           await $`afplaybg /System/Library/Sounds/Submarine.aiff`.quiet().nothrow();
         }
-      } else if (event.type === "permission.updated") {
+      } else if (event.type === "permission.requested") {
         await $`afplaybg /System/Library/Sounds/Ping.aiff`.quiet().nothrow();
       } else {
         return;
