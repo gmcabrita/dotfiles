@@ -9,3 +9,5 @@ zig-out/
 .DS_Store
 scratchpad.*
 **/.claude/settings.local.json
+.config/opencode/node_modules/
+.config/opencode/bun.lock

@@ -26,6 +26,7 @@ interface RalphFileState {
   sessionID: string;
   prdPath: string;
   progressPath: string;
+  projectDir: string;
   iteration: number;
   maxIterations: number;
   errorCount: number;
@@ -217,7 +218,7 @@ When ALL stories have passes: true, output: ${COMPLETE_SIGNAL}
 
 async function detectVCS($: PluginInput["$"]): Promise<VCSType> {
   try {
-    const result = await $`test -d .jj && echo jj || echo git`;
+    const result = await $`test -d .jj && echo jj || echo git`.quiet();
     const output = result.stdout.toString().trim();
     return output === "jj" ? "jj" : "git";
   } catch {
@@ -225,15 +226,12 @@ async function detectVCS($: PluginInput["$"]): Promise<VCSType> {
   }
 }
 
-async function readPRD(client: OpencodeClient, prdPath: string): Promise<PRD> {
-  const result = await client.file.read({ query: { path: prdPath } });
-  const data = (result as { data?: { content?: string } }).data;
-  const content = data?.content;
-
-  if (!content) {
-    throw new Error(`Could not read ${prdPath}`);
+async function readPRD(prdPath: string): Promise<PRD> {
+  if (!fs.existsSync(prdPath)) {
+    throw new Error(`PRD file not found: ${prdPath}`);
   }
 
+  const content = fs.readFileSync(prdPath, "utf-8");
   const prd = JSON.parse(content) as PRD;
 
   if (!prd.branchName || !Array.isArray(prd.userStories)) {
@@ -264,7 +262,7 @@ Branch: ${branchName}
 
 ---
 `;
-    await $`echo ${content} > ${progressPath}`;
+    await $`echo ${content} > ${progressPath}`.quiet();
   }
 }
 
@@ -311,7 +309,7 @@ async function showToast(
 
 function createRalphStart(
   client: OpencodeClient,
-  directory: string,
+  stateDir: string,
   $: PluginInput["$"],
 ): ToolDefinition {
   return tool({
@@ -326,13 +324,16 @@ PRD schema: { branchName: string, userStories: [{ category, description, steps: 
     },
     async execute(args: RalphStartArgs, ctx) {
       try {
+        // Derive project directory from PRD path
+        const projectDir = path.dirname(args.prd);
+
         // Check for existing active loop
-        const existing = readState(directory);
+        const existing = readState(stateDir);
         if (existing?.active) {
           return fmt.error(`Loop already active. Use ralph_stop first or wait for completion.`);
         }
 
-        const prd = await readPRD(client, args.prd);
+        const prd = await readPRD(args.prd);
         const vcsType = await detectVCS($);
         const progressPath = getProgressPath(args.prd);
 
@@ -348,6 +349,7 @@ PRD schema: { branchName: string, userStories: [{ category, description, steps: 
           sessionID: ctx.sessionID,
           prdPath: args.prd,
           progressPath,
+          projectDir,
           iteration: 1,
           maxIterations: args.iterations ?? DEFAULT_MAX_ITERATIONS,
           errorCount: 0,
@@ -357,7 +359,7 @@ PRD schema: { branchName: string, userStories: [{ category, description, steps: 
           startedAt: new Date().toISOString(),
         };
 
-        writeState(directory, state);
+        writeState(stateDir, state);
 
         await showToast(client, `Ralph started: ${incompleteCount} stories`, "info");
 
@@ -373,12 +375,12 @@ PRD schema: { branchName: string, userStories: [{ category, description, steps: 
   });
 }
 
-function createRalphStatus(client: OpencodeClient, directory: string): ToolDefinition {
+function createRalphStatus(client: OpencodeClient, stateDir: string): ToolDefinition {
   return tool({
     description: "Check Ralph loop status with PRD progress summary.",
     args: {},
     async execute() {
-      const state = readState(directory);
+      const state = readState(stateDir);
       if (!state) {
         return fmt.noActive();
       }
@@ -410,18 +412,18 @@ function createRalphStatus(client: OpencodeClient, directory: string): ToolDefin
   });
 }
 
-function createRalphStop(directory: string): ToolDefinition {
+function createRalphStop(stateDir: string): ToolDefinition {
   return tool({
     description: "Stop Ralph loop.",
     args: {},
     async execute() {
-      const state = readState(directory);
+      const state = readState(stateDir);
       if (!state?.active) {
         return fmt.noActive();
       }
 
       state.active = false;
-      writeState(directory, state);
+      writeState(stateDir, state);
 
       return fmt.stopped(state);
     },
@@ -435,14 +437,14 @@ function createRalphStop(directory: string): ToolDefinition {
 async function handleSessionIdle(
   event: { type: string; properties?: Record<string, unknown> },
   client: OpencodeClient,
-  directory: string,
+  stateDir: string,
 ): Promise<void> {
   if (event.type !== "session.idle") return;
 
   const sessionID = event.properties?.sessionID as string | undefined;
   if (!sessionID) return;
 
-  const state = readState(directory);
+  const state = readState(stateDir);
   if (!state?.active) return;
   if (state.sessionID !== sessionID) return;
 
@@ -450,14 +452,14 @@ async function handleSessionIdle(
   const complete = await checkForCompletion(client, sessionID);
 
   if (complete) {
-    clearState(directory);
+    clearState(stateDir);
     await showToast(client, "Ralph complete!", "success");
     return;
   }
 
   // Check max iterations
   if (state.iteration >= state.maxIterations) {
-    clearState(directory);
+    clearState(stateDir);
     await showToast(client, fmt.maxReached(state), "warning");
     return;
   }
@@ -465,7 +467,7 @@ async function handleSessionIdle(
   // Continue to next iteration
   state.iteration++;
   state.errorCount = 0; // Reset error count on successful iteration
-  writeState(directory, state);
+  writeState(stateDir, state);
 
   await showToast(client, `Ralph iteration ${state.iteration}/${state.maxIterations}`, "info");
 
@@ -474,21 +476,21 @@ async function handleSessionIdle(
   await client.session.prompt({
     path: { id: sessionID },
     body: { parts: [{ type: "text", text: prompt }] },
-    query: { directory },
+    query: { directory: state.projectDir },
   });
 }
 
 async function handleSessionError(
   event: { type: string; properties?: Record<string, unknown> },
   client: OpencodeClient,
-  directory: string,
+  stateDir: string,
 ): Promise<void> {
   if (event.type !== "session.error") return;
 
   const sessionID = event.properties?.sessionID as string | undefined;
   if (!sessionID) return;
 
-  const state = readState(directory);
+  const state = readState(stateDir);
   if (!state?.active) return;
   if (state.sessionID !== sessionID) return;
 
@@ -496,13 +498,13 @@ async function handleSessionError(
 
   if (state.errorCount >= state.maxErrors) {
     state.active = false;
-    writeState(directory, state);
+    writeState(stateDir, state);
     await showToast(client, fmt.maxErrors(state), "error");
     return;
   }
 
   // Retry - inject continuation prompt
-  writeState(directory, state);
+  writeState(stateDir, state);
 
   await showToast(
     client,
@@ -515,7 +517,7 @@ async function handleSessionError(
   await client.session.prompt({
     path: { id: sessionID },
     body: { parts: [{ type: "text", text: prompt }] },
-    query: { directory },
+    query: { directory: state.projectDir },
   });
 }
 
