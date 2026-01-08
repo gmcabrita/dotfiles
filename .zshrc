@@ -431,19 +431,4 @@ function sound-prompt() {
   (afplay /System/Library/Sounds/Ping.aiff &>/dev/null &)
 }
 
-function ralph() {
-    local script_path="$HOME/.config/opencode/scripts/ralph.sh"
-
-    if [[ ! -x "$script_path" ]]; then
-        echo "Error: ralph.sh not found or not executable at $script_path" >&2
-        return 1
-    fi
-
-    "$script_path" "$@"
-}
-
-function ralph-status() {
-    ralph --status "$@"
-}
-
 [[ $ZPROF == 1 ]] && zprof

@@ -1,351 +1,220 @@
+---
+name: prd
+description: Create Product Requirements Documents (PRDs) that define the end state of a feature. Use when planning new features, migrations, or refactors. Generates structured PRDs with acceptance criteria for Ralph to execute.
+---
+
 # PRD Creation Skill
 
-Create detailed Product Requirements Documents through interactive clarification.
+Create Product Requirements Documents that define the **end state** of a feature.
+
+The PRD describes WHAT to build, not HOW or in WHAT ORDER. Ralph (the agent) decides implementation path.
 
 ## Workflow
 
 1. User requests: "Load the prd skill and create a PRD for [feature]"
-2. **Ask clarifying questions** to understand scope
-3. **Explore codebase** to understand patterns
-4. Generate markdown PRD to `tasks/prd-<feature-name>.md`
+2. **Ask clarifying questions** to understand the end state
+3. **Explore codebase** to understand patterns and context
+4. Generate markdown PRD to `prd-<feature-name>.md` in project root
 
 ## Clarifying Questions
 
-Before creating the PRD, ask about:
+Focus on understanding the **definition of done**:
 
-- **Problem**: What pain point does this solve?
-- **Scope**: What's in/out of scope?
-- **Users**: Who uses this feature?
-- **Dependencies**: External services, APIs, packages needed?
-- **Existing code**: Build on existing patterns or greenfield?
-- **Priority**: MVP vs full implementation?
-- **Testing**: Unit, integration, e2e requirements?
+- **End state**: What does the feature look like when complete?
+- **Scope boundary**: What's explicitly out of scope?
+- **Success criteria**: How do we know it works?
+- **Constraints**: Performance, security, compatibility requirements?
+- **Context**: What existing code/patterns should be leveraged?
 
 Keep questions concise. 3-5 max per round.
 
 ## Output Format
 
-Save to `tasks/prd-<feature-name>.md`:
+Save to `prd-<feature-name>.md` (project root):
 
 ```markdown
 # PRD: <Feature Name>
 
-**Status:** Draft
-**Date:** <YYYY-MM-DD>
-**Scope:** <Brief scope description>
+## **Date:** <YYYY-MM-DD>
+
+## Overview
+
+One paragraph describing what this feature does when complete.
 
 ---
 
-## Problem Statement
+## End State
 
-### Current Behavior
+When this PRD is complete, the following will be true:
 
-Describe how things work today (or don't).
-
-### Pain Points
-
-| Problem | Impact                    |
-| ------- | ------------------------- |
-| Issue 1 | How it affects users/devs |
-| Issue 2 | How it affects users/devs |
-
-### Why This Solution?
-
-Brief justification for the chosen approach.
+- [ ] Capability 1 exists and works
+- [ ] Capability 2 exists and works
+- [ ] All acceptance criteria pass
+- [ ] Tests cover the new functionality
 
 ---
 
-## Goals
+## Acceptance Criteria
 
-| Priority | Goal                                     |
-| -------- | ---------------------------------------- |
-| P0       | Must-have for initial release            |
-| P0       | Another critical requirement             |
-| P1       | Important but can follow initial release |
-| P2       | Nice to have                             |
+### Feature: <Name>
 
-### Non-Goals (v1)
+- [ ] Criterion 1
+- [ ] Criterion 2
+- [ ] Criterion 3
 
-- What this PRD explicitly does NOT cover
-- Deferred features
-- Out of scope items
+### Feature: <Name>
+
+- [ ] Criterion 1
+- [ ] Criterion 2
 
 ---
 
-## Design
+## Technical Context
 
-### Overview
+### Existing Patterns
 
-High-level approach and architecture.
+- Pattern 1: `src/path/to/example.ts`
+- Pattern 2: `src/path/to/example.ts`
 
-### Data Model
-```
+### Key Files
 
-Schemas, structures, file formats if applicable.
+- `src/relevant/file.ts` - Description of relevance
+- `src/another/file.ts` - Description of relevance
 
-```
+### Dependencies
 
-### Key Decisions
+- External service/API if any
+- Package requirements if any
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Question 1 | What we chose | Why |
-| Question 2 | What we chose | Why |
+---
+
+## Non-Goals (v1)
+
+Explicitly out of scope for this PRD:
+
+- Thing we're not building
+- Future enhancement deferred
+- Related feature that's separate
 
 ---
 
 ## Interface Specifications
 
-<!-- Include sections relevant to your feature -->
+<!-- Only include if user-facing interfaces need precise definition -->
 
-### CLI Interface (if applicable)
+### CLI (if applicable)
+```
 
-#### `command-name [args...]`
-
-Brief description.
+command-name [args] [options]
 
 ```
 
-USAGE:
-command-name [OPTIONS] [ARGS]
+### API (if applicable)
+```
 
-ARGS:
-<arg> Description
-
-OPTIONS:
--f, --flag Description
--o, --option Description
--h, --help Print help
+POST /api/endpoint
+Request: { ... }
+Response: { ... }
 
 ```
 
-**Behavior:**
-- No args → Default behavior
-- With args → Specific behavior
-- `--flag` → Flag behavior
-
-**Output:**
-```
-
-$ command-name arg1
-Success message or output format
-
-````
-
-### API Endpoints (if applicable)
-
-#### `POST /api/resource`
-
-Brief description.
-
-**Request:**
-```json
-{
-  "field": "value"
-}
-````
-
-**Response (201):**
-
-```json
-{
-  "id": "123",
-  "field": "value"
-}
-```
-
-**Errors:**
-| Status | Condition |
-|--------|-----------|
-| 400 | Invalid input |
-| 401 | Not authenticated |
-| 409 | Resource exists |
-
-### UI Components (if applicable)
-
-#### ComponentName
-
-Brief description and purpose.
-
-**Props:**
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `variant` | `'primary' \| 'secondary'` | `'primary'` | Visual style |
-| `onClick` | `() => void` | - | Click handler |
-
-**States:**
-
-- Default
-- Hover
-- Loading
-- Disabled
-- Error
-
-**Behavior:**
-
-- Click → What happens
-- Keyboard → Accessibility behavior
-
----
-
-## User Stories
-
-### US-001: <Story Title> [category]
-
-**As a** <user type>
-**I want** <action>
-**So that** <benefit>
-
-#### Acceptance Criteria
-
-- [ ] Criterion 1
-- [ ] Criterion 2
-
-#### Technical Notes
-
-- Implementation hints
-- File references: `src/path/to/file.ts`
-
-### US-002: <Story Title> [category]
-
-...
-
----
-
-## Implementation Phases
-
-### Phase 1: <Name>
-
-- [ ] Task 1
-- [ ] Task 2
-
-### Phase 2: <Name>
-
-- [ ] Task 3
-- [ ] Task 4
-
----
-
-## Testing Strategy
-
-### Unit Tests
-
-- What to unit test
-
-### Integration Tests
-
-- What to integration test
-
-### E2E Tests (if applicable)
-
-- End-to-end scenarios
+### UI (if applicable)
+Component behavior and states.
 
 ---
 
 ## Open Questions
 
-- Unresolved decisions needing input
-- Areas requiring clarification
+- Unresolved decisions (if any)
+```
 
-````
+## Key Principles
 
-## Section Guidelines
+### Define End State, Not Process
 
-### Problem Statement
-- Explain the "why" before the "what"
-- Use tables for pain points (scannable)
-- Include current behavior so readers understand the gap
+- Describe WHAT exists when done
+- Don't prescribe implementation order
+- Don't assign priorities - agent decides
+- Don't create phases - agent determines path
 
-### Goals with Priority
-- **P0**: Blocking - must ship with feature
-- **P1**: Important - should ship soon after
-- **P2**: Nice to have - future consideration
+### Acceptance Criteria are Checkboxes
 
-### Non-Goals
-Explicitly state what's out of scope to prevent scope creep.
+- Each criterion is independently verifiable
+- Agent marks them complete as it works
+- All checked = PRD complete
 
-### Key Decisions
-Capture important architectural choices and WHY. Future readers (including Ralph) benefit from understanding rationale.
+### Technical Context Enables Autonomy
 
-### Implementation Phases
-Group related work into logical phases. Each phase should be independently deployable if possible.
+- Show existing patterns to follow
+- Reference key files agent should explore
+- Agent uses this to make informed decisions
 
-### Interface Specifications
-Document user-facing interfaces in detail. Ralph uses these as implementation specs.
+### Non-Goals Prevent Scope Creep
 
-**CLI interfaces** should include:
-- Usage syntax with args and options
-- Behavior for each flag/arg combination
-- Example output (success and error cases)
-- Interactive prompts if any
+- Explicit boundaries help agent stay focused
+- Agent won't accidentally build deferred features
 
-**API endpoints** should include:
-- HTTP method and path
-- Request body schema
-- Response schemas (success + error codes)
-- Authentication requirements
+## Bad vs Good Examples
 
-**UI components** should include:
-- Props with types and defaults
-- Visual states (hover, loading, disabled, error)
-- Behavior on interaction
-- Accessibility considerations
-
-## Categories
-
-Tag stories with a category for Ralph conversion. Categories are **flexible** - choose what fits the codebase.
-
-**Common categories:**
-- `[db]`, `[api]`, `[ui]`, `[test]`, `[docs]`, `[config]`
-
-**Project-specific examples:**
-- `[auth]`, `[payments]`, `[search]` - domain modules
-- `[cli]`, `[sdk]`, `[plugin]` - package types
-- `[infra]`, `[ci]`, `[deploy]` - ops concerns
-- `[perf]`, `[security]`, `[a11y]` - cross-cutting
-
-Explore the codebase to discover natural groupings (folder structure, module names, existing conventions).
-
-## Writing Good User Stories
-
-### Atomic
-One story = one deployable unit of value.
-
-### Ordered by Phase
-Group into implementation phases. Within phases, order by dependency.
-
-### Testable
-Every acceptance criterion must be verifiable.
-
-### Example
+### Bad (Prescriptive)
 
 ```markdown
-### US-001: User can upload profile picture [api]
-**As a** registered user
-**I want** to upload a profile picture
-**So that** other users can identify me
+## Implementation Phases
 
-#### Acceptance Criteria
-- [ ] Upload accepts jpg, png, webp (max 5MB)
-- [ ] Image resized to 256x256
-- [ ] Old picture deleted on replacement
-- [ ] Fallback to initials if no picture
+### Phase 1: Database
 
-#### Technical Notes
-- Use existing S3 client in `src/lib/aws.ts`
-- Store URL in `users.avatarUrl` column
-- Reference: `src/components/Avatar.tsx` for display
-````
+1. Create users table
+2. Add indexes
+
+### Phase 2: API
+
+1. Build registration endpoint
+2. Build login endpoint
+
+### Phase 3: Tests
+
+1. Write unit tests
+2. Write integration tests
+```
+
+### Good (End State)
+
+```markdown
+## End State
+
+When complete:
+
+- [ ] Users can register with email/password
+- [ ] Users can log in and receive JWT
+- [ ] Auth endpoints have >80% test coverage
+
+## Acceptance Criteria
+
+### Registration
+
+- [ ] POST /api/auth/register creates user
+- [ ] Password is hashed (never stored plain)
+- [ ] Duplicate email returns 409
+- [ ] Invalid input returns 400 with details
+
+### Login
+
+- [ ] POST /api/auth/login returns JWT
+- [ ] Invalid credentials return 401
+- [ ] Token expires in 24h
+```
 
 ## After PRD Creation
 
 Tell the user:
 
 ```
-PRD saved to tasks/prd-<name>.md
+PRD saved to prd-<name>.md
 
 Next steps:
-1. Review and refine the PRD
+1. Review the PRD - refine acceptance criteria as needed
 2. Load the ralph skill to convert to prd.json
-3. Run: ./scripts/ralph.sh [max_iterations]
+3. Run: /ralph <branch-name> [max_iterations]
+
+Ralph will decide implementation order based on dependencies it discovers.
 ```
