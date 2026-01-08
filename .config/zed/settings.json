@@ -149,6 +149,7 @@
     "earthfile": true,
     "elixir": true,
     "erlang": true,
+    "ghostty": true,
     "git-firefly": true,
     "html": true,
     "log": true,
