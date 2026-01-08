@@ -375,102 +375,41 @@ function nosleep() {
   caffeinate -isd
 }
 
-function sxr8() {
-  curl -s "https://www.tradegatebsx.com/refresh.php?isin=IE00B5BMR087" | \
-  jq -r '["Bid", "Ask", "Mid", "Spread"] as $headers |
-        ([.bid, .ask] | map(if type == "string" then gsub(",";".") | tonumber else . end)) as [$bid, $ask] |
-        [$headers,
-          [$bid, $ask, ($bid + $ask) / 2, (($ask / $bid - 1) * 100)]
-        ] | .[] | join("\t")' | \
-  awk -F'\t' 'NR==1 {printf "%-8s %-8s %-8s %-8s\n", $1, $2, $3, $4}
-              NR==2 {printf "%-8.2f %-8.2f %-8.2f %-8.2f\n", $1, $2, $3, $4}'
+# Generic tradegate quote fetcher
+function _tradegate_quote() {
+  local isin=$1 header=${2:-1}
+  curl -s "https://www.tradegatebsx.com/refresh.php?isin=$isin" | \
+  jq -r --argjson h "$header" '
+    ([.bid, .ask] | map(if type == "string" then gsub(",";".") | tonumber else . end)) as [$bid, $ask] |
+    if $h == 1 then
+      (["Bid", "Ask", "Mid", "Spread"], [$bid, $ask, ($bid + $ask) / 2, (($ask / $bid - 1) * 100)]) | @tsv
+    else
+      [$bid, $ask, ($bid + $ask) / 2, (($ask / $bid - 1) * 100)] | @tsv
+    end' | \
+  awk -F'\t' 'NR==1 && /Bid/ {printf "%-8s %-8s %-8s %-8s\n", $1, $2, $3, $4; next}
+              {printf "%-8.2f %-8.2f %-8.2f %-8.2f\n", $1, $2, $3, $4}'
 }
 
-function sxr8_no_header() {
-  curl -s "https://www.tradegatebsx.com/refresh.php?isin=IE00B5BMR087" | \
-  jq -r '([.bid, .ask] | map(if type == "string" then gsub(",";".") | tonumber else . end)) as [$bid, $ask] |
-        [$bid, $ask,
-        ($bid + $ask) / 2,
-        (($ask / $bid - 1) * 100)] |
-        join("\t")' | \
-  awk -F'\t' '{printf "%-8.2f %-8.2f %-8.2f %-8.2f\n", $1, $2, $3, $4}'
+function _tradegate_loop() {
+  local isin=$1
+  _tradegate_quote "$isin" 1
+  for _ in {1..9}; do sleep 1; _tradegate_quote "$isin" 0; done
 }
 
-function sxr8loop() {
-  sxr8
-  sleep 1;
-  for w in {1..9}; do
-    sxr8_no_header;
-    sleep 1;
-  done
-}
+# ETF aliases
+function sxr8() { _tradegate_quote IE00B5BMR087 1; }
+function sxr8loop() { _tradegate_loop IE00B5BMR087; }
+function sppw() { _tradegate_quote IE00BFY0GT14 1; }
+function sppwloop() { _tradegate_loop IE00BFY0GT14; }
+function uetw() { _tradegate_quote IE00BD4TXV59 1; }
+function uetwloop() { _tradegate_loop IE00BD4TXV59; }
 
-function sppw() {
-  curl -s "https://www.tradegatebsx.com/refresh.php?isin=IE00BFY0GT14" | \
-  jq -r '["Bid", "Ask", "Mid", "Spread"] as $headers |
-        ([.bid, .ask] | map(if type == "string" then gsub(",";".") | tonumber else . end)) as [$bid, $ask] |
-        [$headers,
-          [$bid, $ask, ($bid + $ask) / 2, (($ask / $bid - 1) * 100)]
-        ] | .[] | join("\t")' | \
-  awk -F'\t' 'NR==1 {printf "%-8s %-8s %-8s %-8s\n", $1, $2, $3, $4}
-              NR==2 {printf "%-8.2f %-8.2f %-8.2f %-8.2f\n", $1, $2, $3, $4}'
-}
-
-function sppw_no_header() {
-  curl -s "https://www.tradegatebsx.com/refresh.php?isin=IE00BFY0GT14" | \
-  jq -r '([.bid, .ask] | map(if type == "string" then gsub(",";".") | tonumber else . end)) as [$bid, $ask] |
-        [$bid, $ask,
-        ($bid + $ask) / 2,
-        (($ask / $bid - 1) * 100)] |
-        join("\t")' | \
-  awk -F'\t' '{printf "%-8.2f %-8.2f %-8.2f %-8.2f\n", $1, $2, $3, $4}'
-}
-
-function sppwloop() {
-  sppw
-  sleep 1;
-  for w in {1..9}; do
-    sppw_no_header;
-    sleep 1;
-  done
-}
-
-function uetw() {
-  curl -s "https://www.tradegatebsx.com/refresh.php?isin=IE00BD4TXV59" | \
-  jq -r '["Bid", "Ask", "Mid", "Spread"] as $headers |
-        ([.bid, .ask] | map(if type == "string" then gsub(",";".") | tonumber else . end)) as [$bid, $ask] |
-        [$headers,
-          [$bid, $ask, ($bid + $ask) / 2, (($ask / $bid - 1) * 100)]
-        ] | .[] | join("\t")' | \
-  awk -F'\t' 'NR==1 {printf "%-8s %-8s %-8s %-8s\n", $1, $2, $3, $4}
-              NR==2 {printf "%-8.2f %-8.2f %-8.2f %-8.2f\n", $1, $2, $3, $4}'
-}
-
-function uetw_no_header() {
-  curl -s "https://www.tradegatebsx.com/refresh.php?isin=IE00BD4TXV59" | \
-  jq -r '([.bid, .ask] | map(if type == "string" then gsub(",";".") | tonumber else . end)) as [$bid, $ask] |
-        [$bid, $ask,
-        ($bid + $ask) / 2,
-        (($ask / $bid - 1) * 100)] |
-        join("\t")' | \
-  awk -F'\t' '{printf "%-8.2f %-8.2f %-8.2f %-8.2f\n", $1, $2, $3, $4}'
-}
-
-function uetwloop() {
-  uetw
-  sleep 1;
-  for w in {1..9}; do
-    uetw_no_header;
-    sleep 1;
-  done
-}
-
-function mkcd () {
+function mkcd() {
   \mkdir -p "$1"
   cd "$1"
 }
 
-function tempe () {
+function tempe() {
   cd "$(mktemp -d)"
   chmod -R 0700 .
   if [[ $# -eq 1 ]]; then
