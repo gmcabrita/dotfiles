@@ -27,24 +27,6 @@ cp -r ".ssh/"* "$HOME/.ssh"
 mkdir -p "$HOME/.claude"
 cp -r ".claude/"* "$HOME/.claude"
 
-mkdir -p "$HOME/.config/ghostty"
-cp -r ".config/ghostty/"* "$HOME/.config/ghostty"
-
-mkdir -p "$HOME/.config/zed"
-cp ".config/zed/"* "$HOME/.config/zed"
-
-mkdir -p "$HOME/.config/jj"
-cp ".config/jj/"* "$HOME/.config/jj"
-
-mkdir -p "$HOME/.config/qBittorrent"
-cp ".config/qBittorrent/"* "$HOME/.config/qBittorrent"
-
-mkdir -p "$HOME/.config/opencode/"
-cp -r ".config/opencode/"* "$HOME/.config/opencode"
-
-mkdir -p "$HOME/.config/mole/"
-cp -r ".config/mole/"* "$HOME/.config/mole"
-
 mkdir -p "$HOME/.config"
 cp -r ".config/"* "$HOME/.config"
 

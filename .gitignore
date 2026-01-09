@@ -11,3 +11,4 @@ scratchpad.*
 **/.claude/settings.local.json
 .config/opencode/node_modules/
 .config/opencode/bun.lock
+scripts/ralph/**
