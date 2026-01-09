@@ -212,28 +212,6 @@ function jj() {
   command jj "$@"
 }
 
-function vt() {
-  unfunction vt
-  if ! command -v vt &> /dev/null; then
-    echo "vt not found. Attempting to install via Deno..."
-
-    if ! command -v deno &> /dev/null; then
-      echo "Error: Deno is not installed. Please install Deno first." >&2
-      return 1
-    fi
-
-    if deno install -grAf jsr:@valtown/vt; then
-      mise reshim
-    else
-      echo "Error: Failed to install vt." >&2
-      return 1
-    fi
-  fi
-
-  vt "$@"
-}
-
-
 function profile-zsh() {
   ZPROF=1 zsh -i -c exit
 }
