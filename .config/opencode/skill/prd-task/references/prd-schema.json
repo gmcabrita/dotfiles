@@ -1,6 +1,6 @@
 {
-  "branchName": "user-authentication",
-  "features": [
+  "prdName": "user-authentication",
+  "tasks": [
     {
       "category": "functional",
       "description": "User can register with email and password",
@@ -52,7 +52,14 @@
       "Validation: src/lib/validate.ts",
       "DB queries: src/db/queries/"
     ],
-    "keyFiles": ["src/db/schema.ts", "src/routes/index.ts"],
-    "nonGoals": ["OAuth/social login", "Password reset", "Email verification"]
+    "keyFiles": [
+      "src/db/schema.ts",
+      "src/routes/index.ts"
+    ],
+    "nonGoals": [
+      "OAuth/social login",
+      "Password reset",
+      "Email verification"
+    ]
   }
 }
