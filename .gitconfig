@@ -24,7 +24,6 @@
   colorMoved = plain
   mnemonicPrefix = true
   renames = true
-  external = difft
 [branch]
   sort = -committerdate
 [tag]
