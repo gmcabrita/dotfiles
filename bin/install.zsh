@@ -160,6 +160,9 @@ brew autoupdate start 43200
 
 # Programming language stuff
 mise plugin install pnpm
+mise settings add idiomatic_version_file_enable_tools rust
+mise settings set python.uv_venv_auto true
+mise settings set npm.package_manager bun
 ERL_AFLAGS="-kernel shell_history enabled" \
 JEMALLOC_LIBS="-L$(brew --prefix jemalloc)/lib -ljemalloc" \
 JEMALLOC_CFLAGS="-I$(brew --prefix jemalloc)/include" \
@@ -188,8 +191,6 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               zig@latest \
               zls@latest
 
-mise settings add idiomatic_version_file_enable_tools rust
-mise settings set python.uv_venv_auto true
 mix local.hex --force
 curl -fsSL https://ampcode.com/install.sh | bash
 mkdir ~/.config/amp

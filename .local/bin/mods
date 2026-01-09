@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-set -eo pipefail
-
-GOOGLE_API_KEY="op://Personal/amgiqtk6hefolumdkxidsxmc6y/password" ANTHROPIC_API_KEY="op://Personal/ebpfp27lruzgaf57gwcxs7s4ka/password" OPENAI_API_KEY="op://Personal/ewuflivynutk2orpeprbz3chpq/password" op run --no-masking -- /opt/homebrew/bin/mods "$@"

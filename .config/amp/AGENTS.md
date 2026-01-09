@@ -30,7 +30,6 @@ you cut will be cut again.
 
 ## SCM, Git, Pull Requests, Commits
 
-- **ALWAYS check for `.jj/` dir before ANY VCS command** - if present, use jj not git
 - **Never** add Claude to attribution or as a contributor PRs, commits, messages, or PR descriptions
 - **gh CLI available** for GitHub operations (PRs, issues, etc.)
 

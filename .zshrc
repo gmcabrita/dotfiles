@@ -289,10 +289,6 @@ function e() {
   $EDITOR "$@"
 }
 
-function s() {
-  subl "$@"
-}
-
 function gti() {
   git "$@"
 }
@@ -430,26 +426,6 @@ function sound-done() {
 
 function sound-prompt() {
   (afplay /System/Library/Sounds/Ping.aiff &>/dev/null &)
-}
-
-function ralph-init() {
-  mkdir -p scripts/ralph
-  cp ~/.config/amp/scripts/ralph/{prompt.md,ralph.sh} scripts/ralph/
-  chmod +x scripts/ralph/ralph.sh
-}
-
-function ralph() {
-  local git_root
-  git_root=$(git rev-parse --show-toplevel 2>/dev/null) || {
-    echo "Error: Not in a git repository" >&2
-    return 1
-  }
-  
-  if [[ ! -f "$git_root/scripts/ralph/ralph.sh" ]]; then
-    ralph-init
-  fi
-  
-  (cd "$git_root" && scripts/ralph/ralph.sh "$@")
 }
 
 [[ $ZPROF == 1 ]] && zprof

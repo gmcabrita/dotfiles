@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-set -eo pipefail
-
-git --no-pager diff | code-review
