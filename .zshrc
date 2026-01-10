@@ -191,6 +191,7 @@ alias marked="open -a Marked"
 
 alias vi="nvim"
 alias vim="nvim"
+alias oc="opencode"
 
 alias -s json='jless'
 alias -s jsonl='jless'
