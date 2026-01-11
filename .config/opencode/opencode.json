@@ -9,5 +9,18 @@
       "model": "openai/gpt-5.2"
     }
   },
+  "permission": {
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.envrc": "deny",
+      "secrets/*": "deny"
+    },
+    "external_directory": {
+      "/Users/gmcabrita/Developer/dotfiles/.config/opencode/*": "allow",
+      "/Users/gmcabrita/.config/opencode/*": "allow"
+    }
+  },
   "autoupdate": "notify"
 }
