@@ -52,6 +52,8 @@ select
 \set lock_trees `cat ~/.psql/queries/lock_trees.sql`
 \set lock_trees_detailed `cat ~/.psql/queries/lock_trees_detailed.sql`
 \set long_running `cat ~/.psql/queries/running_2_minutes.sql`
+\set multixact_size `cat ~/.psql/queries/multixact_size.sql`
+\set multixact_size_11 `cat ~/.psql/queries/multixact_size_11.sql`
 \set non_indexed_fks `cat ~/.psql/queries/non_indexed_fks.sql`
 \set pg_stat_statements_report `cat ~/.psql/queries/pg_stat_statements_report.sql`
 \set pg_stat_statements_top_total `cat ~/.psql/queries/pg_stat_statements_top_total.sql`
