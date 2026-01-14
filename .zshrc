@@ -13,7 +13,7 @@ if [[ -z "$MACOS_SDK_PATH" ]]; then
   fi
 fi
 
-PATH="$HOME/.bun/bin:$HOME/.amp/bin:$HOME/.local/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$HOMEBREW_PREFIX/opt/gnu-tar/libexec/gnubin:$PATH"
+PATH="$HOME/.bun/bin:$HOME/.local/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$HOMEBREW_PREFIX/opt/gnu-tar/libexec/gnubin:$PATH"
 export HOMEBREW_CLEANUP_MAX_AGE_DAYS=30
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export HK_MISE=1
@@ -320,7 +320,6 @@ function update-programming-languages() {
   mise plugins up
   mise up --bump
   mise reshim
-  amp update
   mix local.hex --force
   rm -rf "$HOME/Library/Application Support/Zed/extensions/work/elixir"/expert-*(N)
 }

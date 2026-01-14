@@ -193,5 +193,3 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               zls@latest
 
 mix local.hex --force
-curl -fsSL https://ampcode.com/install.sh | bash
-mkdir ~/.config/amp
