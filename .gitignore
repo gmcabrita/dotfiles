@@ -13,3 +13,4 @@ scratchpad.*
 .config/opencode/bun.lock
 scripts/ralph/**
 .ralph-*
+.opencode/**
