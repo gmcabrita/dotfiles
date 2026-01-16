@@ -35,3 +35,6 @@ cp -r ".raycast-scripts/"* "$HOME/.raycast-scripts"
 
 mkdir -p "$HOME/Library/Application Support/go/telemetry"
 cp "Library/Application Support/go/telemetry/"* "$HOME/Library/Application Support/go/telemetry"
+
+mkdir -p "$HOME/Library/Application Support/com.pais.handy"
+cp "Library/Application Support/com.pais.handy/"* "$HOME/Library/Application Support/com.pais.handy"
