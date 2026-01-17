@@ -408,4 +408,8 @@ function sound-prompt() {
   (afplay /System/Library/Sounds/Ping.aiff &>/dev/null &)
 }
 
+function zig-ast-check-all() {
+  find . -name '.zig-cache' -prune -o -type f -name "*.zig" -exec zig ast-check {} \;
+}
+
 [[ $ZPROF == 1 ]] && zprof
