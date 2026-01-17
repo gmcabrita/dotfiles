@@ -144,6 +144,7 @@
     "show": true,
   },
   "auto_install_extensions": {
+    "basher": true,
     "docker-compose": true,
     "dockerfile": true,
     "earthfile": true,
