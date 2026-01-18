@@ -2,6 +2,6 @@
 	"chrome-devtools": {
 		"command": "npx",
 		"args": ["-y", "chrome-devtools-mcp@latest"],
-		"includeTools": ["navigate_page", "take_screenshot", "new_page", "list_pages"]
+		"includeTools": ["navigate_page", "take_screenshot", "new_page", "list_pages", "press_key", "evaluate_script"]
 	}
 }

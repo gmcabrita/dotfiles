@@ -11,3 +11,6 @@ fmt:
 
 lint:
 	./bin/lint.sh
+
+update:
+	./bin/update-amp-contrib-skills.sh

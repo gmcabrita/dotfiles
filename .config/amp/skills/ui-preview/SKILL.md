@@ -13,8 +13,9 @@ Preview local dev servers and storybooks using Chrome DevTools.
 
 - `navigate_page` - Navigate to a URL
 - `take_screenshot` - Capture a screenshot of the current page
-- `take_snapshot` - Get a text snapshot of the page (a11y tree with element UIDs)
 - `new_page` - Open a new browser tab
+- `press_key` - Press keyboard keys (e.g., scrolling with PageDown, End)
+- `evaluate_script` - Run JavaScript on the page
 
 ## Workflow
 
@@ -144,7 +145,8 @@ Components for the ampcode.com web app.
 
 ## Tips
 
-- Use `take_snapshot` to get element UIDs for clicking/filling
 - Story titles use kebab-case from filenames (remove `-story.svelte`)
 - Reload the skill if MCP tools become unavailable
 - Use `list_pages` to manage multiple browser tabs
+- Use `press_key` with "End" or "PageDown" to scroll the page
+- Use `evaluate_script` for custom page interactions

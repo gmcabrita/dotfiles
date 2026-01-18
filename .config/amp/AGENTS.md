@@ -7,6 +7,7 @@ You run in an environment where ast-grep (`sg`) is available; whenever a search 
 ## Code Quality Standards
 
 - Make minimal, surgical changes
+- Design for testability using "functional core, imperative shell": keep pure business logic separate from code that does IO
 - **Never compromise type safety**: No `any`, no non-null assertion operator (`!`), no type assertions (`as Type`)
 - **Make illegal states unrepresentable**: Model domain with ADTs/discriminated unions; parse inputs at boundaries into typed structures; if state can't exist, code can't mishandle it
 - **Abstractions**: Consciously constrained, pragmatically parameterised, doggedly documented
