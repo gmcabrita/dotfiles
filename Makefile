@@ -1,4 +1,4 @@
-default: fmt sync
+default: update fmt sync
 
 install:
 	./bin/install.zsh
@@ -14,3 +14,4 @@ lint:
 
 update:
 	./bin/update-amp-contrib-skills.sh
+	./bin/update-cloudflare-skill.sh
