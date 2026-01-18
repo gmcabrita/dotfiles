@@ -155,12 +155,6 @@ autoload zmv
 
 bindkey '^x^e' edit-command-line
 bindkey '^_' undo
-bindkey '^[3~' backward-kill-word # option-backspace
-bindkey '^[[3;3~' kill-word # option-fn-backspace
-bindkey '^[[1;3D' backward-word # option-left
-bindkey '^[[1;3C' forward-word # option-right
-bindkey '^[[1;9D' beginning-of-line # cmd-left
-bindkey '^[[1;9C' end-of-line # cmd-right
 
 #### Prompt
 
