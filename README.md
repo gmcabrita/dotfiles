@@ -61,6 +61,7 @@
     - Sign in automatically after autofill: No
   - uBlacklist import from Google Drive
   - Import uBlock Origin Lite settings
+  - https://github.com/corbindavenport/just-the-browser/tree/main/chrome
 - 1Password
 - `gh auth login`
   - Add ssh key as gpg key
