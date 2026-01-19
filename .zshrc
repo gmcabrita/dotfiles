@@ -414,9 +414,10 @@ function ga() {
   local repo_name="$(basename "$PWD")"
   local repo_url="$(git remote get-url origin)"
   local clone_path="../${repo_name}-${branch}"
+  local default_branch=$(git rev-parse --abbrev-ref origin/HEAD | cut -d'/' -f2)
 
   # Use fzf to select base branch, defaulting to main
-  local base_branch="$(git branch -r --format='%(refname:short)' | sed 's|origin/||' | fzf --height=20 --prompt='Select base branch: ' --query="main")"
+  local base_branch="$(git branch -r --format='%(refname:short)' | sed 's|origin/||' | fzf --height=20 --prompt='Select base branch: ' --query="$default_branch")"
 
   # If fzf was cancelled, fall back to main
   if [[ -z "$base_branch" ]]; then
