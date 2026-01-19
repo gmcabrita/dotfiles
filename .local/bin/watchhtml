@@ -6,19 +6,15 @@ set -euo pipefail
 URL=""
 INTERVAL=30
 TIMEOUT=15
-USERAGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
 
 usage() {
     cat <<'EOF'
 Usage:
-    watchhtml <URL> [--interval|-i SECONDS] [--timeout|-t SECONDS]
-                          [--user-agent|-A UA] [--cmd|-c "COMMAND ..."]
+    watchhtml <URL> [--interval|-i SECONDS] [--timeout|-t SECONDS] [--cmd|-c "COMMAND ..."]
 
 Examples:
     watchhtml "https://example.com/page"
     watchhtml "https://example.com/page" --interval 10 --timeout 8
-    watchhtml "https://example.com/page" | notify-send "Changed!"
-    watchhtml "https://example.com/page" | echo Page changed at $(date)
 EOF
 }
 
@@ -44,11 +40,6 @@ while (( $# > 0 )); do
             shift
             [[ $# -gt 0 ]] || { echo "Missing value for --timeout" >&2; exit 2; }
             TIMEOUT="$1"
-            ;;
-        -A|--user-agent)
-            shift
-            [[ $# -gt 0 ]] || { echo "Missing value for --user-agent" >&2; exit 2; }
-            USERAGENT="$1"
             ;;
         --) # explicit end of flags
             shift
@@ -95,7 +86,7 @@ trap cleanup EXIT INT TERM
 
 fetch_body() {
     # stdout: body
-    curl -fsS --max-time "$TIMEOUT" -L -A "$USERAGENT" "$URL" | xmllint --html --format --recover --xpath '//body//*[not(self::script or self::style)]/text() | //body/text()' - 2>/dev/null
+    curl-impersonate --compressed --impersonate "chrome142" --cookie "" -fsS --max-time "$TIMEOUT" -L "$URL" | xmllint --html --format --recover --xpath '//body//*[not(self::script or self::style)]/text() | //body/text()' - 2>/dev/null
 }
 
 hash_of() {
@@ -108,7 +99,6 @@ hash_of() {
 
 echo "Watching: $URL"
 echo "Interval: ${INTERVAL}s, Timeout: ${TIMEOUT}s"
-echo "User-Agent: $USERAGENT"
 
 # Acquire baseline body and hash
 baseline_hash=""
