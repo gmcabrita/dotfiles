@@ -431,7 +431,7 @@ function ga() {
   # Enter clone and set up branch
   cd "$clone_path"
   git checkout "$base_branch"
-  git checkout -b "sj/$branch"
+  git checkout -b "gmcabrita/$branch"
 
   echo "Created clone at $clone_path on branch sj/$branch (based on $base_branch)"
 }
