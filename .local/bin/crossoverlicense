@@ -1,0 +1,356 @@
+#!/bin/bash
+#
+# CrossOver License Activation Bypass Script
+# Activates CrossOver on macOS without trial limitations
+#
+# Usage:
+#   ./crossoverlicense           - Interactive mode
+#   ./crossoverlicense activate  - Activate CrossOver (bypass trial)
+#   ./crossoverlicense execute   - Just reset trial period
+#   ./crossoverlicense install   - Activate + install auto-maintain service
+#   ./crossoverlicense uninstall - Remove the service
+#   ./crossoverlicense help      - Show this help
+
+# Variables
+FOLDER_NAME="CrossOverLicence"
+PLIST_NAME="com.codeweavers.CrossOver.license.plist"
+BOTTLES_PATH="$HOME/Library/Application Support/CrossOver/Bottles"
+SCRIPT_PATH="$HOME/$FOLDER_NAME/main.sh"
+PREFS_PATH="$HOME/Library/Preferences"
+LICENSE_FILE="$PREFS_PATH/com.codeweavers.CrossOver.license"
+
+TOTAL_STEPS=4
+STEP=0
+
+# Colors
+RED='\033[31m'
+GREEN='\033[32m'
+YELLOW='\033[33m'
+WHITE='\033[37m'
+CYAN='\033[36m'
+NC='\033[0m' # No Color
+
+addStep() {
+  ((STEP++))
+  echo ""
+  echo -e "${YELLOW}$STEP/$TOTAL_STEPS $1${NC}"
+}
+
+resetSystemReg() {
+  local arquivo="$1"
+  local data_atual=$(date +%Y-%m-%d)
+  local backup_arquivo="${arquivo}.${data_atual}.bak"
+
+  if [[ ! -f "$arquivo" ]]; then
+    return 1
+  fi
+
+  cp "$arquivo" "$backup_arquivo" 2>/dev/null
+
+  awk '
+  BEGIN { flag = 0; }
+  /^\[Software\\\\CodeWeavers\\\\CrossOver\\\\cxoffice\]/ { flag = 1; }
+  flag && /^$/ { flag = 0; next; }
+  !flag
+  ' "$arquivo" > "${arquivo}.tmp" && mv "${arquivo}.tmp" "$arquivo"
+}
+
+resetBottle() {
+  local bottlePath="$1"
+  local bottleName=$(basename "$bottlePath")
+
+  rm -rf "$bottlePath"/.version 2>/dev/null
+  rm -rf "$bottlePath"/.update-timestamp 2>/dev/null
+
+  resetSystemReg "$bottlePath/system.reg"
+  echo -e "${GREEN}  ✓ $bottleName${NC}"
+}
+
+find_bottles() {
+  find "$1" -name "system.reg" -exec dirname {} \; 2>/dev/null
+}
+
+# Generate fake license file
+generate_license() {
+  local expiry_year=$(($(date +%Y) + 10))
+  local email="user@activated.local"
+  local customer="Activated User"
+  local license_id=$(openssl rand -hex 8 2>/dev/null || echo "ACTV$(date +%s)")
+
+  cat > "$LICENSE_FILE" <<EOF
+[crossmac]
+customer=$customer
+email=$email
+expires=$expiry_year/12/31
+[license]
+id=$license_id
+EOF
+}
+
+# Main activation function
+activate() {
+  addStep "Closing CrossOver if running..."
+  pkill -9 -f "CrossOver" 2>/dev/null
+  pkill -9 -f "wineserver" 2>/dev/null
+  sleep 1
+  echo -e "${GREEN}  ✓ Done${NC}"
+
+  addStep "Generating activation license..."
+
+  # Remove old license files
+  rm -f "$LICENSE_FILE" 2>/dev/null
+  rm -f "$PREFS_PATH/com.codeweavers.CrossOver.sha256" 2>/dev/null
+
+  # Generate new license
+  generate_license
+  echo -e "${GREEN}  ✓ License file created${NC}"
+
+  addStep "Configuring CrossOver preferences..."
+
+  # Kill cfprefsd to ensure preferences are refreshed
+  killall cfprefsd 2>/dev/null
+
+  local current_date=$(date +"%Y-%m-%d %H:%M:%S")
+  local future_date=$(date -v+10y +"%Y-%m-%d %H:%M:%S" 2>/dev/null || date +"%Y-%m-%d %H:%M:%S")
+
+  # Set CrossOver preferences to bypass trial checks
+  defaults write com.codeweavers.CrossOver FirstRunDate -date "$current_date"
+  defaults write com.codeweavers.CrossOver FirstRunVersion -string "1.0.0"
+  defaults write com.codeweavers.CrossOver SULastCheckTime -date "$current_date"
+  defaults write com.codeweavers.CrossOver SUEnableAutomaticChecks -bool NO
+  defaults write com.codeweavers.CrossOver SUAutomaticallyUpdate -bool NO
+  defaults write com.codeweavers.CrossOver SUHasLaunchedBefore -bool YES
+  defaults write com.codeweavers.CrossOver SUSendProfileInfo -bool NO
+
+  # Disable all nag dialogs
+  defaults write com.codeweavers.CrossOver NagDialogShown -int 999999
+  defaults write com.codeweavers.CrossOver TSRDialogShown -int 999999
+  defaults write com.codeweavers.CrossOver TSContactedOK -bool YES
+  defaults write com.codeweavers.CrossOver lastDemoNagTime -float 9999999999
+
+  echo -e "${GREEN}  ✓ Preferences configured${NC}"
+
+  addStep "Processing bottles..."
+
+  bottlePaths=$(find_bottles "$BOTTLES_PATH")
+
+  if [[ -n "$bottlePaths" ]]; then
+    OLD_IFS="$IFS"
+    IFS=$'\n'
+    for bottle in $bottlePaths; do
+      resetBottle "$bottle"
+    done
+    IFS="$OLD_IFS"
+  else
+    echo -e "${YELLOW}  No bottles found (this is OK)${NC}"
+  fi
+
+  echo ""
+  echo -e "${GREEN}════════════════════════════════════════════════${NC}"
+  echo -e "${GREEN}✓ CrossOver Activation Complete!${NC}"
+  echo -e "${GREEN}════════════════════════════════════════════════${NC}"
+  echo ""
+  echo -e "${CYAN}Please restart CrossOver to apply changes.${NC}"
+  echo -e "${YELLOW}Note: If trial dialog still appears, click 'Try Now' once.${NC}"
+  echo -e "${YELLOW}      It should not appear again after that.${NC}"
+}
+
+# Legacy function - just reset trial
+execute_only() {
+  TOTAL_STEPS=3
+  STEP=0
+
+  addStep "Executing trial reset..."
+  local date=$(date +"%Y-%m-%d %H:%M:%S")
+
+  defaults write com.codeweavers.CrossOver FirstRunDate -date "$date"
+  defaults write com.codeweavers.CrossOver SULastCheckTime -date "$date"
+  defaults write com.codeweavers.CrossOver NagDialogShown -int 999999
+  defaults write com.codeweavers.CrossOver TSRDialogShown -int 999999
+  defaults write com.codeweavers.CrossOver SUEnableAutomaticChecks -bool NO
+  defaults write com.codeweavers.CrossOver TSContactedOK -bool YES
+
+  echo -e "${GREEN}  ✓ Trial reset to $date${NC}"
+
+  addStep "Finding bottles..."
+  bottlePaths=$(find_bottles "$BOTTLES_PATH")
+
+  if [[ -n "$bottlePaths" ]]; then
+    OLD_IFS="$IFS"
+    IFS=$'\n'
+
+    addStep "Resetting bottles..."
+    for bottle in $bottlePaths; do
+      resetBottle "$bottle"
+    done
+    IFS="$OLD_IFS"
+  else
+    addStep "No bottles to reset"
+    echo -e "${YELLOW}  Skipped${NC}"
+  fi
+
+  echo ""
+  echo -e "${GREEN}✓ Trial reset completed!${NC}"
+}
+
+# Install service
+install() {
+  TOTAL_STEPS=5
+  STEP=0
+
+  addStep "Running activation first..."
+  activate
+  STEP=4  # Reset step counter after activate
+
+  addStep "Installing auto-maintenance service..."
+
+  mkdir -p "$HOME/$FOLDER_NAME"
+
+  CURRENT_SCRIPT="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+  cp "$CURRENT_SCRIPT" "$SCRIPT_PATH"
+  chmod +x "$SCRIPT_PATH"
+
+  local plistPath="$HOME/Library/LaunchAgents/$PLIST_NAME"
+  mkdir -p "$HOME/Library/LaunchAgents"
+
+  if [[ -f "$plistPath" ]]; then
+    launchctl unload "$plistPath" 2>/dev/null
+    rm "$plistPath"
+  fi
+
+  # Service runs every 7 days (604800 seconds)
+  cat > "$plistPath" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>$PLIST_NAME</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>$SCRIPT_PATH</string>
+        <string>activate</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StartInterval</key>
+    <integer>604800</integer>
+</dict>
+</plist>
+EOF
+
+  launchctl load "$plistPath"
+
+  echo -e "${GREEN}  ✓ Service installed${NC}"
+  echo ""
+  echo -e "${WHITE}  Script: $SCRIPT_PATH${NC}"
+  echo -e "${WHITE}  Service: $plistPath${NC}"
+  echo -e "${WHITE}  Interval: Every 7 days${NC}"
+}
+
+# Uninstall service
+uninstall() {
+  TOTAL_STEPS=2
+  STEP=0
+
+  addStep "Uninstalling service..."
+
+  local plistPath="$HOME/Library/LaunchAgents/$PLIST_NAME"
+
+  if [[ -f "$plistPath" ]]; then
+    launchctl unload "$plistPath" 2>/dev/null
+    rm "$plistPath"
+    echo -e "${GREEN}  ✓ Service removed${NC}"
+  else
+    echo -e "${YELLOW}  Service not found${NC}"
+  fi
+
+  addStep "Removing script directory..."
+
+  if [[ -d "$HOME/$FOLDER_NAME" ]]; then
+    rm -rf "$HOME/$FOLDER_NAME"
+    echo -e "${GREEN}  ✓ Directory removed${NC}"
+  else
+    echo -e "${YELLOW}  Directory not found${NC}"
+  fi
+
+  echo ""
+  echo -e "${GREEN}✓ Uninstallation complete!${NC}"
+}
+
+# Show help
+show_help() {
+  echo ""
+  echo -e "${CYAN}╔════════════════════════════════════════════════╗${NC}"
+  echo -e "${CYAN}║   CrossOver License Activation Bypass Script   ║${NC}"
+  echo -e "${CYAN}╚════════════════════════════════════════════════╝${NC}"
+  echo ""
+  echo "Usage: $0 [command]"
+  echo ""
+  echo "Commands:"
+  echo -e "  ${GREEN}activate${NC}   - Activate CrossOver (recommended)"
+  echo -e "  ${WHITE}execute${NC}    - Just reset trial period"
+  echo -e "  ${YELLOW}install${NC}    - Activate + install auto-maintain service"
+  echo -e "  ${RED}uninstall${NC}  - Remove the auto-maintain service"
+  echo -e "  ${CYAN}help${NC}       - Show this help"
+  echo ""
+  echo "Examples:"
+  echo "  ./crossoverlicense activate    # One-time activation"
+  echo "  ./crossoverlicense install     # Activate + auto-maintain"
+  echo ""
+}
+
+# Main
+if [[ "$#" -eq 1 ]]; then
+  case "$1" in
+    activate)
+      activate
+      ;;
+    execute)
+      execute_only
+      ;;
+    install)
+      install
+      ;;
+    uninstall)
+      uninstall
+      ;;
+    help|--help|-h)
+      show_help
+      ;;
+    *)
+      echo -e "${RED}Invalid argument: $1${NC}"
+      show_help
+      exit 1
+      ;;
+  esac
+else
+  echo ""
+  echo -e "${CYAN}╔════════════════════════════════════════════════╗${NC}"
+  echo -e "${CYAN}║   CrossOver License Activation Bypass Script   ║${NC}"
+  echo -e "${CYAN}╚════════════════════════════════════════════════╝${NC}"
+  echo ""
+  echo "Choose an option:"
+  echo ""
+  echo -e "  ${GREEN}1) activate${NC}  - Activate CrossOver (one-time)"
+  echo -e "  ${YELLOW}2) install${NC}   - Activate + auto-maintain service"
+  echo -e "  ${WHITE}3) execute${NC}   - Just reset trial period"
+  echo ""
+  read -r -p "Your choice [1/2/3]: " response
+
+  case "$response" in
+    1|activate)
+      activate
+      ;;
+    2|install)
+      install
+      ;;
+    3|execute)
+      execute_only
+      ;;
+    *)
+      echo -e "${YELLOW}Defaulting to 'activate'...${NC}"
+      activate
+      ;;
+  esac
+fi
