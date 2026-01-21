@@ -3,30 +3,27 @@
   "theme": "gruvbox-hard",
   "agent": {
     "build": {
-      "model": "anthropic/claude-opus-4-5",
-      "thinking": {
-        "type": "enabled",
-        "budgetTokens": 31999
-      }
+      "model": "openai/gpt-5.2",
+      "reasoningEffort": "xhigh"
     },
     "plan": {
       "model": "openai/gpt-5.2",
       "reasoningEffort": "xhigh"
     },
     "general": {
-      "model": "anthropic/claude-sonnet-4-5"
+      "model": "openai/gpt-5.2"
     },
     "explore": {
-      "model": "anthropic/claude-sonnet-4-5"
+      "model": "openai/gpt-5.2"
     },
     "compaction": {
-      "model": "anthropic/claude-haiku-4-5"
+      "model": "openai/gpt-5.2-mini"
     },
     "summary": {
-      "model": "anthropic/claude-haiku-4-5"
+      "model": "openai/gpt-5.2-mini"
     },
     "title": {
-      "model": "anthropic/claude-haiku-4-5"
+      "model": "openai/gpt-5.2-mini"
     }
   },
   "permission": {
