@@ -156,6 +156,7 @@
     "log": true,
     "make": true,
     "nginx": true,
+    "odin": true,
     "proto": true,
     "ruby": true,
     "scss": true,
