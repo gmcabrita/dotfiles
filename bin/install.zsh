@@ -160,6 +160,7 @@ brew autoupdate start 43200
 
 # Programming language stuff
 mise plugin install pnpm
+mise plugin install odin
 mise settings add idiomatic_version_file_enable_tools rust
 mise settings set python.uv_venv_auto true
 mise settings set npm.package_manager bun
@@ -177,11 +178,12 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               elixir@latest \
               erlang@latest \
               fnox@latest \
-              gleam@latest \
               github:lexiforest/curl-impersonate \
+              gleam@latest \
               go@latest \
               hk@latest \
               node@lts \
+              odin@latest \
               pkl@latest \
               pnpm@latest \
               python@latest \
