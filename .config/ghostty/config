@@ -76,7 +76,7 @@ custom-shader = ~/.config/ghostty/shaders/cursor.glsl
 #custom-shader = ~/.config/ghostty/shaders/water.glsl
 #custom-shader = ~/.config/ghostty/shaders/WIP.glsl
 #custom-shader = ~/.config/ghostty/shaders/zoom_and_aberration.glsl
-font-family = Google Sans Code
+font-family = JetBrains Mono NL
 font-feature = -calt, -liga, -dlig
 font-size = 17
 keybind = cmd+enter=unbind
