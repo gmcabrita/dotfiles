@@ -62,6 +62,9 @@
   - uBlacklist import from Google Drive
   - Import uBlock Origin Lite settings
   - https://github.com/corbindavenport/just-the-browser/tree/main/chrome
+  - Disable chrome://flags/#side-by-side
+  - Disable chrome://flags/#optimization-guide-on-device-model
+  - chrome://flags/#vertical-tabs
 - 1Password
 - `gh auth login`
   - Add ssh key as gpg key
