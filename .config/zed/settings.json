@@ -57,9 +57,6 @@
       "model": "gpt-5.2h",
     },
   },
-  "features": {
-    "edit_prediction_provider": "copilot",
-  },
   "terminal": {
     "font_weight": 400.0,
     "button": false,
@@ -127,6 +124,7 @@
   "remove_trailing_whitespace_on_save": true,
   "show_edit_predictions": true,
   "edit_predictions": {
+    "provider": "copilot",
     "mode": "subtle",
     "enabled_in_text_threads": false,
   },
