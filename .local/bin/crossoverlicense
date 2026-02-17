@@ -37,22 +37,22 @@ addStep() {
 }
 
 resetSystemReg() {
-  local arquivo="$1"
-  local data_atual=$(date +%Y-%m-%d)
-  local backup_arquivo="${arquivo}.${data_atual}.bak"
+  local file="$1"
+  local current_date=$(date +%Y-%m-%d)
+  local backup_file="${file}.${current_date}.bak"
 
-  if [[ ! -f "$arquivo" ]]; then
+  if [[ ! -f "$file" ]]; then
     return 1
   fi
 
-  cp "$arquivo" "$backup_arquivo" 2>/dev/null
+  cp "$file" "$backup_file" 2>/dev/null
 
   awk '
   BEGIN { flag = 0; }
   /^\[Software\\\\CodeWeavers\\\\CrossOver\\\\cxoffice\]/ { flag = 1; }
   flag && /^$/ { flag = 0; next; }
   !flag
-  ' "$arquivo" > "${arquivo}.tmp" && mv "${arquivo}.tmp" "$arquivo"
+  ' "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
 }
 
 resetBottle() {
