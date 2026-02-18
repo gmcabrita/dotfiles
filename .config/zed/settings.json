@@ -46,8 +46,10 @@
   },
   "extend_comment_on_newline": false,
   "agent": {
+    "tool_permissions": {
+      "default": "allow",
+    },
     "button": false,
-    "always_allow_tool_actions": true,
     "inline_assistant_model": {
       "provider": "openai",
       "model": "gpt-5.2",
