@@ -14,4 +14,5 @@ lint:
 
 update:
 	./bin/update-amp-contrib-skills.sh
+	./bin/update-database-skills.sh
 	./bin/update-cloudflare-skill.sh
