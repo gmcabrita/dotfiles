@@ -163,7 +163,7 @@ mise plugin install pnpm
 mise plugin install odin
 mise settings add idiomatic_version_file_enable_tools rust
 mise settings set python.uv_venv_auto true
-mise settings set npm.package_manager bun
+mise settings set npm.package_manager pnpm
 ERL_AFLAGS="-kernel shell_history enabled" \
 JEMALLOC_LIBS="-L$(brew --prefix jemalloc)/lib -ljemalloc" \
 JEMALLOC_CFLAGS="-I$(brew --prefix jemalloc)/include" \
@@ -171,8 +171,7 @@ CPPFLAGS="-I$(brew --prefix openssl@3)/include -I$(brew --prefix jemalloc)/inclu
 LDFLAGS="-L$(brew --prefix openssl@3)/lib -L$(brew --prefix jemalloc)/lib -L$(brew --prefix gmp)/lib -L$(xcrun --show-sdk-path)/usr/lib -L$(brew --prefix sqlite)/lib" \
 PKG_CONFIG_PATH="$(brew --prefix openssl@3)/lib/pkgconfig:$(brew --prefix gmp)/lib/pkgconfig:$(brew --prefix jemalloc)/lib/pkgconfig:$PKG_CONFIG_PATH" \
 RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
-  mise use -g bun@latest \
-              cargo:hurlfmt@latest \
+  mise use -g cargo:hurlfmt@latest \
               cargo:oha@latest \
               deno@latest \
               elixir@latest \
@@ -196,5 +195,3 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               zls@latest
 
 mix local.hex --force
-curl -fsSL https://ampcode.com/install.sh | bash
-mkdir ~/.config/amp
