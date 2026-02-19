@@ -21,7 +21,7 @@ VTGate routes queries based on the VSchema and WHERE clause, targeting the fewes
 | **Scatter** | No primary vindex filter | Expensive (all shards) |
 | **Unsharded** | Table in unsharded keyspace | Direct to single backend |
 
-**Always include the primary vindex column in WHERE clauses** to avoid scatter queries. For non-vindex column lookups, configure a **lookup vindex** (see VSchema skill).
+**Always include the primary vindex column in WHERE clauses** to avoid scatter queries. If a non-vindex column lookup is unavoidable, a **lookup vindex** exists as an option (see VSchema skill), but lookup vindexes are expensive. Prefer redesigning the schema or access patterns before reaching for a lookup vindex.
 
 ```sql
 SELECT * FROM orders WHERE customer_id = 42;          -- single-shard (fast)
@@ -83,7 +83,7 @@ Mark tables with `"type": "reference"` in the VSchema of both keyspaces (the tar
 
 1. Include primary vindex in WHERE clauses for single-shard routing
 2. Co-locate frequently joined tables with shared vindexes
-3. Use lookup vindexes for secondary access patterns
+3. Consider lookup vindexes as a last resort for secondary access patterns (they add write overhead)
 4. Always use `ORDER BY` when order matters
 5. Avoid `SELECT *`; use `LIMIT` on user-facing queries
 6. Prefer cursor-based pagination over `OFFSET`

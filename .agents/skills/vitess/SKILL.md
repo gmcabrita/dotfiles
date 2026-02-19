@@ -14,7 +14,7 @@ metadata:
 Vitess is a MySQL-compatible, cloud-native database system originally built at YouTube to scale MySQL. PlanetScale runs Vitess as a managed service. Core capabilities:
 
 - **Horizontal sharding**: Built-in sharding transparent to the application — no sharding logic in app code.
-- **Connection pooling**: VTGate multiplexes client connections, scaling concurrent connections far beyond native MySQL limits.
+- **Connection pooling**: VTTablet multiplexes client connections to MySQL, scaling concurrent connections far beyond native MySQL limits.
 - **High availability**: Automatic primary failure detection and repair. Resharding and data migrations with near-zero downtime.
 - **Query rewriting and caching**: VTGate rewrites and optimizes queries before routing to shards.
 - **Schema management**: Apply schema changes across all shards consistently, in the background, without disrupting workloads.
@@ -47,7 +47,7 @@ Known limitations:
 - **`SELECT ... FOR UPDATE`**: Works within a single shard; cross-shard locking is not atomic.
 - **Cross-shard joins**: Supported but expensive (scatter-gather). Filter by vindex column for single-shard routing.
 - **Correlated subqueries**: May fail or perform poorly cross-shard. Rewrite as joins when possible.
-- **AUTO_INCREMENT**: Sequences are per-shard. Use vindexes or app-generated IDs (UUIDs, snowflake) to avoid collisions on sharded tables.
+- **IDs**: Use **Vitess Sequences** (a global counter in an unsharded keyspace) or app-generated IDs (UUIDs, snowflake) to avoid collisions on sharded tables.
 - **Aggregations on sharded tables**: `GROUP BY`/`ORDER BY`/`LIMIT` merge in VTGate memory. Large result sets can be slow.
 - **Foreign keys**: Limited support. Prefer application-level referential integrity on sharded keyspaces.
 

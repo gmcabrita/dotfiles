@@ -58,17 +58,17 @@ Both tables shard on `customer_id` (**shared vindex**), so rows with the same `c
 
 ## Lookup vindexes
 
-Provide secondary routing to avoid scatter queries on non-primary-vindex columns. Backed by a separate lookup table mapping column values to keyspace IDs.
+Provide secondary routing to avoid scatter queries on non-primary-vindex columns. Backed by a separate lookup table mapping column values to keyspace IDs. **Lookup vindexes are expensive** — consider schema redesign or alternative access patterns before using.
 
 ```json
 "customer_email_lookup": {
-  "type": "consistent_lookup_unique",
+  "type": "consistent_lookup",
   "params": { "table": "product.customer_email_lookup", "from": "email", "to": "keyspace_id" },
   "owner": "customer"
 }
 ```
 
-Use `consistent_lookup_unique` for unique columns, `consistent_lookup` for non-unique. The `owner` table maintains the lookup. Backfill existing data with `vtctldclient LookupVindex create ...` (see `vtctldclient LookupVindex --help` for required args).
+Use `consistent_lookup` (or `consistent_lookup_unique` if strictly needed, though database-level uniqueness enforcement is a scalability anti-pattern). The `owner` table maintains the lookup. Backfill existing data with `vtctldclient LookupVindex create ...` (see `vtctldclient LookupVindex --help` for required args).
 
 ## Sequences
 
@@ -114,7 +114,7 @@ Use `SHOW VSCHEMA TABLES` to quickly confirm whether a table is recognized by VT
 
 ## Sharding guidelines
 
-**250 GB per shard** is the sweet spot, though the specifics depend on how many CPUs and RAM each shard has. Highest-QPS query's WHERE clause dictates primary vindex. Co-locate joined tables; keep transactions local. For multi-tenant apps, use multi-column vindexes. `MoveTables` can change sharding keys later.
+Optimal shard size depends on hardware (CPUs, RAM, disk I/O) and workload characteristics — there is no universal number. Highest-QPS query's WHERE clause dictates primary vindex. Co-locate joined tables; keep transactions local. For multi-tenant apps, use multi-column vindexes. `MoveTables` can change sharding keys later.
 
 ## Advanced properties
 

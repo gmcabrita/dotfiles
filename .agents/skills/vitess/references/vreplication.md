@@ -70,17 +70,16 @@ vtctldclient VDiff --workflow mv1 --target-keyspace customer create
 vtctldclient VDiff --workflow mv1 --target-keyspace customer show last
 ```
 
-## VStream
+### VStream
 
-Change data capture (CDC) via VTGate gRPC API. Streams binlog events across all shards in a keyspace. Supports GTID-based positioning, table filtering, and resumable streams. Each event contains table name, operation (INSERT/UPDATE/DELETE), and row data.
+VStream is the underlying streaming API that powers all VReplication workflows above. It also provides change data capture (CDC) via VTGate gRPC API, streaming binlog events across all shards in a keyspace. Supports GTID-based positioning, table filtering, and resumable streams. Each event contains table name, operation (INSERT/UPDATE/DELETE), and row data.
 
 ## Traffic switching
 
 Both MoveTables and Reshard support granular traffic switching:
 1. Switch read traffic first (replica/rdonly) to verify correctness
-2. For MoveTables, optionally mirror a percentage: `mirrortraffic --percent 5`
-3. Switch write traffic (brief write pause during cutover)
-4. Roll back with `reversetraffic` if issues arise
+2. Switch write traffic (brief write pause during cutover)
+3. Roll back with `reversetraffic` if issues arise
 
 VTGate buffers queries during switches to minimize application impact.
 

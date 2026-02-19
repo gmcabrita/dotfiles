@@ -15,8 +15,7 @@ Reference: https://vitess.io/docs/23.0/overview/architecture/
 Stateless proxy. Load-balance across multiple instances. Handles:
 - **Query routing**: parses SQL, consults VSchema, routes to correct shard(s)
 - **Cross-shard execution**: scatter-gather, joins, aggregations, ORDER BY/LIMIT merging
-- **Connection pooling**: multiplexes many client connections to fewer backend connections
-- **Transaction management**: single-shard (full ACID) and multi-shard transactions
+- **Transaction management**: single-shard (full ACID) and multi-shard transactions (atomic distributed transactions via 2PC, production-ready in v22+)
 - **Query buffering**: buffers queries during PlannedReparentShard failovers and MoveTables/Reshard traffic switches
 
 Shard targeting: `USE 'keyspace:-80';` or `USE 'keyspace:80-@replica';`
@@ -27,7 +26,7 @@ OLTP (default, strict timeouts) vs OLAP mode: `SET workload = 'olap';`
 
 Sidecar process alongside each mysqld. A VTTablet + mysqld pair = a **tablet**.
 
-Handles connection pooling, query rewriting, health reporting, Online DDL execution, throttling (based on replication lag), backup/restore, and resharding operations.
+Handles connection pooling (multiplexes many client connections to fewer MySQL backend connections), query rewriting, health reporting, Online DDL execution, throttling (based on replication lag), backup/restore, and resharding operations.
 
 ### Tablet types
 
@@ -76,14 +75,19 @@ Automatic failover manager. Detects primary failure, promotes best replica, re-p
 3. Routes to VTTablet(s) → VTTablet forwards to mysqld
 4. Results flow back; VTGate merges multi-shard results (sort, aggregate, limit)
 
-**Execution plan types** (check with `VEXPLAIN PLAN`; shown as `Route` operator `Variant` values). For deeper debugging, `VEXPLAIN ALL` includes the MySQL query plans from each tablet, and `VEXPLAIN TRACE` includes metrics on how many rows are passed between parts of the query:
+**Execution plan types** (check with `VEXPLAIN PLAN`; shown as `Route` operator `Variant` values). For deeper debugging, `VEXPLAIN ALL` includes the MySQL query plans from each tablet, and `VEXPLAIN TRACE` includes metrics on how many rows are passed between parts of the query. Route variants as of v22+:
 
 | Route Variant | Meaning |
 | --- | --- |
 | `Unsharded` | Unsharded keyspace, single backend |
-| `Equal` / `EqualUnique` | Single shard via primary vindex equality |
-| `IN` | Targeted multi-shard via IN list |
+| `Local` | Single shard via primary vindex equality (e.g. `=` or `EqualUnique`) |
+| `MultiShard` | Targeted multi-shard (e.g. `IN` list on primary vindex) |
 | `Scatter` | All shards (expensive, avoid in hot paths) |
+| `Passthrough` | Query passed directly to a specific tablet |
+| `Complex` | Multi-part plan that doesn't fit simpler categories |
+| `DirectDDL` | DDL statement routed directly |
+| `ForeignKey` | Query involving foreign key handling |
+| `Transaction` | Transaction-related routing |
 
 ## Best practices
 
