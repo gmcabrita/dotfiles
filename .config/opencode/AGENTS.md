@@ -12,6 +12,7 @@ You run in an environment where ast-grep (`sg`) is available; whenever a search 
 - **Make illegal states unrepresentable**: Model domain with ADTs/discriminated unions; parse inputs at boundaries into typed structures; if state can't exist, code can't mishandle it
 - **Abstractions**: Consciously constrained, pragmatically parameterised, doggedly documented
 - Do not randomly break existing lines into multiple lines, let formatters do that for you
+- Maintain code formatting/preferences across the codebase, e.g. if the codebase prefers " over ' for strings use that
 
 ### **ENTROPY REMINDER**
 
