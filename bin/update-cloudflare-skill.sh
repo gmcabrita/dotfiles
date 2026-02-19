@@ -3,7 +3,7 @@ set -e
 
 REPO_URL="https://github.com/dmmulroy/cloudflare-skill.git"
 SKILLS_PATH="skills"
-TARGET_DIR="$(git rev-parse --show-toplevel)/.config/opencode/skill"
+TARGET_DIR="$(git rev-parse --show-toplevel)/.agents/skills"
 
 # Clone to temp directory
 TEMP_DIR=$(mktemp -d)

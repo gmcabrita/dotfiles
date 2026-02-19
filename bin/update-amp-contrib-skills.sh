@@ -3,7 +3,7 @@ set -e
 
 REPO_URL="https://github.com/ampcode/amp-contrib.git"
 SKILLS_PATH=".agents/skills"
-TARGET_DIR="$(git rev-parse --show-toplevel)/.config/amp/skills"
+TARGET_DIR="$(git rev-parse --show-toplevel)/.agents/skills"
 
 # Clone to temp directory
 TEMP_DIR=$(mktemp -d)

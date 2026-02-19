@@ -27,6 +27,9 @@ cp -r ".ssh/"* "$HOME/.ssh"
 mkdir -p "$HOME/.claude"
 cp -r ".claude/"* "$HOME/.claude"
 
+mkdir -p "$HOME/.agents"
+cp -r ".agents/"* "$HOME/.agents"
+
 mkdir -p "$HOME/.config"
 cp -r ".config/"* "$HOME/.config"
 
