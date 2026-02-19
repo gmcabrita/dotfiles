@@ -68,13 +68,6 @@
     "font_family": "JetBrains Mono NL",
     "font_size": 17.0,
   },
-  "experimental.theme_overrides": {
-    "players": [
-      {
-        "cursor": "#908376",
-      },
-    ],
-  },
   "scrollbar": {
     "show": "always",
   },
@@ -86,7 +79,7 @@
   "use_autoclose": false,
   "vertical_scroll_margin": 0,
   "base_keymap": "VSCode",
-  "theme": "Gruvbox Dark Hard",
+  "theme": "Alabaster BG",
   "vim_mode": false,
   "project_panel": {
     "dock": "right",

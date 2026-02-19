@@ -92,5 +92,5 @@ mouse-hide-while-typing = false
 quit-after-last-window-closed = true
 scrollback-limit = 100000000
 shell-integration-features = no-cursor
-theme = Gruvbox Dark Hard
+theme = Alabaster
 unfocused-split-opacity = 0.6
