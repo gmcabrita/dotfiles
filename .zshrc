@@ -35,7 +35,7 @@ export VISUAL="zed -n -w"
 export PSQL_EDITOR="zed -n -w"
 export KUBE_EDITOR="zed -n -w"
 export ERL_AFLAGS="-kernel shell_history enabled"
-export FZF_DEFAULT_OPTS="--color=light"
+export FZF_DEFAULT_OPTS="--color=dark --style=full"
 export PAGER="less -S"
 
 set -a
