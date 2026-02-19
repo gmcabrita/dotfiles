@@ -15,15 +15,6 @@
     },
     "explore": {
       "model": "openai/gpt-5.3-codex"
-    },
-    "compaction": {
-      "model": "openai/gpt-5-mini"
-    },
-    "summary": {
-      "model": "openai/gpt-5-mini"
-    },
-    "title": {
-      "model": "openai/gpt-5-mini"
     }
   },
   "permission": {
