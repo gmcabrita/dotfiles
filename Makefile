@@ -15,4 +15,5 @@ lint:
 update:
 	./bin/update-amp-contrib-skills.sh
 	./bin/update-database-skills.sh
-	./bin/update-cloudflare-skill.sh
+	./bin/update-cloudflare-skills.sh
+	./bin/update-mitsuhiko-skills.sh
