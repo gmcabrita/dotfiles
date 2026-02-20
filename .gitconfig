@@ -19,6 +19,7 @@
   symlinks = true
   fsmonitor = false
   excludesfile = ~/.gitignore
+  untrackedCache = true
 [diff]
   algorithm = histogram
   colorMoved = plain
