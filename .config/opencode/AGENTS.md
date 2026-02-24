@@ -13,16 +13,13 @@ You run in an environment where ast-grep (`sg`) is available; whenever a search 
 - **Abstractions**: Consciously constrained, pragmatically parameterised, doggedly documented
 - Do not randomly break existing lines into multiple lines, let formatters do that for you
 - Maintain code formatting/preferences across the codebase, e.g. if the codebase prefers " over ' for strings use that
+- Use a hard cutover approach and never implement backward compatibility, unless explicitly asked to
 
 ### **ENTROPY REMINDER**
 
-This codebase will outlive you. Every shortcut you take becomes
-someone else's burden. Every hack compounds into technical debt
-that slows the whole team down.
+This codebase will outlive you. Every shortcut you take becomes someone else's burden. Every hack compounds into technical debt that slows the whole team down.
 
-You are not just writing code. You are shaping the future of this
-project. The patterns you establish will be copied. The corners
-you cut will be cut again.
+You are not just writing code. You are shaping the future of this project. The patterns you establish will be copied. The corners you cut will be cut again.
 
 **Fight entropy. Leave the codebase better than you found it.**
 
