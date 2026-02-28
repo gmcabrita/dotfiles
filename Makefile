@@ -13,8 +13,17 @@ lint:
 	./bin/lint.sh
 
 update:
-	./bin/update-amp-contrib-skills.sh
-	./bin/update-database-skills.sh
-	./bin/update-cloudflare-skills.sh
-	./bin/update-mitsuhiko-skills.sh
-	./bin/update-modern-go-skills.sh
+	pids=""; \
+	for script in \
+		./bin/update-amp-contrib-skills.sh \
+		./bin/update-database-skills.sh \
+		./bin/update-cloudflare-skills.sh \
+		./bin/update-mitsuhiko-skills.sh \
+		./bin/update-modern-go-skills.sh; do \
+		$$script & pids="$$pids $$!"; \
+	done; \
+	status=0; \
+	for pid in $$pids; do \
+		wait $$pid || status=1; \
+	done; \
+	exit $$status
