@@ -17,3 +17,4 @@ update:
 	./bin/update-database-skills.sh
 	./bin/update-cloudflare-skills.sh
 	./bin/update-mitsuhiko-skills.sh
+	./bin/update-modern-go-skills.sh
