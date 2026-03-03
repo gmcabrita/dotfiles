@@ -8,6 +8,7 @@ description: "Use `uv` instead of pip/python/venv. Run scripts with `uv run scri
 ```bash
 uv run script.py                   # Run a script
 uv run --with requests script.py   # Run with ad-hoc dependency
+uv run python -m ast foo.py >/dev/null  # Verify syntax without writing __pycache__
 uv add requests                    # Add dependency to project
 uv init --script foo.py            # Create script with inline metadata
 ```

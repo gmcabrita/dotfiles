@@ -770,7 +770,15 @@
     },
     "Ruby": {
       "format_on_save": "on",
-      "language_servers": ["ruby-lsp", "!steep", "!sorbet", "!solargraph", "!rubocop", "..."],
+      "language_servers": [
+        "ruby-lsp",
+        "!kanayago",
+        "!steep",
+        "!sorbet",
+        "!solargraph",
+        "!rubocop",
+        "...",
+      ],
     },
     "Go": {
       "hard_tabs": true,

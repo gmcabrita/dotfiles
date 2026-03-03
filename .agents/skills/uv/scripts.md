@@ -15,6 +15,14 @@ In a project directory, use `--no-project` to skip installing the project:
 uv run --no-project script.py
 ```
 
+## Syntax Verification (No `__pycache__`)
+
+Use the AST parser instead of `python -m py_compile`:
+
+```bash
+uv run python -m ast script.py >/dev/null
+```
+
 ## Ad-hoc Dependencies
 
 ```bash
