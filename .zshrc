@@ -19,6 +19,7 @@ export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export HK_MISE=1
 export OPENCODE_EXPERIMENTAL_LSP_TOOL=1
 export OPENCODE_EXPERIMENTAL_PLAN_MODE=1
+export TIDEWAVE_OPENCODE_EXECUTABLE=$HOMEBREW_PREFIX/bin/opencode
 export MIX_OS_DEPS_COMPILE_PARTITION_COUNT=$(sysctl -n hw.perflevel0.logicalcpu 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || nproc --all 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
 export JEMALLOC_LIBS="-L$HOMEBREW_PREFIX/opt/jemalloc/lib -ljemalloc"
 export JEMALLOC_CFLAGS="-I$HOMEBREW_PREFIX/opt/jemalloc/include"
