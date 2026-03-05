@@ -7,7 +7,7 @@
       "reasoningEffort": "xhigh"
     },
     "plan": {
-      "model": "openai/gpt-5.3-codex",
+      "model": "openai/gpt-5.2",
       "reasoningEffort": "xhigh"
     },
     "general": {
