@@ -22,6 +22,9 @@ sudo scutil --set HostName "$name"
 sudo scutil --set LocalHostName "$LOCALHOSTNAME"
 sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName -string "$name"
 
+# Show Library folder
+chflags nohidden ~/Library
+
 # Show advanced printing settings by default
 defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
 defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
