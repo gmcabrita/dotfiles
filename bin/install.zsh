@@ -30,7 +30,7 @@ defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
 defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
 
 # Disable the all finder animations
-defaults write com.apple.finder DisableAllAnimations -bool true
+defaults write NSGlobalDomain DisableAllAnimations -bool true
 
 # Enable full keyboard access for all controls (Accessibility pane)
 defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
@@ -95,22 +95,22 @@ defaults write com.apple.finder NewWindowTarget -string "PfLo"
 defaults write com.apple.finder NewWindowTargetPath -string "file://{$HOME}/"
 
 # Show more things in a Finder window
-defaults write com.apple.Finder AppleShowAllFiles -bool true # show hidden files
+defaults write NSGlobalDomain AppleShowAllFiles -bool true # show hidden files
 defaults write NSGlobalDomain AppleShowAllExtensions -bool true # always show extensions
-defaults write com.apple.finder ShowStatusBar -bool true # show status bar
-defaults write com.apple.finder ShowPathbar -bool true # show path bar
+defaults write NSGlobalDomain ShowStatusBar -bool true # show status bar
+defaults write NSGlobalDomain ShowPathbar -bool true # show path bar
 
 # Don't warn when changing a file extension
-defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
+defaults write NSGlobalDomain FXEnableExtensionChangeWarning -bool false
 
 # Use column view by default
-defaults write com.apple.finder FXPreferredViewStyle -string "clmv"
+defaults write NSGlobalDomain FXPreferredViewStyle -string "clmv"
 
 # Keep folders on top when sorting by name
-defaults write com.apple.finder _FXSortFoldersFirst -bool true
+defaults write NSGlobalDomain _FXSortFoldersFirst -bool true
 
 # Hide desktop icons
-defaults write com.apple.finder CreateDesktop false
+defaults write NSGlobalDomain CreateDesktop false
 
 # Expanded Save and Print dialogs by default
 defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
