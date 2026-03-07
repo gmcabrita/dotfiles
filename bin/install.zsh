@@ -167,6 +167,7 @@ mise plugin install odin
 mise settings add idiomatic_version_file_enable_tools rust
 mise settings set python.uv_venv_auto true
 mise settings set npm.package_manager pnpm
+mise settings ruby.compile=false
 ERL_AFLAGS="-kernel shell_history enabled" \
 JEMALLOC_LIBS="-L$(brew --prefix jemalloc)/lib -ljemalloc" \
 JEMALLOC_CFLAGS="-I$(brew --prefix jemalloc)/include" \
