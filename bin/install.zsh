@@ -22,6 +22,13 @@ sudo scutil --set HostName "$name"
 sudo scutil --set LocalHostName "$LOCALHOSTNAME"
 sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName -string "$name"
 
+# Pointer settings
+defaults write NSGlobalDomain CGDisableCursorLocationMagnification -bool false
+defaults write com.apple.universalaccess mouseDriverCursorSize 1.5
+
+# Do not reduce motion
+defaults write com.apple.universalaccess reduceMotion -bool false
+
 # Show Library folder
 chflags nohidden ~/Library
 

@@ -81,7 +81,7 @@
 - [Tailscale](https://pkgs.tailscale.com/stable/#macos)
 - Setapp + apps
 - https://twitter.com/thorstenball/status/1736679960784310775
-  - Keep "Wake for network access" on because of Plex
+  - Keep "Wake for network access" on because of Jellyfin
 - Copy zsh history from icloud
   - `cp ~/iCloud\ Drive/Software/.zsh_history ~/.zsh_history`
 - Download and install [qBittorrent](https://www.qbittorrent.org/download)
