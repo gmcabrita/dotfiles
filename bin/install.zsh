@@ -22,6 +22,24 @@ sudo scutil --set HostName "$name"
 sudo scutil --set LocalHostName "$LOCALHOSTNAME"
 sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName -string "$name"
 
+# Battery
+sudo pmset -a lowpowermode 0
+sudo pmset -b lessbright 0
+sudo pmset -b tcpkeepalive 1
+sudo pmset -b womp 0
+sudo pmset -c tcpkeepalive 1
+sudo pmset -c womp 1
+
+# Touchpad
+defaults write com.apple.AppleMultitouchTrackpad Clicking -bool false
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool false
+defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 0
+
+# Google DNS
+networksetup -listallnetworkservices | sed 1d | sed '/^\*/d' | while IFS= read -r service; do
+    networksetup -setdnsservers "$service" 8.8.8.8 8.8.4.4 2001:4860:4860::8888 2001:4860:4860::8844
+done
+
 # Pointer settings
 defaults write NSGlobalDomain CGDisableCursorLocationMagnification -bool false
 defaults write com.apple.universalaccess mouseDriverCursorSize 1.5
@@ -108,14 +126,20 @@ defaults write NSGlobalDomain AppleShowAllExtensions -bool true # always show ex
 defaults write NSGlobalDomain ShowStatusBar -bool true # show status bar
 defaults write NSGlobalDomain ShowPathbar -bool true # show path bar
 
+# Finder trash settings
+defaults write com.apple.finder WarnOnEmptyTrash -bool true
+defaults write com.apple.finder FXRemoveOldTrashItems -bool true
+
 # Don't warn when changing a file extension
 defaults write NSGlobalDomain FXEnableExtensionChangeWarning -bool false
 
 # Use column view by default
 defaults write NSGlobalDomain FXPreferredViewStyle -string "clmv"
+defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
 
 # Keep folders on top when sorting by name
 defaults write NSGlobalDomain _FXSortFoldersFirst -bool true
+defaults write NSGlobalDomain _FXSortFoldersFirstOnDesktop -bool true
 
 # Hide desktop icons
 defaults write NSGlobalDomain CreateDesktop false
