@@ -70,6 +70,11 @@ defaults write NSGlobalDomain NSAutomaticPeriodSubstitutionEnabled -bool false
 # Disable smart quotes and dashes
 defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool false
 
+# Same, but for Apple Notes
+defaults write com.apple.Notes ShouldCorrectSpellingAutomatically -bool false
+defaults write com.apple.Notes ShouldUseSmartDashes -bool false
+defaults write com.apple.Notes ShouldUseSmartQuotes -bool false
+
 # Disable text replacements
 defaults write NSGlobalDomain NSUserDictionaryReplacementItems -array
 
@@ -81,10 +86,6 @@ defaults write com.apple.LaunchServices/com.apple.launchservices.secure LSHandle
   '{LSHandlerContentType=public.unix-executable;LSHandlerRoleAll=dev.zed.Zed;}' \
   '{LSHandlerContentType=public.data;LSHandlerRoleAll=dev.zed.Zed;}'
 
-# Same, but for Apple Notes
-defaults write com.apple.Notes ShouldCorrectSpellingAutomatically -bool false
-defaults write com.apple.Notes ShouldUseSmartDashes -bool false
-defaults write com.apple.Notes ShouldUseSmartQuotes -bool false
 
 # TODO: this does not work
 # Don't adjust screen brightness in low light
@@ -152,14 +153,25 @@ defaults write com.apple.dock springboard-show-duration -float .1
 defaults write com.apple.dock springboard-page-duration -float .2
 
 # In Safari, don't send search queries to Apple
-sudo defaults write com.apple.Safari UniversalSearchEnabled -bool false
-sudo defaults write com.apple.Safari SuppressSearchSuggestions -bool true
+defaults write com.apple.Safari UniversalSearchEnabled -bool false
+defaults write com.apple.Safari SuppressSearchSuggestions -bool true
 
 # In Safari, show full URLs always
-sudo defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
+defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
 
 # Increase file limits
 sudo sysctl kern.maxfiles=64000 kern.maxfilesperproc=28000
+
+# Check for software updates daily, not just once per week
+defaults write com.apple.SoftwareUpdate ScheduleFrequency -int 1
+
+# Avoid creating .DS_Store files on network volumes
+defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
+
+# Sort users in Contacts by first name
+defaults write -app Contacts ABNameSortingFormat -string "sortingFirstName sortingLastName"
+
+defaults write -app Calendar "number of hours displayed" -int 11
 
 brew bundle install --cleanup --file=~/.config/Brewfile
 
