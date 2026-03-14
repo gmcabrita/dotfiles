@@ -52,11 +52,13 @@
     "button": false,
     "inline_assistant_model": {
       "provider": "openai",
-      "model": "gpt-5.2",
+      "model": "gpt-5.4",
+      "effort": "xhigh",
     },
     "default_model": {
       "provider": "openai",
-      "model": "gpt-5.2h",
+      "model": "gpt-5.4",
+      "effort": "xhigh",
     },
   },
   "terminal": {
