@@ -1,26 +1,23 @@
-// Check if a session is a main (non-subagent) session
-const isMainSession = async (sessionID) => {
+import type { PluginInput, Plugin } from "@opencode-ai/plugin";
+
+const isMainSession = async (client: PluginInput["client"], sessionID: string) => {
   try {
     const result = await client.session.get({ path: { id: sessionID } });
-    const session = result.data ?? result;
-    return !session.parentID;
+    return !result.data?.parentID;
   } catch {
-    // If we can't fetch the session, assume it's main to avoid missing notifications
     return true;
   }
 };
 
-export const NotificationPlugin = async ({ project, client, $, directory, worktree }) => {
+export const NotificationPlugin: Plugin = async ({ client, $ }) => {
   return {
     event: async ({ event }) => {
       if (event.type === "session.idle") {
         const sessionID = event.properties.sessionID;
-        if (await isMainSession(sessionID)) {
+        if (await isMainSession(client, sessionID)) {
           await $`afplaybg /System/Library/Sounds/Submarine.aiff`.quiet().nothrow();
         }
-      } else if (event.type === "permission.asked") {
-        // or permission.updated
-        // or permission.requested
+      } else if (event.type === "permission.updated") {
         await $`afplaybg /System/Library/Sounds/Ping.aiff`.quiet().nothrow();
       } else {
         return;
