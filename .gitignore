@@ -15,4 +15,3 @@ scripts/ralph/**
 .ralph-*
 .opencode/**
 __pycache__
-autoresearch.jsonl
