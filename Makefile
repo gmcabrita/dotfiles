@@ -16,6 +16,7 @@ update:
 	pids=""; \
 	for script in \
 		./bin/update-amp-contrib-skills.sh \
+		./bin/update-chrome-cdp-skills.sh \
 		./bin/update-database-skills.sh \
 		./bin/update-cloudflare-skills.sh \
 		./bin/update-mitsuhiko-skills.sh \

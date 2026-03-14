@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 set -e
 
-REPO_URL="https://github.com/ampcode/amp-contrib.git"
-SKILLS_PATH=".agents/skills"
+REPO_URL="https://github.com/pasky/chrome-cdp-skill.git"
+SKILLS_PATH="skills"
 TARGET_DIR="$(git rev-parse --show-toplevel)/.agents/skills"
 
 # Clone to temp directory
 TEMP_DIR=$(mktemp -d)
 trap "rm -rf $TEMP_DIR" EXIT
 
-echo "Fetching latest amp contrib skills..."
+echo "Fetching latest chrome-cdp skills..."
 git clone --depth 1 --filter=blob:none --sparse "$REPO_URL" "$TEMP_DIR"
 cd "$TEMP_DIR"
 git sparse-checkout set "$SKILLS_PATH"
