@@ -33,6 +33,9 @@ cp -r ".agents/"* "$HOME/.agents"
 mkdir -p "$HOME/.config"
 cp -r ".config/"* "$HOME/.config"
 
+mkdir -p "$HOME/.pi"
+cp -r ".pi/"* "$HOME/.pi"
+
 mkdir -p "$HOME/.raycast-scripts"
 cp -r ".raycast-scripts/"* "$HOME/.raycast-scripts"
 
