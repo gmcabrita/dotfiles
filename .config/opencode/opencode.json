@@ -32,6 +32,7 @@
   "permission": {
     "read": {
       "*": "allow",
+      ".*.vars": "deny",
       "*.env": "deny",
       "*.env.*": "deny",
       "*.envrc": "deny",
