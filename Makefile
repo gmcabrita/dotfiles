@@ -4,6 +4,7 @@ install:
 	./bin/install.zsh
 
 sync:
+	npm i --prefix .pi/agent/extensions
 	./bin/copy-dotfiles.sh
 
 fmt:
@@ -15,11 +16,11 @@ lint:
 update:
 	pids=""; \
 	for script in \
-		./bin/update-amp-contrib-skills.sh \
 		./bin/update-chrome-cdp-skills.sh \
 		./bin/update-database-skills.sh \
 		./bin/update-cloudflare-skills.sh \
-		./bin/update-mitsuhiko-skills.sh \
+		./bin/update-mitsuhiko-skills-and-pi-extensions.sh \
+		./bin/update-pi-autoresearch-skills-and-extensions.sh \
 		./bin/update-modern-go-skills.sh; do \
 		$$script & pids="$$pids $$!"; \
 	done; \

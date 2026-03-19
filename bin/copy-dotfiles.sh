@@ -16,28 +16,25 @@ cp .bunfig.toml "$HOME/"
 mkdir -p "$HOME/Developer"
 
 mkdir -p "$HOME/.psql/queries"
-cp ".psql/queries/"* "$HOME/.psql/queries"
+rsync -a ".psql/queries/" "$HOME/.psql/queries/"
 
 mkdir -p "$HOME/.local"
-cp -r ".local/"* "$HOME/.local"
+rsync -a ".local/" "$HOME/.local/"
 
 mkdir -p "$HOME/.ssh"
-cp -r ".ssh/"* "$HOME/.ssh"
-
-mkdir -p "$HOME/.claude"
-cp -r ".claude/"* "$HOME/.claude"
+rsync -a ".ssh/" "$HOME/.ssh/"
 
 mkdir -p "$HOME/.agents"
-cp -r ".agents/"* "$HOME/.agents"
+rsync -a ".agents/" "$HOME/.agents/"
 
 mkdir -p "$HOME/.config"
-cp -r ".config/"* "$HOME/.config"
+rsync -a ".config/" "$HOME/.config/"
 
 mkdir -p "$HOME/.pi"
-cp -r ".pi/"* "$HOME/.pi"
+rsync -a ".pi/" "$HOME/.pi/"
 
 mkdir -p "$HOME/.raycast-scripts"
-cp -r ".raycast-scripts/"* "$HOME/.raycast-scripts"
+rsync -a ".raycast-scripts/" "$HOME/.raycast-scripts/"
 
 mkdir -p "$HOME/Library/Application Support/go/telemetry"
-cp "Library/Application Support/go/telemetry/"* "$HOME/Library/Application Support/go/telemetry"
+rsync -a "Library/Application Support/go/telemetry/" "$HOME/Library/Application Support/go/telemetry/"

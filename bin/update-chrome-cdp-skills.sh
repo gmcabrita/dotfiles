@@ -19,5 +19,5 @@ mkdir -p "$TARGET_DIR"
 for skill_dir in "$TEMP_DIR/$SKILLS_PATH"/*/; do
     skill_name=$(basename "$skill_dir")
     echo "Syncing $skill_name..."
-    rsync -av --delete "$skill_dir" "$TARGET_DIR/$skill_name/"
+    cp -r "$skill_dir" "$TARGET_DIR/$skill_name/"
 done

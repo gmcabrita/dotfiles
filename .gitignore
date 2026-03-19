@@ -9,9 +9,11 @@ zig-out/
 .DS_Store
 scratchpad.*
 **/.claude/settings.local.json
+.pi/agent/extensions/node_modules/
+.pi/agent/extensions/package-lock.json
 .config/opencode/node_modules/
-.config/opencode/bun.lock
 scripts/ralph/**
 .ralph-*
 .opencode/**
 __pycache__
+.pi/todos/**
