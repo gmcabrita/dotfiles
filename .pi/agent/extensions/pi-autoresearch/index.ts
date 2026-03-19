@@ -49,6 +49,8 @@ interface ExperimentResult {
   timestamp: number;
   /** Segment index — increments on each config header. Current segment = highest. */
   segment: number;
+  /** Session-level confidence score at the time this result was logged. null if insufficient data. */
+  confidence: number | null;
 }
 
 interface MetricDef {
@@ -70,6 +72,8 @@ interface ExperimentState {
   currentSegment: number;
   /** Maximum number of experiments before auto-stopping. null = unlimited. */
   maxExperiments: number | null;
+  /** Current session confidence score (best improvement / noise floor). null if insufficient data. */
+  confidence: number | null;
 }
 
 interface RunDetails {
@@ -321,6 +325,59 @@ function isBetter(
   return direction === "lower" ? current < best : current > best;
 }
 
+/** Compute the median of a numeric array (returns 0 for empty arrays) */
+function sortedMedian(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[mid - 1] + sorted[mid]) / 2
+    : sorted[mid];
+}
+
+/**
+ * Compute confidence score for the best improvement vs. session noise floor.
+ *
+ * Uses Median Absolute Deviation (MAD) of all metric values in the current
+ * segment as a robust noise estimator. Returns `|best_delta| / MAD`, where
+ * best_delta is the improvement of the best kept metric over baseline.
+ *
+ * Returns null when there are fewer than 3 data points (insufficient data)
+ * or when MAD is 0 (all values identical — no measurable noise).
+ */
+function computeConfidence(
+  results: ExperimentResult[],
+  segment: number,
+  direction: "lower" | "higher"
+): number | null {
+  const cur = currentResults(results, segment).filter((r) => r.metric > 0);
+  if (cur.length < 3) return null;
+
+  const values = cur.map((r) => r.metric);
+  const median = sortedMedian(values);
+  const deviations = values.map((v) => Math.abs(v - median));
+  const mad = sortedMedian(deviations);
+
+  if (mad === 0) return null;
+
+  const baseline = findBaselineMetric(results, segment);
+  if (baseline === null) return null;
+
+  // Find best kept metric in current segment
+  let bestKept: number | null = null;
+  for (const r of cur) {
+    if (r.status === "keep" && r.metric > 0) {
+      if (bestKept === null || isBetter(r.metric, bestKept, direction)) {
+        bestKept = r.metric;
+      }
+    }
+  }
+  if (bestKept === null || bestKept === baseline) return null;
+
+  const delta = Math.abs(bestKept - baseline);
+  return delta / mad;
+}
+
 /** Get results in the current segment only */
 function currentResults(results: ExperimentResult[], segment: number): ExperimentResult[] {
   return results.filter((r) => r.segment === segment);
@@ -447,6 +504,7 @@ function createExperimentState(): ExperimentState {
     name: null,
     currentSegment: 0,
     maxExperiments: null,
+    confidence: null,
   };
 }
 
@@ -531,10 +589,18 @@ function renderDashboardLines(
   }
 
   // Runs summary
+  const confSuffix = st.confidence !== null
+    ? (() => {
+        const confStr = st.confidence!.toFixed(1);
+        const confColor: Parameters<typeof th.fg>[0] = st.confidence! >= 2.0 ? "success" : st.confidence! >= 1.0 ? "warning" : "error";
+        return `  ${th.fg(confColor, `(conf: ${confStr}×)`)}`;
+      })()
+    : "";
   lines.push(
     truncateToWidth(
       `  ${th.fg("muted", "Runs:")} ${th.fg("text", String(st.results.length))}` +
         `  ${th.fg("success", `${kept} kept`)}` +
+        confSuffix +
         (discarded > 0 ? `  ${th.fg("warning", `${discarded} discarded`)}` : "") +
         (crashed > 0 ? `  ${th.fg("error", `${crashed} crashed`)}` : "") +
         (checksFailed > 0 ? `  ${th.fg("error", `${checksFailed} checks failed`)}` : ""),
@@ -855,6 +921,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
               description: entry.description ?? "",
               timestamp: entry.timestamp ?? 0,
               segment,
+              confidence: entry.confidence ?? null,
             });
 
             // Register secondary metrics
@@ -876,6 +943,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
         if (state.results.length > 0) {
           loadedFromJsonl = true;
           state.bestMetric = findBaselineMetric(state.results, state.currentSegment);
+          state.confidence = computeConfidence(state.results, state.currentSegment, state.bestDirection);
         }
       }
     } catch {
@@ -899,6 +967,10 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
           }
           for (const r of state.results) {
             if (!r.metrics) r.metrics = {};
+            if (r.confidence === undefined) r.confidence = null;
+          }
+          if (state.confidence === undefined) {
+            state.confidence = computeConfidence(state.results, state.currentSegment, state.bestDirection);
           }
         }
       }
@@ -1018,6 +1090,14 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
           const sign = pct > 0 ? "+" : "";
           const deltaColor = isBetter(bestPrimary, baseline, state.bestDirection) ? "success" : "error";
           parts.push(theme.fg(deltaColor, ` (${sign}${pct.toFixed(1)}%)`));
+        }
+
+        // Show confidence score
+        if (state.confidence !== null) {
+          const confStr = state.confidence.toFixed(1);
+          const confColor: Parameters<typeof theme.fg>[0] = state.confidence >= 2.0 ? "success" : state.confidence >= 1.0 ? "warning" : "error";
+          parts.push(theme.fg("dim", " │ "));
+          parts.push(theme.fg(confColor, `conf: ${confStr}×`));
         }
 
         // Show secondary metrics with delta %
@@ -1195,6 +1275,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
       }
       state.bestMetric = null;
       state.secondaryMetrics = [];
+      state.confidence = null;
 
       // Read max experiments from config file (config always in ctx.cwd)
       state.maxExperiments = readMaxExperiments(ctx.cwd);
@@ -1780,6 +1861,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
       "Always call log_experiment after run_experiment to record the result.",
       "log_experiment automatically runs git add -A && git commit on 'keep', and auto-reverts code changes on 'discard'/'crash'/'checks_failed' (autoresearch files are preserved). Do NOT commit or revert manually.",
       "Use status 'keep' if the PRIMARY metric improved. 'discard' if worse or unchanged. 'crash' if it failed. Secondary metrics are for monitoring — they almost never affect keep/discard. Only discard a primary improvement if a secondary metric degraded catastrophically, and explain why in the description.",
+      "log_experiment reports a confidence score after 3+ runs (best improvement as a multiple of the noise floor). ≥2.0× = likely real, <1.0× = within noise. If confidence is below 1.0×, consider re-running the same experiment to confirm before keeping. The score is advisory — it never auto-discards.",
       "If you discover complex but promising optimizations you won't pursue immediately, append them as bullet points to autoresearch.ideas.md. Don't let good ideas get lost.",
     ],
     parameters: LogParams,
@@ -1848,6 +1930,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
         description: params.description,
         timestamp: Date.now(),
         segment: state.currentSegment,
+        confidence: null,
       };
 
       state.results.push(experiment);
@@ -1868,6 +1951,10 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
 
       // Baseline = first run in current segment
       state.bestMetric = findBaselineMetric(state.results, state.currentSegment);
+
+      // Compute confidence score (best improvement as multiple of noise floor)
+      state.confidence = computeConfidence(state.results, state.currentSegment, state.bestDirection);
+      experiment.confidence = state.confidence;
 
       // Build response text
       const segmentCount = currentResults(state.results, state.currentSegment).length;
@@ -1901,6 +1988,18 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
           parts.push(part);
         }
         text += `\nSecondary: ${parts.join("  ")}`;
+      }
+
+      // Show confidence score
+      if (state.confidence !== null) {
+        const confStr = state.confidence.toFixed(1);
+        if (state.confidence >= 2.0) {
+          text += `\n📊 Confidence: ${confStr}× noise floor — improvement is likely real`;
+        } else if (state.confidence >= 1.0) {
+          text += `\n📊 Confidence: ${confStr}× noise floor — improvement is above noise but marginal`;
+        } else {
+          text += `\n⚠️ Confidence: ${confStr}× noise floor — improvement is within noise. Consider re-running to confirm before keeping.`;
+        }
       }
 
       text += `\n(${segmentCount} experiments`;

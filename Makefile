@@ -4,7 +4,7 @@ install:
 	./bin/install.zsh
 
 sync:
-	npm i --prefix .pi/agent/extensions
+	pnpm i --prefix .pi/agent
 	./bin/copy-dotfiles.sh
 
 fmt:
