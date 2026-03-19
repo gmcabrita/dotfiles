@@ -1,0 +1,7 @@
+{
+  "providers": {
+    "openai": {
+      "baseUrl": "http://codexlb00.usce1.mgmt.internal.amplemarket.com:2455/v1"
+    }
+  }
+}

@@ -31,7 +31,11 @@ mkdir -p "$HOME/.config"
 rsync -a ".config/" "$HOME/.config/"
 
 mkdir -p "$HOME/.pi"
-rsync -a ".pi/" "$HOME/.pi/"
+if [ ! -f "$HOME/.pi/agent/auth.json" ]; then
+  rsync -a ".pi/" "$HOME/.pi/"
+else
+  rsync -a --exclude "agent/auth.json" ".pi/" "$HOME/.pi/"
+fi
 
 mkdir -p "$HOME/.raycast-scripts"
 rsync -a ".raycast-scripts/" "$HOME/.raycast-scripts/"
