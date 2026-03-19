@@ -5,6 +5,7 @@
   "defaultModel": "gpt-5.4",
   "defaultThinkingLevel": "xhigh",
   "hideThinkingBlock": true,
+  "quietStartup": true
   "toolPolicy": {
     "all": {
       "*": "allow",
