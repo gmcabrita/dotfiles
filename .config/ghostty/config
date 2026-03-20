@@ -2,6 +2,7 @@ auto-update-channel = tip
 background-blur = true
 background-blur-radius = 20
 background-opacity = 1.0
+copy-on-select = clipboard
 cursor-style = block
 cursor-style-blink = false
 #custom-shader = ~/.config/ghostty/shaders/animated-gradient-shader.glsl
