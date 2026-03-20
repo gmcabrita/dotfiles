@@ -322,7 +322,7 @@ function update-programming-languages() {
   EDITOR_APP_ID="dev.zed.Zed"
   for ext in \
     rb py js jsx ts tsx json yml yaml toml go rs java kt swift \
-    c h cc cpp cxx m mm cs php html css scss md sh bash zsh sql xml zig ex exs heex
+    c h cc cpp cxx m mm cs php css scss md sh bash zsh sql xml zig ex exs heex
   do
     duti -s "$EDITOR_APP_ID" ".$ext" all
   done
@@ -339,7 +339,6 @@ function update-programming-languages() {
     public.php-script \
     public.json \
     public.xml \
-    public.html \
     public.css \
     net.daringfireball.markdown
   do
