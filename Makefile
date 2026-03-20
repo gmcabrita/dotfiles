@@ -4,7 +4,7 @@ install:
 	./bin/install.zsh
 
 sync:
-	pnpm i --prefix .pi/agent
+	pnpm install --prefix .pi/agent
 	./bin/copy-dotfiles.sh
 
 fmt:
@@ -16,6 +16,7 @@ lint:
 update:
 	pids=""; \
 	for script in \
+	  "pnpm update --prefix .pi/agent" \
 		./bin/update-chrome-cdp-skills.sh \
 		./bin/update-database-skills.sh \
 		./bin/update-cloudflare-skills.sh \
