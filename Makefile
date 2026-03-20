@@ -21,6 +21,7 @@ update:
 		./bin/update-cloudflare-skills.sh \
 		./bin/update-mitsuhiko-skills-and-pi-extensions.sh \
 		./bin/update-pi-autoresearch-skills-and-extensions.sh \
+		./bin/update-emilkowalski-design-skills.sh \
 		./bin/update-modern-go-skills.sh; do \
 		$$script & pids="$$pids $$!"; \
 	done; \

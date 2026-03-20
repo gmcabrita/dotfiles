@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-REPO_URL="https://github.com/dmmulroy/cloudflare-skill.git"
+REPO_URL="https://github.com/emilkowalski/skill.git"
 SKILLS_PATH="skills"
 TARGET_DIR="$(git rev-parse --show-toplevel)/.agents/skills"
 
@@ -9,7 +9,7 @@ TARGET_DIR="$(git rev-parse --show-toplevel)/.agents/skills"
 TEMP_DIR=$(mktemp -d)
 trap "rm -rf $TEMP_DIR" EXIT
 
-echo "Fetching latest cloudflare skills..."
+echo "Fetching latest emilkowalski ui skills..."
 git clone --depth 1 --filter=blob:none --sparse "$REPO_URL" "$TEMP_DIR"
 cd "$TEMP_DIR"
 git sparse-checkout set "$SKILLS_PATH"
