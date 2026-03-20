@@ -780,7 +780,11 @@ function renderDashboardLines(
     }
 
     const idxStr = th.fg("dim", String(i + 1).padEnd(col.idx));
-    const commitStr = isOld ? "(old)".padEnd(col.commit) : r.commit.padEnd(col.commit);
+    const commitStr = isOld
+      ? "(old)".padEnd(col.commit)
+      : r.status !== "keep"
+        ? "—".padStart(Math.ceil(col.commit / 2)).padEnd(col.commit)
+        : r.commit.padEnd(col.commit);
 
     let rowLine =
       `  ${idxStr}` +
