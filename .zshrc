@@ -319,18 +319,32 @@ function update-programming-languages() {
   mix local.hex --force
   rm -rf "$HOME/Library/Application Support/Zed/extensions/work/elixir"/expert-*(N)
 
-  APP_ID="dev.zed.Zed"
+  EDITOR_APP_ID="dev.zed.Zed"
   for ext in \
     rb py js jsx ts tsx json yml yaml toml go rs java kt swift \
-    c h cc cpp cxx m mm cs php html css scss md sh bash zsh sql xml
+    c h cc cpp cxx m mm cs php html css scss md sh bash zsh sql xml zig ex exs heex
   do
-    duti -s "$APP_ID" ".$ext" all
+    duti -s "$EDITOR_APP_ID" ".$ext" all
   done
 
-  duti -s "$APP_ID" public.ruby-script all
-  duti -s "$APP_ID" public.python-script all
-  duti -s "$APP_ID" public.json all
-  duti -s "$APP_ID" public.shell-script all
+  for uti in \
+    public.text \
+    public.plain-text \
+    public.source-code \
+    public.script \
+    public.shell-script \
+    public.python-script \
+    public.ruby-script \
+    public.perl-script \
+    public.php-script \
+    public.json \
+    public.xml \
+    public.html \
+    public.css \
+    net.daringfireball.markdown
+  do
+    duti -s "$EDITOR_APP_ID" "$uti" all
+  done
 }
 
 function timestamps() {
