@@ -329,6 +329,7 @@ function update-everything() {
   brew bundle install --cleanup --file=~/.config/Brewfile
   brew upgrade
   update-programming-languages
+  pi update
   rm -f ~/.cache/macos_sdk_path
   mole clean
 
