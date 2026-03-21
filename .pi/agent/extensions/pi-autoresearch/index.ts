@@ -39,6 +39,14 @@ const EXPERIMENT_MAX_BYTES = 4 * 1024; // 4KB
 // Types
 // ---------------------------------------------------------------------------
 
+/**
+ * Actionable Side Information (ASI) — free-form diagnostics per experiment run.
+ * The agent decides what to record. Any key/value pair is valid.
+ */
+interface ASI {
+  [key: string]: unknown;
+}
+
 interface ExperimentResult {
   commit: string;
   metric: number;
@@ -51,6 +59,8 @@ interface ExperimentResult {
   segment: number;
   /** Session-level confidence score at the time this result was logged. null if insufficient data. */
   confidence: number | null;
+  /** Actionable Side Information — structured diagnostics for this run */
+  asi?: ASI;
 }
 
 interface MetricDef {
@@ -96,6 +106,7 @@ interface RunDetails {
   /** Name of the primary metric (for display) */
   metricName: string;
   metricUnit: string;
+
 }
 
 interface LogDetails {
@@ -181,6 +192,12 @@ const LogParams = Type.Object({
     Type.Boolean({
       description:
         "Set to true to allow adding a new secondary metric that wasn't tracked before. Only use for metrics that have proven very valuable to watch.",
+    })
+  ),
+  asi: Type.Optional(
+    Type.Record(Type.String(), Type.Unknown(), {
+      description:
+        'Actionable Side Information — structured diagnostics for this run. Free-form key/value pairs. Parsed ASI from run_experiment output is merged automatically; use this to add or override fields.',
     })
   ),
 });
@@ -926,6 +943,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
               timestamp: entry.timestamp ?? 0,
               segment,
               confidence: entry.confidence ?? null,
+              asi: entry.asi ?? undefined,
             });
 
             // Register secondary metrics
@@ -1352,6 +1370,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
       "Use run_experiment instead of bash when running experiment commands — it handles timing and output capture automatically.",
       "After run_experiment, always call log_experiment to record the result.",
       "If the benchmark script outputs structured METRIC lines (e.g. 'METRIC total_µs=15200'), run_experiment will parse them automatically and suggest exact values for log_experiment. Use these parsed values directly instead of extracting them manually from the output.",
+
     ],
     parameters: RunParams,
 
@@ -1867,6 +1886,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
       "Use status 'keep' if the PRIMARY metric improved. 'discard' if worse or unchanged. 'crash' if it failed. Secondary metrics are for monitoring — they almost never affect keep/discard. Only discard a primary improvement if a secondary metric degraded catastrophically, and explain why in the description.",
       "log_experiment reports a confidence score after 3+ runs (best improvement as a multiple of the noise floor). ≥2.0× = likely real, <1.0× = within noise. If confidence is below 1.0×, consider re-running the same experiment to confirm before keeping. The score is advisory — it never auto-discards.",
       "If you discover complex but promising optimizations you won't pursue immediately, append them as bullet points to autoresearch.ideas.md. Don't let good ideas get lost.",
+      "Always include the asi parameter. At minimum: {\"hypothesis\": \"what you tried\"}. On discard/crash, also include rollback_reason and next_action_hint. Add any other key/value pairs that capture what you learned — dead ends, surprising findings, error details, bottlenecks. This is the only structured memory that survives reverts.",
     ],
     parameters: LogParams,
 
@@ -1926,6 +1946,11 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
         }
       }
 
+      // ASI: agent-supplied free-form diagnostics
+      const mergedASI = (params.asi && Object.keys(params.asi).length > 0)
+        ? params.asi as ASI
+        : undefined;
+
       const experiment: ExperimentResult = {
         commit: params.commit.slice(0, 7),
         metric: params.metric,
@@ -1935,6 +1960,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
         timestamp: Date.now(),
         segment: state.currentSegment,
         confidence: null,
+        asi: mergedASI,
       };
 
       state.results.push(experiment);
@@ -1992,6 +2018,18 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
           parts.push(part);
         }
         text += `\nSecondary: ${parts.join("  ")}`;
+      }
+
+      // Show ASI summary
+      if (mergedASI) {
+        const asiParts: string[] = [];
+        for (const [k, v] of Object.entries(mergedASI)) {
+          const s = typeof v === "string" ? v : JSON.stringify(v);
+          asiParts.push(`${k}: ${s.length > 80 ? s.slice(0, 77) + "…" : s}`);
+        }
+        if (asiParts.length > 0) {
+          text += `\n📋 ASI: ${asiParts.join(" | ")}`;
+        }
       }
 
       // Show confidence score
@@ -2061,10 +2099,13 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
       // Persist to autoresearch.jsonl (always, regardless of status)
       try {
         const jsonlPath = path.join(workDir, "autoresearch.jsonl");
-        fs.appendFileSync(jsonlPath, JSON.stringify({
+        const jsonlEntry: Record<string, unknown> = {
           run: state.results.length,
           ...experiment,
-        }) + "\n");
+        };
+        // Only write asi if present (keep lines compact when no ASI)
+        if (!mergedASI) delete jsonlEntry.asi;
+        fs.appendFileSync(jsonlPath, JSON.stringify(jsonlEntry) + "\n");
       } catch (e) {
         text += `\n⚠️ Failed to write autoresearch.jsonl: ${e instanceof Error ? e.message : String(e)}`;
       }
@@ -2086,6 +2127,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
       runtime.runningExperiment = null;
       runtime.lastRunChecks = null;
       runtime.lastRunDuration = null;
+
 
       // Check if max experiments limit reached
       const limitReached = state.maxExperiments !== null && segmentCount >= state.maxExperiments;

@@ -14,7 +14,6 @@
  */
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { createEditTool, type EditToolDetails } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import * as Diff from "diff";
 import { constants } from "fs";
@@ -22,7 +21,7 @@ import { access as fsAccess, readFile as fsReadFile, unlink as fsUnlink, writeFi
 import { isAbsolute, resolve as resolvePath } from "path";
 
 const editItemSchema = Type.Object({
-	path: Type.String({ description: "Path to the file to edit (relative or absolute)" }),
+	path: Type.Optional(Type.String({ description: "Path to the file to edit (relative or absolute). Inherits from top-level path if omitted." })),
 	oldText: Type.String({ description: "Exact text to find and replace (must match exactly)" }),
 	newText: Type.String({ description: "New text to replace the old text with" }),
 });
@@ -123,37 +122,44 @@ function generateDiffString(
 			const nextPartIsChange = i < parts.length - 1 && (parts[i + 1].added || parts[i + 1].removed);
 
 			if (lastWasChange || nextPartIsChange) {
-				let linesToShow = raw;
-				let skipStart = 0;
-				let skipEnd = 0;
+				// Determine how many lines to show at the start and end of this
+				// unchanged block.  When the block sits between two changes we
+				// show context on both sides but collapse the middle.
+				const showAtStart = lastWasChange ? contextLines : 0;
+				const showAtEnd = nextPartIsChange ? contextLines : 0;
 
-				if (!lastWasChange) {
-					skipStart = Math.max(0, raw.length - contextLines);
-					linesToShow = raw.slice(skipStart);
-				}
+				if (raw.length <= showAtStart + showAtEnd) {
+					// Block is small enough — show it entirely.
+					for (const line of raw) {
+						const lineNum = String(oldLineNum).padStart(lineNumWidth, " ");
+						output.push(` ${lineNum} ${line}`);
+						oldLineNum++;
+						newLineNum++;
+					}
+				} else {
+					// Show head context.
+					for (let j = 0; j < showAtStart; j++) {
+						const lineNum = String(oldLineNum).padStart(lineNumWidth, " ");
+						output.push(` ${lineNum} ${raw[j]}`);
+						oldLineNum++;
+						newLineNum++;
+					}
 
-				if (!nextPartIsChange && linesToShow.length > contextLines) {
-					skipEnd = linesToShow.length - contextLines;
-					linesToShow = linesToShow.slice(0, contextLines);
-				}
+					// Collapse the middle.
+					const skipped = raw.length - showAtStart - showAtEnd;
+					if (skipped > 0) {
+						output.push(` ${"".padStart(lineNumWidth, " ")} ...`);
+						oldLineNum += skipped;
+						newLineNum += skipped;
+					}
 
-				if (skipStart > 0) {
-					output.push(` ${"".padStart(lineNumWidth, " ")} ...`);
-					oldLineNum += skipStart;
-					newLineNum += skipStart;
-				}
-
-				for (const line of linesToShow) {
-					const lineNum = String(oldLineNum).padStart(lineNumWidth, " ");
-					output.push(` ${lineNum} ${line}`);
-					oldLineNum++;
-					newLineNum++;
-				}
-
-				if (skipEnd > 0) {
-					output.push(` ${"".padStart(lineNumWidth, " ")} ...`);
-					oldLineNum += skipEnd;
-					newLineNum += skipEnd;
+					// Show tail context.
+					for (let j = raw.length - showAtEnd; j < raw.length; j++) {
+						const lineNum = String(oldLineNum).padStart(lineNumWidth, " ");
+						output.push(` ${lineNum} ${raw[j]}`);
+						oldLineNum++;
+						newLineNum++;
+					}
 				}
 			} else {
 				oldLineNum += raw.length;
@@ -172,6 +178,8 @@ interface Workspace {
 	writeText: (absolutePath: string, content: string) => Promise<void>;
 	deleteFile: (absolutePath: string) => Promise<void>;
 	exists: (absolutePath: string) => Promise<boolean>;
+	/** Check that the file is writable. Rejects if not. No-op on virtual workspaces. */
+	checkWriteAccess: (absolutePath: string) => Promise<void>;
 }
 
 function normalizeToLF(text: string): string {
@@ -455,34 +463,6 @@ function parsePatch(patchText: string): PatchOperation[] {
 	return operations;
 }
 
-function createVirtualEditOperations(): {
-	readFile: (absolutePath: string) => Promise<Buffer>;
-	writeFile: (absolutePath: string, content: string) => Promise<void>;
-	access: (absolutePath: string) => Promise<void>;
-} {
-	const files = new Map<string, string>();
-
-	async function ensureLoaded(absolutePath: string): Promise<void> {
-		if (files.has(absolutePath)) return;
-		const content = await fsReadFile(absolutePath, "utf-8");
-		files.set(absolutePath, content);
-	}
-
-	return {
-		readFile: async (absolutePath) => {
-			await ensureLoaded(absolutePath);
-			return Buffer.from(files.get(absolutePath) ?? "", "utf-8");
-		},
-		writeFile: async (absolutePath, content) => {
-			files.set(absolutePath, content);
-		},
-		access: async (absolutePath) => {
-			if (files.has(absolutePath)) return;
-			await fsAccess(absolutePath, constants.R_OK | constants.W_OK);
-		},
-	};
-}
-
 function createRealWorkspace(): Workspace {
 	return {
 		readText: (absolutePath: string) => fsReadFile(absolutePath, "utf-8"),
@@ -496,6 +476,7 @@ function createRealWorkspace(): Workspace {
 				return false;
 			}
 		},
+		checkWriteAccess: (absolutePath: string) => fsAccess(absolutePath, constants.R_OK | constants.W_OK),
 	};
 }
 
@@ -534,6 +515,9 @@ function createVirtualWorkspace(cwd: string): Workspace {
 		exists: async (absolutePath) => {
 			await ensureLoaded(absolutePath);
 			return state.get(absolutePath) !== null;
+		},
+		checkWriteAccess: async () => {
+			// No-op for virtual workspace — permission checks happen on the real pass.
 		},
 	};
 }
@@ -609,6 +593,97 @@ async function applyPatchOperations(
 	return results;
 }
 
+/**
+ * Apply a list of classic edits (path/oldText/newText) sequentially via a Workspace.
+ *
+ * When multiple edits target the same file, occurrences are matched in file order
+ * (advancing a cursor after each match) so that the model can rely on positional
+ * ordering instead of needing globally-unique oldText snippets.
+ */
+async function applyClassicEdits(
+	edits: EditItem[],
+	workspace: Workspace,
+	cwd: string,
+	signal?: AbortSignal,
+	options?: { collectDiff?: boolean },
+): Promise<EditResult[]> {
+	const collectDiff = options?.collectDiff ?? false;
+
+	// Group edits by resolved absolute path, preserving order.
+	const fileGroups = new Map<string, { index: number; edit: EditItem }[]>();
+	const editOrder: string[] = []; // track insertion order of keys
+
+	for (let i = 0; i < edits.length; i++) {
+		const abs = isAbsolute(edits[i].path) ? resolvePath(edits[i].path) : resolvePath(cwd, edits[i].path);
+		if (!fileGroups.has(abs)) {
+			fileGroups.set(abs, []);
+			editOrder.push(abs);
+		}
+		fileGroups.get(abs)!.push({ index: i, edit: edits[i] });
+	}
+
+	const results: EditResult[] = new Array(edits.length);
+
+	// Verify write access to all target files before mutating anything.
+	for (const absPath of editOrder) {
+		await workspace.checkWriteAccess(absPath);
+	}
+
+	for (const absPath of editOrder) {
+		const group = fileGroups.get(absPath)!;
+
+		if (signal?.aborted) {
+			throw new Error("Operation aborted");
+		}
+
+		const originalContent = await workspace.readText(absPath);
+		let content = originalContent;
+		let searchOffset = 0;
+
+		for (const { index, edit } of group) {
+			if (signal?.aborted) {
+				throw new Error("Operation aborted");
+			}
+
+			// Find oldText starting from the cursor position (positional ordering).
+			const pos = content.indexOf(edit.oldText, searchOffset);
+
+			if (pos === -1) {
+				results[index] = {
+					path: edit.path,
+					success: false,
+					message: `Could not find the exact text in ${edit.path}. The old text must match exactly including all whitespace and newlines.`,
+				};
+				// Fill remaining edits in this group as skipped.
+				const filled = Array.from({ length: edits.length }, (_, i) => results[i]).filter(Boolean);
+				throw new Error(formatResults(filled, edits.length));
+			}
+
+			content = content.slice(0, pos) + edit.newText + content.slice(pos + edit.oldText.length);
+			searchOffset = pos + edit.newText.length;
+
+			results[index] = {
+				path: edit.path,
+				success: true,
+				message: `Edited ${edit.path}.`,
+			};
+		}
+
+		// Write back the fully-edited file.
+		await workspace.writeText(absPath, content);
+
+		// Generate a single diff for all edits to this file; attach to first edit.
+		if (collectDiff) {
+			const diffResult = generateDiffString(originalContent, content);
+			const firstIdx = group[0].index;
+			results[firstIdx].diff = diffResult.diff;
+			results[firstIdx].firstChangedLine = diffResult.firstChangedLine;
+		}
+	}
+
+	return results;
+}
+
 export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "edit",
@@ -662,67 +737,55 @@ export default function (pi: ExtensionAPI) {
 			if (hasTopLevel) {
 				edits.push({ path: path!, oldText: oldText!, newText: newText! });
 			} else if (path !== undefined || oldText !== undefined || newText !== undefined) {
-				const missing: string[] = [];
-				if (path === undefined) missing.push("path");
-				if (oldText === undefined) missing.push("oldText");
-				if (newText === undefined) missing.push("newText");
-				throw new Error(
-					`Incomplete top-level edit: missing ${missing.join(", ")}. Provide all three (path, oldText, newText) or use only the multi parameter.`,
-				);
+				// When multi is present, only a bare top-level `path` (for inheritance) is allowed.
+				// Any other partial combination (e.g. path+oldText, oldText+newText) is an error.
+				const hasOnlyPath = path !== undefined && oldText === undefined && newText === undefined;
+				if (!hasOnlyPath || multi === undefined) {
+					const missing: string[] = [];
+					if (path === undefined) missing.push("path");
+					if (oldText === undefined) missing.push("oldText");
+					if (newText === undefined) missing.push("newText");
+					throw new Error(
+						`Incomplete top-level edit: missing ${missing.join(", ")}. Provide all three (path, oldText, newText) or use only the multi parameter.`,
+					);
+				}
+				// path-only top-level with multi is fine — path is inherited below.
 			}
 
 			if (multi) {
-				edits.push(...multi);
+				for (const item of multi) {
+					edits.push({
+						path: item.path ?? path ?? "",
+						oldText: item.oldText,
+						newText: item.newText,
+					});
+				}
 			}
 
 			if (edits.length === 0) {
 				throw new Error("No edits provided. Supply path/oldText/newText, a multi array, or a patch.");
 			}
 
-			// Preflight pass before mutating files.
-			const preflightTool = createEditTool(ctx.cwd, { operations: createVirtualEditOperations() });
-			const preflightResults: EditResult[] = [];
+			// Validate that every edit has a path.
 			for (let i = 0; i < edits.length; i++) {
-				if (signal?.aborted) {
-					throw new Error("Operation aborted");
-				}
-				const edit = edits[i];
-				try {
-					await preflightTool.execute(`${toolCallId}_preflight_${i}`, edit, signal);
-					preflightResults.push({ path: edit.path, success: true, message: "Preflight passed." });
-				} catch (err: any) {
-					preflightResults.push({ path: edit.path, success: false, message: err.message ?? String(err) });
-					throw new Error(`Preflight failed before mutating files.\n${formatResults(preflightResults, edits.length)}`);
+				if (!edits[i].path) {
+					throw new Error(
+						`Edit ${i + 1} is missing a path. Provide a path on each multi item or set a top-level path to inherit.`,
+					);
 				}
 			}
 
-			// Apply for real with built-in edit tool.
-			const innerTool = createEditTool(ctx.cwd);
-			const results: EditResult[] = [];
-
-			for (let i = 0; i < edits.length; i++) {
-				if (signal?.aborted) {
-					throw new Error("Operation aborted");
-				}
-
-				const edit = edits[i];
-				try {
-					const result = await innerTool.execute(`${toolCallId}_${i}`, edit, signal);
-					const details = result.details as EditToolDetails | undefined;
-					const text = result.content?.[0]?.type === "text" ? result.content[0].text : `Edit ${i + 1} applied.`;
-
-					results.push({
-						path: edit.path,
-						success: true,
-						message: text,
-						diff: details?.diff,
-						firstChangedLine: details?.firstChangedLine,
-					});
-				} catch (err: any) {
-					results.push({ path: edit.path, success: false, message: err.message ?? String(err) });
-					throw new Error(formatResults(results, edits.length));
-				}
+			// Preflight pass on virtual workspace before mutating real files.
+			// Uses sequential occurrence matching so same-file edits are resolved
+			// in file order (positional ordering).
+			try {
+				await applyClassicEdits(edits, createVirtualWorkspace(ctx.cwd), ctx.cwd, signal, { collectDiff: false });
+			} catch (err: any) {
+				throw new Error(`Preflight failed before mutating files.\n${err.message ?? String(err)}`);
 			}
+
+			// Apply for real.
+			const results = await applyClassicEdits(edits, createRealWorkspace(), ctx.cwd, signal, { collectDiff: true });
 
 			if (results.length === 1) {
 				const r = results[0];

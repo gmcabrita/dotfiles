@@ -7,7 +7,7 @@
  * - Review against a base branch (PR style)
  * - Review uncommitted changes
  * - Review a specific commit
- * - Custom review instructions
+ * - Shared custom review instructions (applied to all review modes when configured)
  *
  * Usage:
  * - `/review` - show interactive selector
@@ -17,7 +17,8 @@
  * - `/review branch main` - review against main branch
  * - `/review commit abc123` - review specific commit
  * - `/review folder src docs` - review specific folders/files (snapshot, not diff)
- * - `/review custom "check for security issues"` - custom instructions
+ * - `/review` selector includes Add/Remove custom review instructions (applies to all modes)
+ * - `/review --extra "focus on performance regressions"` - add extra review instruction (works with any mode)
  *
  * Project-specific review guidelines:
  * - If a REVIEW_GUIDELINES.md file exists in the same directory as .pi,
@@ -47,6 +48,7 @@ import { promises as fs } from "node:fs";
 let reviewOriginId: string | undefined = undefined;
 let endReviewInProgress = false;
 let reviewLoopFixingEnabled = false;
+let reviewCustomInstructions: string | undefined = undefined;
 let reviewLoopInProgress = false;
 
 const REVIEW_STATE_TYPE = "review-session";
@@ -63,6 +65,7 @@ type ReviewSessionState = {
 
 type ReviewSettingsState = {
 	loopFixingEnabled?: boolean;
+	customInstructions?: string;
 };
 
 function setReviewWidget(ctx: ExtensionContext, active: boolean) {
@@ -124,12 +127,14 @@ function getReviewSettings(ctx: ExtensionContext): ReviewSettingsState {
 
 	return {
 		loopFixingEnabled: state?.loopFixingEnabled === true,
+		customInstructions: state?.customInstructions?.trim() || undefined,
 	};
 }
 
 function applyReviewSettings(ctx: ExtensionContext) {
 	const state = getReviewSettings(ctx);
 	reviewLoopFixingEnabled = state.loopFixingEnabled === true;
+	reviewCustomInstructions = state.customInstructions?.trim() || undefined;
 }
 
 function parseMarkdownHeading(line: string): { level: number; title: string } | null {
@@ -351,7 +356,6 @@ type ReviewTarget =
 	| { type: "uncommitted" }
 	| { type: "baseBranch"; branch: string }
 	| { type: "commit"; sha: string; title?: string }
-	| { type: "custom"; instructions: string }
 	| { type: "pullRequest"; prNumber: number; baseBranch: string; title: string }
 	| { type: "folder"; paths: string[] };
 
@@ -718,9 +722,6 @@ async function buildReviewPrompt(
 			}
 			return COMMIT_PROMPT.replace("{sha}", target.sha);
 
-		case "custom":
-			return target.instructions;
-
 		case "pullRequest": {
 			const mergeBase = await getMergeBase(pi, target.baseBranch);
 			const basePrompt = mergeBase
@@ -754,8 +755,6 @@ function getUserFacingHint(target: ReviewTarget): string {
 			const shortSha = target.sha.slice(0, 7);
 			return target.title ? `commit ${shortSha}: ${target.title}` : `commit ${shortSha}`;
 		}
-		case "custom":
-			return target.instructions.length > 40 ? target.instructions.slice(0, 37) + "..." : target.instructions;
 
 		case "pullRequest": {
 			const shortTitle = target.title.length > 30 ? target.title.slice(0, 27) + "..." : target.title;
@@ -837,16 +836,31 @@ const REVIEW_PRESETS = [
 	{ value: "commit", label: "Review a commit", description: "" },
 	{ value: "pullRequest", label: "Review a pull request", description: "(GitHub PR)" },
 	{ value: "folder", label: "Review a folder (or more)", description: "(snapshot, not diff)" },
-	{ value: "custom", label: "Custom review instructions", description: "" },
 ] as const;
 
 const TOGGLE_LOOP_FIXING_VALUE = "toggleLoopFixing" as const;
-type ReviewPresetValue = (typeof REVIEW_PRESETS)[number]["value"] | typeof TOGGLE_LOOP_FIXING_VALUE;
+const TOGGLE_CUSTOM_INSTRUCTIONS_VALUE = "toggleCustomInstructions" as const;
+type ReviewPresetValue =
+	| (typeof REVIEW_PRESETS)[number]["value"]
+	| typeof TOGGLE_LOOP_FIXING_VALUE
+	| typeof TOGGLE_CUSTOM_INSTRUCTIONS_VALUE;
 
 export default function reviewExtension(pi: ExtensionAPI) {
+	function persistReviewSettings() {
+		pi.appendEntry(REVIEW_SETTINGS_TYPE, {
+			loopFixingEnabled: reviewLoopFixingEnabled,
+			customInstructions: reviewCustomInstructions,
+		});
+	}
+
 	function setReviewLoopFixingEnabled(enabled: boolean) {
 		reviewLoopFixingEnabled = enabled;
-		pi.appendEntry(REVIEW_SETTINGS_TYPE, { loopFixingEnabled: enabled });
+		persistReviewSettings();
+	}
+
+	function setReviewCustomInstructions(instructions: string | undefined) {
+		reviewCustomInstructions = instructions?.trim() || undefined;
+		persistReviewSettings();
 	}
 
 	function applyAllReviewState(ctx: ExtensionContext) {
@@ -900,10 +914,21 @@ export default function reviewExtension(pi: ExtensionAPI) {
 		const smartDefaultIndex = presetItems.findIndex((item) => item.value === smartDefault);
 
 		while (true) {
+			const customInstructionsLabel = reviewCustomInstructions
+				? "Remove custom review instructions"
+				: "Add custom review instructions";
+			const customInstructionsDescription = reviewCustomInstructions
+				? "(currently set)"
+				: "(applies to all review modes)";
 			const loopToggleLabel = reviewLoopFixingEnabled ? "Disable Loop Fixing" : "Enable Loop Fixing";
 			const loopToggleDescription = reviewLoopFixingEnabled ? "(currently on)" : "(currently off)";
 			const items: SelectItem[] = [
 				...presetItems,
+				{
+					value: TOGGLE_CUSTOM_INSTRUCTIONS_VALUE,
+					label: customInstructionsLabel,
+					description: customInstructionsDescription,
+				},
 				{ value: TOGGLE_LOOP_FIXING_VALUE, label: loopToggleLabel, description: loopToggleDescription },
 			];
 
@@ -955,6 +980,28 @@ export default function reviewExtension(pi: ExtensionAPI) {
 				continue;
 			}
 
+			if (result === TOGGLE_CUSTOM_INSTRUCTIONS_VALUE) {
+				if (reviewCustomInstructions) {
+					setReviewCustomInstructions(undefined);
+					ctx.ui.notify("Custom review instructions removed", "info");
+					continue;
+				}
+
+				const customInstructions = await ctx.ui.editor(
+					"Enter custom review instructions (applies to all review modes):",
+					"",
+				);
+
+				if (!customInstructions?.trim()) {
+					ctx.ui.notify("Custom review instructions not changed", "info");
+					continue;
+				}
+
+				setReviewCustomInstructions(customInstructions);
+				ctx.ui.notify("Custom review instructions saved", "info");
+				continue;
+			}
+
 			// Handle each preset type
 			switch (result) {
 				case "uncommitted":
@@ -972,12 +1019,6 @@ export default function reviewExtension(pi: ExtensionAPI) {
 						break;
 					}
 					const target = await showCommitSelector(ctx);
-					if (target) return target;
-					break;
-				}
-
-				case "custom": {
-					const target = await showCustomInput(ctx);
 					if (target) return target;
 					break;
 				}
@@ -1222,18 +1263,6 @@ export default function reviewExtension(pi: ExtensionAPI) {
 		return { type: "commit", sha: result.sha, title: result.title };
 	}
 
-	/**
-	 * Show custom instructions input
-	 */
-	async function showCustomInput(ctx: ExtensionContext): Promise<ReviewTarget | null> {
-		const result = await ctx.ui.editor(
-			"Enter review instructions:",
-			"Review the code for security vulnerabilities and potential bugs...",
-		);
-
-		if (!result?.trim()) return null;
-		return { type: "custom", instructions: result.trim() };
-	}
 
 	function parseReviewPaths(value: string): string[] {
 		return value
@@ -1323,7 +1352,7 @@ export default function reviewExtension(pi: ExtensionAPI) {
 		ctx: ExtensionCommandContext,
 		target: ReviewTarget,
 		useFreshSession: boolean,
-		options?: { includeLocalChanges?: boolean },
+		options?: { includeLocalChanges?: boolean; extraInstruction?: string },
 	): Promise<boolean> {
 		// Check if we're already in a review
 		if (reviewOriginId) {
@@ -1395,6 +1424,14 @@ export default function reviewExtension(pi: ExtensionAPI) {
 		// Combine the review rubric with the specific prompt
 		let fullPrompt = `${REVIEW_RUBRIC}\n\n---\n\nPlease perform a code review with the following focus:\n\n${prompt}`;
 
+		if (reviewCustomInstructions) {
+			fullPrompt += `\n\nShared custom review instructions (applies to all reviews):\n\n${reviewCustomInstructions}`;
+		}
+
+		if (options?.extraInstruction?.trim()) {
+			fullPrompt += `\n\nAdditional user-provided review instruction:\n\n${options.extraInstruction.trim()}`;
+		}
+
 		if (projectGuidelines) {
 			fullPrompt += `\n\nThis project has additional instructions for code reviews:\n\n${projectGuidelines}`;
 		}
@@ -1411,49 +1448,122 @@ export default function reviewExtension(pi: ExtensionAPI) {
 	 * Parse command arguments for direct invocation
 	 * Returns the target or a special marker for PR that needs async handling
 	 */
-	function parseArgs(args: string | undefined): ReviewTarget | { type: "pr"; ref: string } | null {
-		if (!args?.trim()) return null;
+	type ParsedReviewArgs = {
+		target: ReviewTarget | { type: "pr"; ref: string } | null;
+		extraInstruction?: string;
+		error?: string;
+	};
 
-		const parts = args.trim().split(/\s+/);
+	function tokenizeArgs(value: string): string[] {
+		const tokens: string[] = [];
+		let current = "";
+		let quote: '"' | "'" | null = null;
+
+		for (let i = 0; i < value.length; i++) {
+			const char = value[i];
+
+			if (quote) {
+				if (char === "\\" && i + 1 < value.length) {
+					current += value[i + 1];
+					i += 1;
+					continue;
+				}
+				if (char === quote) {
+					quote = null;
+					continue;
+				}
+				current += char;
+				continue;
+			}
+
+			if (char === '"' || char === "'") {
+				quote = char;
+				continue;
+			}
+
+			if (/\s/.test(char)) {
+				if (current.length > 0) {
+					tokens.push(current);
+					current = "";
+				}
+				continue;
+			}
+
+			current += char;
+		}
+
+		if (current.length > 0) {
+			tokens.push(current);
+		}
+
+		return tokens;
+	}
+
+	function parseArgs(args: string | undefined): ParsedReviewArgs {
+		if (!args?.trim()) return { target: null };
+
+		const rawParts = tokenizeArgs(args.trim());
+		const parts: string[] = [];
+		let extraInstruction: string | undefined;
+
+		for (let i = 0; i < rawParts.length; i++) {
+			const part = rawParts[i];
+			if (part === "--extra") {
+				const next = rawParts[i + 1];
+				if (!next) {
+					return { target: null, error: "Missing value for --extra" };
+				}
+				extraInstruction = next;
+				i += 1;
+				continue;
+			}
+
+			if (part.startsWith("--extra=")) {
+				extraInstruction = part.slice("--extra=".length);
+				continue;
+			}
+
+			parts.push(part);
+		}
+
+		if (parts.length === 0) {
+			return { target: null, extraInstruction };
+		}
+
 		const subcommand = parts[0]?.toLowerCase();
 
 		switch (subcommand) {
 			case "uncommitted":
-				return { type: "uncommitted" };
+				return { target: { type: "uncommitted" }, extraInstruction };
 
 			case "branch": {
 				const branch = parts[1];
-				if (!branch) return null;
-				return { type: "baseBranch", branch };
+				if (!branch) return { target: null, extraInstruction };
+				return { target: { type: "baseBranch", branch }, extraInstruction };
 			}
 
 			case "commit": {
 				const sha = parts[1];
-				if (!sha) return null;
+				if (!sha) return { target: null, extraInstruction };
 				const title = parts.slice(2).join(" ") || undefined;
-				return { type: "commit", sha, title };
+				return { target: { type: "commit", sha, title }, extraInstruction };
 			}
 
-			case "custom": {
-				const instructions = parts.slice(1).join(" ");
-				if (!instructions) return null;
-				return { type: "custom", instructions };
-			}
 
 			case "folder": {
 				const paths = parseReviewPaths(parts.slice(1).join(" "));
-				if (paths.length === 0) return null;
-				return { type: "folder", paths };
+				if (paths.length === 0) return { target: null, extraInstruction };
+				return { target: { type: "folder", paths }, extraInstruction };
 			}
 
 			case "pr": {
 				const ref = parts[1];
-				if (!ref) return null;
-				return { type: "pr", ref };
+				if (!ref) return { target: null, extraInstruction };
+				return { target: { type: "pr", ref }, extraInstruction };
 			}
 
 			default:
-				return null;
+				return { target: null, extraInstruction };
 		}
 	}
 
@@ -1509,7 +1619,11 @@ export default function reviewExtension(pi: ExtensionAPI) {
 		return false;
 	}
 
-	async function runLoopFixingReview(ctx: ExtensionCommandContext, target: ReviewTarget): Promise<void> {
+	async function runLoopFixingReview(
+		ctx: ExtensionCommandContext,
+		target: ReviewTarget,
+		extraInstruction?: string,
+	): Promise<void> {
 		if (reviewLoopInProgress) {
 			ctx.ui.notify("Loop fixing review is already running.", "warning");
 			return;
@@ -1525,7 +1639,10 @@ export default function reviewExtension(pi: ExtensionAPI) {
 
 			for (let pass = 1; pass <= REVIEW_LOOP_MAX_ITERATIONS; pass++) {
 				const reviewBaselineAssistantId = getLastAssistantSnapshot(ctx)?.id;
-				const started = await executeReview(ctx, target, true, { includeLocalChanges: true });
+				const started = await executeReview(ctx, target, true, {
+					includeLocalChanges: true,
+					extraInstruction,
+				});
 				if (!started) {
 					ctx.ui.notify("Loop fixing stopped before starting the review pass.", "warning");
 					return;
@@ -1623,7 +1740,7 @@ export default function reviewExtension(pi: ExtensionAPI) {
 
 	// Register the /review command
 	pi.registerCommand("review", {
-		description: "Review code changes (PR, uncommitted, branch, commit, folder, or custom)",
+		description: "Review code changes (PR, uncommitted, branch, commit, or folder)",
 		handler: async (args, ctx) => {
 			if (!ctx.hasUI) {
 				ctx.ui.notify("Review requires interactive mode", "error");
@@ -1651,17 +1768,23 @@ export default function reviewExtension(pi: ExtensionAPI) {
 			// Try to parse direct arguments
 			let target: ReviewTarget | null = null;
 			let fromSelector = false;
+			let extraInstruction: string | undefined;
 			const parsed = parseArgs(args);
+			if (parsed.error) {
+				ctx.ui.notify(parsed.error, "error");
+				return;
+			}
+			extraInstruction = parsed.extraInstruction?.trim() || undefined;
 
-			if (parsed) {
-				if (parsed.type === "pr") {
+			if (parsed.target) {
+				if (parsed.target.type === "pr") {
 					// Handle PR checkout (async operation)
-					target = await handlePrCheckout(ctx, parsed.ref);
+					target = await handlePrCheckout(ctx, parsed.target.ref);
 					if (!target) {
 						ctx.ui.notify("PR review failed. Returning to review menu.", "warning");
 					}
 				} else {
-					target = parsed;
+					target = parsed.target;
 				}
 			}
 
@@ -1690,7 +1813,7 @@ export default function reviewExtension(pi: ExtensionAPI) {
 				}
 
 				if (reviewLoopFixingEnabled) {
-					await runLoopFixingReview(ctx, target);
+					await runLoopFixingReview(ctx, target, extraInstruction);
 					return;
 				}
 
@@ -1718,7 +1841,7 @@ export default function reviewExtension(pi: ExtensionAPI) {
 					useFreshSession = choice === "Empty branch";
 				}
 
-				await executeReview(ctx, target, useFreshSession);
+				await executeReview(ctx, target, useFreshSession, { extraInstruction });
 				return;
 			}
 		},
