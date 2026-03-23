@@ -26,6 +26,7 @@ done
 
 SYNC_EXTENSIONS=(
   "answer.ts"
+  "btw.ts"
   "context.ts"
   "control.ts"
   "loop.ts"
