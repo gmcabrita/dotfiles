@@ -152,6 +152,9 @@ defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
 # Save to disk, rather than iCloud, by default
 defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false
 
+# Disable Tahoe menu icons
+defaults write NSGlobalDomain NSMenuEnableActionImages -bool false
+
 # Wipe all default app icons from the dock
 defaults write com.apple.dock persistent-apps -array
 
