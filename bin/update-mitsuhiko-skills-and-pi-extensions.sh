@@ -33,6 +33,7 @@ SYNC_EXTENSIONS=(
   "multi-edit.ts"
   "review.ts"
   "session-breakdown.ts"
+  "split-fork.ts"
   "todos.ts"
   "whimsical.ts"
 )
