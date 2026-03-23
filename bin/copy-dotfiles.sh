@@ -29,6 +29,7 @@ rsync -a ".agents/" "$HOME/.agents/"
 
 mkdir -p "$HOME/.config"
 rsync -a ".config/" "$HOME/.config/"
+cp .AGENTS.md "$HOME/.config/opencode/AGENTS.md"
 
 mkdir -p "$HOME/.pi"
 if [ ! -f "$HOME/.pi/agent/auth.json" ]; then
@@ -36,6 +37,7 @@ if [ ! -f "$HOME/.pi/agent/auth.json" ]; then
 else
   rsync -a --exclude "agent/auth.json" ".pi/" "$HOME/.pi/"
 fi
+cp .AGENTS.md "$HOME/.pi/agent/AGENTS.md"
 
 mkdir -p "$HOME/.raycast-scripts"
 rsync -a ".raycast-scripts/" "$HOME/.raycast-scripts/"
