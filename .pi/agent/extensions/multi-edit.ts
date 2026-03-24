@@ -657,6 +657,11 @@ async function applyClassicEdits(
 		let content = originalContent;
 		let searchOffset = 0;
 
+		// Track successfully applied oldText→newText pairs in this file so we
+		// can detect redundant duplicate edits (model listed more replacements
+		// than actual occurrences).
+		const appliedPairs = new Set<string>();
+
 		for (const { index, edit } of group) {
 			if (signal?.aborted) {
 				throw new Error("Operation aborted");
@@ -666,6 +671,19 @@ async function applyClassicEdits(
 			const pos = content.indexOf(edit.oldText, searchOffset);
 
 			if (pos === -1) {
+				// If the exact same oldText→newText pair was already applied in
+				// this file, the model likely just over-counted occurrences.
+				// Skip gracefully instead of aborting the entire batch.
+				const pairKey = `${edit.oldText}\0${edit.newText}`;
+				if (appliedPairs.has(pairKey)) {
+					results[index] = {
+						path: edit.path,
+						success: true,
+						message: `Skipped redundant edit in ${edit.path} (already replaced all occurrences).`,
+					};
+					continue;
+				}
+
 				results[index] = {
 					path: edit.path,
 					success: false,
@@ -678,6 +696,7 @@ async function applyClassicEdits(
 
 			content = content.slice(0, pos) + edit.newText + content.slice(pos + edit.oldText.length);
 			searchOffset = pos + edit.newText.length;
+			appliedPairs.add(`${edit.oldText}\0${edit.newText}`);
 
 			results[index] = {
 				path: edit.path,
