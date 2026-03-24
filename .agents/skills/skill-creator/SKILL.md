@@ -61,7 +61,7 @@ skill-name/
 - **Referenced scripts**:
   - Prefer nodejs or python scripts instead of bash script, because bash scripts are not well-supported on Windows.
   - If you're going to write python scripts, make sure you have `requirements.txt`
-  - Make sure scripts respect `.env` file follow this order: `process.env` > `.opencode/skill/${SKILL}/.env` > `.opencode/skill/.env` > `.opencode/.env`
+  - Make sure scripts respect `.env` file follow this order: `process.env` > `.agents/skills/${SKILL}/.env` > `.agents/skills/.env` > `.agents/.env`
   - Create `.env.example` file to show the required environment variables.
   - Always write tests for these scripts.
 
