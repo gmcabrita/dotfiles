@@ -794,7 +794,7 @@
     "Elixir": {
       "language_servers": ["expert", "!next-ls", "!lexical", "!elixir-ls", "..."],
     },
-    "HEEX": {
+    "HEEx": {
       "language_servers": ["next-ls", "!lexical", "!elixir-ls", "tailwindcss-ls", "..."],
     },
     "HTML": {
