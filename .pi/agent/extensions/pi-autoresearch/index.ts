@@ -59,6 +59,8 @@ interface ExperimentResult {
   segment: number;
   /** Session-level confidence score at the time this result was logged. null if insufficient data. */
   confidence: number | null;
+  /** Context tokens consumed during this iteration (from run_experiment to log_experiment). null if unavailable. */
+  iterationTokens: number | null;
   /** Actionable Side Information — structured diagnostics for this run */
   asi?: ASI;
 }
@@ -125,6 +127,10 @@ interface AutoresearchRuntime {
   lastRunDuration: number | null;
   runningExperiment: { startedAt: number; command: string } | null;
   state: ExperimentState;
+  /** Context tokens at the start of the current run_experiment call. null if not running. */
+  iterationStartTokens: number | null;
+  /** Token cost of each completed iteration (for predicting context exhaustion). */
+  iterationTokenHistory: number[];
 }
 
 // ---------------------------------------------------------------------------
@@ -342,6 +348,49 @@ function isBetter(
   return direction === "lower" ? current < best : current > best;
 }
 
+// Why 1.2: iterations vary in cost; 20% buffer prevents overflow on heavier iterations
+const CONTEXT_SAFETY_MARGIN = 1.2;
+
+function estimateTokensPerIteration(history: number[]): number {
+  const mean = history.reduce((a, b) => a + b, 0) / history.length;
+  const sorted = [...history].sort((a, b) => a - b);
+  const median = sorted[Math.floor(sorted.length / 2)];
+  // Why max(mean, median): outlier-heavy runs inflate the mean, skewed runs inflate the median.
+  // Taking the larger gives a conservative estimate that handles both distributions.
+  return Math.max(mean, median);
+}
+
+function hasRoomForNextIteration(history: number[], currentTokens: number, contextWindow: number): boolean {
+  if (history.length < 1) return true;
+  const projectedTokens = currentTokens + estimateTokensPerIteration(history) * CONTEXT_SAFETY_MARGIN;
+  return projectedTokens <= contextWindow;
+}
+
+function recordIterationTokens(runtime: AutoresearchRuntime, currentTokens: number | null): void {
+  if (runtime.iterationStartTokens == null || currentTokens == null) return;
+  const tokensConsumed = currentTokens - runtime.iterationStartTokens;
+  if (tokensConsumed <= 0) return;
+  runtime.iterationTokenHistory.push(tokensConsumed);
+}
+
+function lastIterationTokens(runtime: AutoresearchRuntime): number | null {
+  if (runtime.iterationTokenHistory.length === 0) return null;
+  return runtime.iterationTokenHistory[runtime.iterationTokenHistory.length - 1];
+}
+
+function advanceIterationTracking(runtime: AutoresearchRuntime, ctx: ExtensionContext): void {
+  const usage = ctx.getContextUsage();
+  if (usage?.tokens == null) return;
+  recordIterationTokens(runtime, usage.tokens);
+  runtime.iterationStartTokens = usage.tokens;
+}
+
+function isContextExhausted(runtime: AutoresearchRuntime, ctx: ExtensionContext): boolean {
+  const usage = ctx.getContextUsage();
+  if (usage?.tokens == null) return false;
+  return !hasRoomForNextIteration(runtime.iterationTokenHistory, usage.tokens, usage.contextWindow);
+}
+
 /** Compute the median of a numeric array (returns 0 for empty arrays) */
 function sortedMedian(values: number[]): number {
   if (values.length === 0) return 0;
@@ -536,6 +585,8 @@ function createSessionRuntime(): AutoresearchRuntime {
     lastRunDuration: null,
     runningExperiment: null,
     state: createExperimentState(),
+    iterationStartTokens: null,
+    iterationTokenHistory: [],
   };
 }
 
@@ -899,6 +950,8 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
     runtime.lastAutoResumeTime = 0;
     runtime.experimentsThisSession = 0;
     runtime.autoResumeTurns = 0;
+    runtime.iterationStartTokens = null;
+    runtime.iterationTokenHistory = [];
     runtime.state = createExperimentState();
 
     let state = runtime.state;
@@ -934,6 +987,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
             }
 
             // Experiment result line
+            const iterationTokens = entry.iterationTokens ?? null;
             state.results.push({
               commit: entry.commit ?? "",
               metric: entry.metric ?? 0,
@@ -943,8 +997,13 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
               timestamp: entry.timestamp ?? 0,
               segment,
               confidence: entry.confidence ?? null,
+              iterationTokens,
               asi: entry.asi ?? undefined,
             });
+
+            if (typeof iterationTokens === "number" && iterationTokens > 0) {
+              runtime.iterationTokenHistory.push(iterationTokens);
+            }
 
             // Register secondary metrics
             for (const name of Object.keys(entry.metrics ?? {})) {
@@ -1313,7 +1372,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
           metricUnit: state.metricUnit,
           bestDirection: state.bestDirection,
         });
-        if (isReinit) {
+        if (fs.existsSync(jsonlPath)) {
           fs.appendFileSync(jsonlPath, config + "\n");
         } else {
           fs.writeFileSync(jsonlPath, config + "\n");
@@ -1329,6 +1388,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
       }
 
       runtime.autoresearchMode = true;
+      runtime.iterationStartTokens = ctx.getContextUsage()?.tokens ?? null;
       updateWidget(ctx);
 
       const reinitNote = isReinit ? " (re-initialized — previous results archived, new baseline needed)" : "";
@@ -1422,6 +1482,16 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
             checksOutput: "",
             checksDuration: 0,
           } as RunDetails,
+        };
+      }
+
+      advanceIterationTracking(runtime, ctx);
+      if (isContextExhausted(runtime, ctx)) {
+        runtime.autoresearchMode = false;
+        ctx.abort();
+        return {
+          content: [{ type: "text", text: "🛑 Context window almost full. Start a new pi session to continue — all progress is saved." }],
+          details: {},
         };
       }
 
@@ -1951,6 +2021,8 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
         ? params.asi as ASI
         : undefined;
 
+      const iterationTokens = lastIterationTokens(runtime);
+
       const experiment: ExperimentResult = {
         commit: params.commit.slice(0, 7),
         metric: params.metric,
@@ -1960,6 +2032,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
         timestamp: Date.now(),
         segment: state.currentSegment,
         confidence: null,
+        iterationTokens,
         asi: mergedASI,
       };
 
@@ -2134,6 +2207,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
       if (limitReached) {
         text += `\n\n🛑 Maximum experiments reached (${state.maxExperiments}). STOP the experiment loop now.`;
         runtime.autoresearchMode = false;
+        ctx.abort();
       }
 
       updateWidget(ctx);
@@ -2275,11 +2349,19 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
             if (runtime.runningExperiment) tui.requestRender();
           }, 80);
 
+          const computeViewportRows = () => {
+            const termH = process.stdout.rows || 40;
+            const overlayMaxH = Math.floor(termH * 0.9);
+            return Math.max(4, overlayMaxH - 4);
+          };
+
           return {
             render(width: number): string[] {
-              const termH = process.stdout.rows || 40;
-              // Content gets the full width — no box borders
-              const content = renderDashboardLines(state, width, theme, 0);
+              const border = (s: string) => theme.fg("accent", s);
+
+              // Inner content width: │ + space + content + space + │
+              const innerWidth = Math.max(10, width - 4);
+              const content = renderDashboardLines(state, innerWidth, theme, 0);
 
               // Add running experiment as next row in the list
               if (runtime.runningExperiment) {
@@ -2290,13 +2372,13 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
                   truncateToWidth(
                     `  ${theme.fg("dim", String(nextIdx).padEnd(3))}` +
                     theme.fg("warning", `${frame} running… ${elapsed}`),
-                    width
+                    innerWidth
                   )
                 );
               }
 
               const totalRows = content.length;
-              const viewportRows = Math.max(4, termH - 4); // leave room for header/footer
+              const viewportRows = computeViewportRows();
 
               // Clamp scroll
               const maxScroll = Math.max(0, totalRows - viewportRows);
@@ -2305,44 +2387,62 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
 
               const out: string[] = [];
 
-              // Header line
+              // Top border with embedded title: ┌── 🔬 autoresearch: name ──────┐
               const titlePrefix = "🔬 autoresearch";
               const nameStr = state.name ? `: ${state.name}` : "";
-              const maxTitleLen = width - 6;
               let title = titlePrefix + nameStr;
-              if (title.length > maxTitleLen) {
-                title = title.slice(0, maxTitleLen - 1) + "…";
+              const titleVisW = visibleWidth(title);
+              // Budget: ┌── (3) + space (1) + title + space (1) + fill + ┐ (1) = width
+              const maxTitleVisW = width - 6;
+              if (titleVisW > maxTitleVisW) {
+                title = truncateToWidth(title, Math.max(5, maxTitleVisW));
               }
-              const fillLen = Math.max(0, width - 3 - 1 - title.length - 1);
+              const titleActualVisW = visibleWidth(title);
+              const topFillLen = Math.max(0, width - 6 - titleActualVisW);
               out.push(
                 truncateToWidth(
-                  theme.fg("borderMuted", "───") +
-                  theme.fg("accent", " " + title + " ") +
-                  theme.fg("borderMuted", "─".repeat(fillLen)),
+                  border("┌──") +
+                  border(" " + title + " ") +
+                  border("─".repeat(topFillLen) + "┐"),
                   width
                 )
               );
 
-              // Content rows
+              // Content rows with side borders: │ content │
               const visible = content.slice(scrollOffset, scrollOffset + viewportRows);
               for (const line of visible) {
-                out.push(truncateToWidth(line, width));
+                const lineVisW = visibleWidth(line);
+                const padding = Math.max(0, innerWidth - lineVisW);
+                out.push(
+                  truncateToWidth(
+                    border("│") + " " + line + " ".repeat(padding) + " " + border("│"),
+                    width
+                  )
+                );
               }
-              // Fill remaining viewport
+              // Fill remaining viewport with empty bordered rows
               for (let i = visible.length; i < viewportRows; i++) {
-                out.push("");
+                out.push(
+                  truncateToWidth(
+                    border("│") + " ".repeat(width - 2) + border("│"),
+                    width
+                  )
+                );
               }
 
-              // Footer line
+              // Bottom border with help text: └─────── ↑↓/j/k scroll • esc close ──┘
               const scrollInfo = totalRows > viewportRows
                 ? ` ${scrollOffset + 1}-${Math.min(scrollOffset + viewportRows, totalRows)}/${totalRows}`
                 : "";
-              const helpText = ` ↑↓/j/k scroll • esc close${scrollInfo} `;
-              const footFill = Math.max(0, width - helpText.length);
+              const helpText = `↑↓/j/k scroll • esc close${scrollInfo}`;
+              const helpVisW = visibleWidth(helpText);
+              // Budget: └ (1) + fill + space (1) + help + space (1) + ──┘ (3) = width
+              const bottomFillLen = Math.max(0, width - 6 - helpVisW);
               out.push(
                 truncateToWidth(
-                  theme.fg("borderMuted", "─".repeat(footFill)) +
-                  theme.fg("dim", helpText),
+                  border("└" + "─".repeat(bottomFillLen)) +
+                  theme.fg("dim", " " + helpText + " ") +
+                  border("──┘"),
                   width
                 )
               );
@@ -2351,9 +2451,9 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
             },
 
             handleInput(data: string): void {
-              const termH = process.stdout.rows || 40;
-              const viewportRows = Math.max(4, termH - 4);
-              const totalRows = state.results.length + (runtime.runningExperiment ? 1 : 0) + 15; // rough estimate
+              const viewportRows = computeViewportRows();
+              const actualContent = renderDashboardLines(state, process.stdout.columns || 120, theme, 0);
+              const totalRows = actualContent.length + (runtime.runningExperiment ? 1 : 0);
               const maxScroll = Math.max(0, totalRows - viewportRows);
 
               if (matchesKey(data, "escape") || data === "q") {
@@ -2447,6 +2547,11 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
         } else {
           ctx.ui.notify("No autoresearch.jsonl found. Autoresearch mode OFF", "info");
         }
+        return;
+      }
+
+      if (runtime.autoresearchMode) {
+        ctx.ui.notify("Autoresearch already active — use '/autoresearch off' to stop first", "info");
         return;
       }
 
