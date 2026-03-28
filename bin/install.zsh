@@ -227,13 +227,14 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               elixir@latest \
               erlang@latest \
               fnox@latest \
-              npm:portless \
               github:lexiforest/curl-impersonate \
               github:rockorager/ziglint \
               gleam@latest \
               go@latest \
               hk@latest \
               node@lts \
+              npm:hunkdiff \
+              npm:portless \
               odin@latest \
               pkl@latest \
               pnpm@latest \
