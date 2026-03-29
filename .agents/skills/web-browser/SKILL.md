@@ -17,6 +17,12 @@ Minimal CDP tools for collaborative site exploration.
 
 Start Chrome on `:9222` with remote debugging.
 
+If Chrome is installed in a non-standard location, set:
+
+```bash
+BROWSER_BIN=/path/to/chrome ./scripts/start.js
+```
+
 ## Navigate
 
 ```bash
