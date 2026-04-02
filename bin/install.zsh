@@ -44,9 +44,6 @@ done
 defaults write NSGlobalDomain CGDisableCursorLocationMagnification -bool false
 defaults write com.apple.universalaccess mouseDriverCursorSize 1.5
 
-# Do not reduce motion
-defaults write com.apple.universalaccess reduceMotion -bool false
-
 # Show Library folder
 chflags nohidden ~/Library
 
@@ -54,8 +51,27 @@ chflags nohidden ~/Library
 defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
 defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
 
-# Disable the all finder animations
+# Disable all animations
 defaults write NSGlobalDomain DisableAllAnimations -bool true
+defaults write NSGlobalDomain NSAutomaticWindowAnimationsEnabled -bool false
+defaults write NSGlobalDomain NSScrollAnimationEnabled -bool false
+defaults write NSGlobalDomain QLPanelAnimationDuration -float 0
+defaults write NSGlobalDomain NSScrollViewRubberbanding -bool false
+defaults write NSGlobalDomain NSDocumentRevisionsWindowTransformAnimation -bool false
+defaults write NSGlobalDomain NSToolbarFullScreenAnimationDuration -float 0
+defaults write NSGlobalDomain NSBrowserColumnAnimationSpeedMultiplier -float 0
+defaults write com.apple.finder DisableAllAnimations -bool true
+defaults write com.apple.dock no-bouncing -bool true
+defaults write com.apple.dock launchanim -bool false
+defaults write com.apple.dock springboard-show-duration -float 0
+defaults write com.apple.dock springboard-hide-duration -float 0
+defaults write com.apple.dock springboard-page-duration -float 0
+defaults write com.apple.dock mineffect -string "scale"
+defaults write com.apple.dock autohide -bool true
+defaults write com.apple.dock autohide-delay -int 0
+defaults write com.apple.dock autohide-time-modifier -float 0
+defaults write com.apple.Accessibility ReduceMotionEnabled -bool true
+defaults write com.apple.universalaccess reduceMotion -bool true
 
 # Enable full keyboard access for all controls (Accessibility pane)
 defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
@@ -163,21 +179,6 @@ defaults write com.apple.dock tilesize -int 36
 
 # Dock on the right
 defaults write com.apple.dock orientation -string "right"
-
-# Set Dock minimize effect to scale
-defaults write com.apple.dock mineffect -string "scale"
-
-# Auto-hide the Dock
-defaults write com.apple.dock autohide -bool true
-defaults write com.apple.dock autohide-delay -int 1000
-defaults write com.apple.dock autohide-time-modifier -float 0.4
-
-# Disable Dock icons bounce animation
-defaults write com.apple.dock no-bouncing -bool true
-
-# Speedup dock animations
-defaults write com.apple.dock springboard-show-duration -float .1
-defaults write com.apple.dock springboard-page-duration -float .2
 
 # In Safari, don't send search queries to Apple
 defaults write com.apple.Safari UniversalSearchEnabled -bool false
