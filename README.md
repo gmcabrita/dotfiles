@@ -110,7 +110,6 @@
     - Remove items from the Trash after 30 days
     - Keep folders on top when sorting by name
     - When performing a search: Search the Current Folder
-- Enable "Remote Login" (user only, disable full disk access)
 - https://github.com/D-Berg/crap
   - `gh repo clone D-Berg/crap`
   - `gh repo set-default`
