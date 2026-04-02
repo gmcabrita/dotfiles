@@ -336,7 +336,6 @@ function update-everything() {
   update-programming-languages
   pi update
   rm -f ~/.cache/macos_sdk_path
-  mole clean
 
   echo "Remember that these exist:"
   echo "\tdoggo            DNS Client"
