@@ -559,6 +559,59 @@ function cloneExperimentState(state: ExperimentState): ExperimentState {
   };
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function truncateDisplayText(text: string, width: number): string {
+  if (width <= 0) return "";
+  return truncateToWidth(text, width, "…", true);
+}
+
+function joinPartsToWidth(parts: string[], width: number): string {
+  let line = "";
+  for (const part of parts) {
+    if (!part) continue;
+    const next = line + part;
+    if (visibleWidth(next) <= width) {
+      line = next;
+      continue;
+    }
+    return truncateToWidth(line || part, width, "…", true);
+  }
+  return truncateToWidth(line, width, "…", true);
+}
+
+function appendRightAlignedAdaptiveHint(
+  left: string,
+  width: number,
+  theme: Theme,
+  candidates: string[]
+): string {
+  if (width <= 0) return "";
+  const leftWidth = visibleWidth(left);
+  for (const candidate of candidates) {
+    const hint = theme.fg("dim", ` ${candidate}`);
+    const hintWidth = visibleWidth(hint);
+    if (hintWidth > width) continue;
+    if (leftWidth + hintWidth <= width) {
+      return left + " ".repeat(Math.max(0, width - leftWidth - hintWidth)) + hint;
+    }
+    const availableLeftWidth = Math.max(0, width - hintWidth);
+    const truncatedLeft = truncateToWidth(left, availableLeftWidth, "…", true);
+    const truncatedLeftWidth = visibleWidth(truncatedLeft);
+    return truncatedLeft + " ".repeat(Math.max(0, width - truncatedLeftWidth - hintWidth)) + hint;
+  }
+  return truncateToWidth(left, width, "…", true);
+}
+
+function getTuiSize(tui: { terminal?: { columns?: number; rows?: number } }): { width: number; height: number } {
+  return {
+    width: tui.terminal?.columns ?? process.stdout.columns ?? 120,
+    height: tui.terminal?.rows ?? process.stdout.rows ?? 40,
+  };
+}
+
 function createExperimentState(): ExperimentState {
   return {
     results: [],
@@ -621,7 +674,8 @@ function renderDashboardLines(
   st: ExperimentState,
   width: number,
   th: Theme,
-  maxRows: number = 6
+  maxRows: number = 6,
+  headerHint?: string
 ): string[] {
   const lines: string[] = [];
 
@@ -746,42 +800,57 @@ function renderDashboardLines(
 
   lines.push("");
 
-  // Determine visible rows for column pruning
+  // Determine visible rows once — used for both column sizing and rendering
   const effectiveMax = maxRows <= 0 ? st.results.length : maxRows;
   const startIdx = Math.max(0, st.results.length - effectiveMax);
-  const visibleRows = st.results.slice(startIdx);
+  const rowsToRender = st.results.slice(startIdx);
 
-  // Only show secondary metric columns that have at least one value in visible rows
+  // Only show secondary metric columns that have at least one value in rendered rows
   const secMetrics = st.secondaryMetrics.filter((sm) =>
-    visibleRows.some((r) => (r.metrics ?? {})[sm.name] !== undefined)
+    rowsToRender.some((r) => (r.metrics ?? {})[sm.name] !== undefined)
   );
 
-  // Column definitions — guarantee 25% of width for description
-  const col = { idx: 3, commit: 8, primary: 11, status: 15 };
-  const secColWidth = 11;
+  // Column definitions
+  // Primary column: "★ " prefix (2 visible) + metric name + 1 padding, clamped to 25% of width
+  const primaryLabel = "★ " + (st.metricName || "metric");
+  const primaryW = Math.max(11, Math.min(Math.floor(width * 0.25), visibleWidth(primaryLabel) + 1));
+  const col = { idx: 3, commit: 8, primary: primaryW, status: 15 };
   const minDescW = Math.max(10, Math.floor(width * 0.25));
   const fixedW = col.idx + col.commit + col.primary + col.status + 6;
-  const availableForSec = width - fixedW - minDescW;
+
+  // Compute each secondary column width from actual content: max(name, widest value) + 1 padding
+  const secColWidths: number[] = secMetrics.map((sm) => {
+    let maxW = visibleWidth(sm.name);
+    for (const r of rowsToRender) {
+      const val = (r.metrics ?? {})[sm.name];
+      if (val !== undefined) {
+        maxW = Math.max(maxW, visibleWidth(formatNum(val, sm.unit)));
+      }
+    }
+    return maxW + 1;
+  });
+
+  const totalSecWidth = () => secColWidths.slice(0, visibleSecMetrics.length).reduce((a, b) => a + b, 0);
 
   // Drop secondary columns from the right until they fit
   let visibleSecMetrics = secMetrics;
-  while (visibleSecMetrics.length > 0 && visibleSecMetrics.length * secColWidth > availableForSec) {
+  while (visibleSecMetrics.length > 0 && totalSecWidth() > width - fixedW - minDescW) {
     visibleSecMetrics = visibleSecMetrics.slice(0, -1);
   }
 
-  const totalSecWidth = visibleSecMetrics.length * secColWidth;
-  const descW = Math.max(minDescW, width - fixedW - totalSecWidth);
+  const descW = Math.max(minDescW, width - fixedW - totalSecWidth());
 
   // Table header — primary metric name bolded with ★
   let headerLine =
     `  ${th.fg("muted", "#".padEnd(col.idx))}` +
     `${th.fg("muted", "commit".padEnd(col.commit))}` +
-    `${th.fg("warning", th.bold(("★ " + st.metricName).slice(0, col.primary - 1).padEnd(col.primary)))}`;
+    `${th.fg("warning", th.bold(truncateToWidth(primaryLabel, col.primary - 1).padEnd(col.primary)))}`;
 
-  for (const sm of visibleSecMetrics) {
+  for (let si = 0; si < visibleSecMetrics.length; si++) {
+    const sm = visibleSecMetrics[si];
     headerLine += th.fg(
       "muted",
-      sm.name.slice(0, secColWidth - 1).padEnd(secColWidth)
+      sm.name.padEnd(secColWidths[si])
     );
   }
 
@@ -789,10 +858,18 @@ function renderDashboardLines(
     `${th.fg("muted", "status".padEnd(col.status))}` +
     `${th.fg("muted", "description")}`;
 
-  lines.push(truncateToWidth(headerLine, width));
+  lines.push(
+    headerHint
+      ? appendRightAlignedAdaptiveHint(headerLine, width, th, [
+          headerHint,
+          "ctrl+x collapse • full: c-s-x",
+          "ctrl+x • c-s-x",
+        ])
+      : truncateToWidth(headerLine, width, "…", true)
+  );
   lines.push(
     truncateToWidth(
-      `  ${th.fg("borderMuted", "─".repeat(width - 4))}`,
+      `  ${th.fg("borderMuted", "─".repeat(Math.max(0, width - 4)))}`,
       width
     )
   );
@@ -815,10 +892,12 @@ function renderDashboardLines(
     );
   }
 
+  const baselineIndex = st.results.findIndex((x) => x.segment === st.currentSegment);
+
   for (let i = startIdx; i < st.results.length; i++) {
     const r = st.results[i];
     const isOld = r.segment !== st.currentSegment;
-    const isBaseline = !isOld && i === st.results.findIndex((x) => x.segment === st.currentSegment);
+    const isBaseline = !isOld && i === baselineIndex;
 
     const color = isOld
       ? "dim"
@@ -861,7 +940,9 @@ function renderDashboardLines(
 
     // Secondary metrics (only visible columns)
     const rowMetrics = r.metrics ?? {};
-    for (const sm of visibleSecMetrics) {
+    for (let si = 0; si < visibleSecMetrics.length; si++) {
+      const sm = visibleSecMetrics[si];
+      const colW = secColWidths[si];
       const val = rowMetrics[sm.name];
       if (val !== undefined) {
         const secStr = formatNum(val, sm.unit);
@@ -869,14 +950,14 @@ function renderDashboardLines(
         if (!isOld) {
           const bv = baselineSecondary[sm.name];
           if (isBaseline) {
-            secColor = "text"; // baseline row — normal text
+            secColor = "text";
           } else if (bv !== undefined && bv !== 0) {
             secColor = val <= bv ? "success" : "error";
           }
         }
-        rowLine += th.fg(secColor, secStr.padEnd(secColWidth));
+        rowLine += th.fg(secColor, secStr.padEnd(colW));
       } else {
-        rowLine += th.fg("dim", "—".padEnd(secColWidth));
+        rowLine += th.fg("dim", "—".padEnd(colW));
       }
     }
 
@@ -1079,141 +1160,157 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
         return;
       }
 
-      ctx.ui.setWidget("autoresearch", (_tui, theme) => {
-        const parts = [
-          theme.fg("accent", "🔬"),
-          theme.fg("warning", " running…"),
-        ];
-
-        if (state.name) {
-          parts.push(theme.fg("dim", ` │ ${state.name}`));
-        }
-
-        parts.push(theme.fg("dim", ` │ ${runtime.runningExperiment.command}`));
-        parts.push(theme.fg("dim", "  (waiting for first logged result)"));
-
-        return new Text(parts.join(""), 0, 0);
-      });
+      ctx.ui.setWidget("autoresearch", (tui, theme) => ({
+        render(width: number): string[] {
+          const safeWidth = Math.max(1, width || getTuiSize(tui).width);
+          const runningLine = joinPartsToWidth(
+            [
+              theme.fg("accent", "🔬"),
+              theme.fg("warning", " running…"),
+              state.name ? theme.fg("dim", ` │ ${state.name}`) : "",
+              theme.fg("dim", ` │ ${runtime.runningExperiment?.command ?? ""}`),
+              theme.fg("dim", " │ waiting for first logged result"),
+            ],
+            safeWidth
+          );
+          return [runningLine];
+        },
+        invalidate(): void {},
+      }));
       return;
     }
 
     if (runtime.dashboardExpanded) {
       // Expanded: full dashboard table rendered as widget
-      ctx.ui.setWidget("autoresearch", (_tui, theme) => {
-        const width = process.stdout.columns || 120;
-        const lines: string[] = [];
+      ctx.ui.setWidget("autoresearch", (tui, theme) => ({
+        render(width: number): string[] {
+          const safeWidth = Math.max(1, width || getTuiSize(tui).width);
+          const title = truncateDisplayText(
+            `🔬 autoresearch${state.name ? `: ${state.name}` : ""}`,
+            Math.max(0, safeWidth - 5)
+          );
+          const fillLen = Math.max(0, safeWidth - 3 - 1 - visibleWidth(title) - 1);
+          const rows = safeWidth < 95 ? 4 : 6;
 
-        const hintText = " ctrl+x collapse • ctrl+shift+x fullscreen ";
-        const labelPrefix = "🔬 autoresearch";
-        const nameStr = state.name ? `: ${state.name}` : "";
-        // 3 leading dashes + space + label + space + fill + hint
-        const maxLabelLen = width - 3 - 2 - hintText.length - 1;
-        let label = labelPrefix + nameStr;
-        if (label.length > maxLabelLen) {
-          label = label.slice(0, maxLabelLen - 1) + "…";
-        }
-        const fillLen = Math.max(0, width - 3 - 1 - label.length - 1 - hintText.length);
-        lines.push(
-          truncateToWidth(
-            theme.fg("borderMuted", "───") +
-              theme.fg("accent", " " + label + " ") +
-              theme.fg("borderMuted", "─".repeat(fillLen)) +
-              theme.fg("dim", hintText),
-            width
-          )
-        );
-
-        lines.push(...renderDashboardLines(state, width, theme));
-
-        return new Text(lines.join("\n"), 0, 0);
-      });
+          return [
+            truncateToWidth(
+              theme.fg("borderMuted", "───") +
+                theme.fg("accent", ` ${title} `) +
+                theme.fg("borderMuted", "─".repeat(fillLen)),
+              safeWidth,
+              "…",
+              true
+            ),
+            ...renderDashboardLines(
+              state,
+              safeWidth,
+              theme,
+              rows,
+              "ctrl+x collapse • ctrl+shift+x fullscreen"
+            ),
+          ];
+        },
+        invalidate(): void {},
+      }));
     } else {
       // Collapsed: compact one-liner — compute everything inside render
-      ctx.ui.setWidget("autoresearch", (_tui, theme) => {
-        const cur = currentResults(state.results, state.currentSegment);
-        const kept = cur.filter((r) => r.status === "keep").length;
-        const crashed = cur.filter((r) => r.status === "crash").length;
-        const checksFailed = cur.filter((r) => r.status === "checks_failed").length;
-        const baseline = state.bestMetric;
-        const baselineSec = findBaselineSecondary(state.results, state.currentSegment, state.secondaryMetrics);
+      ctx.ui.setWidget("autoresearch", (tui, theme) => ({
+        render(width: number): string[] {
+          const safeWidth = Math.max(1, width || getTuiSize(tui).width);
+          const cur = currentResults(state.results, state.currentSegment);
+          const kept = cur.filter((r) => r.status === "keep").length;
+          const crashed = cur.filter((r) => r.status === "crash").length;
+          const checksFailed = cur.filter((r) => r.status === "checks_failed").length;
+          const baseline = state.bestMetric;
+          const baselineSec = findBaselineSecondary(
+            state.results,
+            state.currentSegment,
+            state.secondaryMetrics
+          );
 
-        // Find best kept primary metric, its secondary values, and run number
-        let bestPrimary: number | null = null;
-        let bestSec: Record<string, number> = {};
-        let bestRunNum = 0;
-        for (let i = state.results.length - 1; i >= 0; i--) {
-          const r = state.results[i];
-          if (r.segment !== state.currentSegment) continue;
-          if (r.status === "keep" && r.metric > 0) {
-            if (bestPrimary === null || isBetter(r.metric, bestPrimary, state.bestDirection)) {
-              bestPrimary = r.metric;
-              bestSec = r.metrics ?? {};
-              bestRunNum = i + 1;
+          let bestPrimary: number | null = null;
+          let bestSec: Record<string, number> = {};
+          let bestRunNum = 0;
+          for (let i = state.results.length - 1; i >= 0; i--) {
+            const r = state.results[i];
+            if (r.segment !== state.currentSegment) continue;
+            if (r.status === "keep" && r.metric > 0) {
+              if (bestPrimary === null || isBetter(r.metric, bestPrimary, state.bestDirection)) {
+                bestPrimary = r.metric;
+                bestSec = r.metrics ?? {};
+                bestRunNum = i + 1;
+              }
             }
           }
-        }
 
-        const displayVal = bestPrimary ?? baseline;
-        const parts = [
-          theme.fg("accent", "🔬"),
-          theme.fg("muted", ` ${state.results.length} runs`),
-          theme.fg("success", ` ${kept} kept`),
-          crashed > 0 ? theme.fg("error", ` ${crashed}💥`) : "",
-          checksFailed > 0 ? theme.fg("error", ` ${checksFailed}⚠`) : "",
-          theme.fg("dim", " │ "),
-          theme.fg("warning", theme.bold(`★ ${state.metricName}: ${formatNum(displayVal, state.metricUnit)}`)),
-          bestRunNum > 0 ? theme.fg("dim", ` #${bestRunNum}`) : "",
-        ];
+          const displayVal = bestPrimary ?? baseline;
+          const essential = [
+            theme.fg("accent", "🔬"),
+            theme.fg("muted", ` ${state.results.length} runs`),
+            theme.fg("success", ` ${kept} kept`),
+            theme.fg("dim", " │ "),
+            theme.fg(
+              "warning",
+              theme.bold(`★ ${state.metricName}: ${formatNum(displayVal, state.metricUnit)}`)
+            ),
+            bestRunNum > 0 ? theme.fg("dim", ` #${bestRunNum}`) : "",
+          ];
 
-        // Show delta % vs baseline for primary
-        if (baseline !== null && bestPrimary !== null && baseline !== 0 && bestPrimary !== baseline) {
-          const pct = ((bestPrimary - baseline) / baseline) * 100;
-          const sign = pct > 0 ? "+" : "";
-          const deltaColor = isBetter(bestPrimary, baseline, state.bestDirection) ? "success" : "error";
-          parts.push(theme.fg(deltaColor, ` (${sign}${pct.toFixed(1)}%)`));
-        }
+          const optional: string[] = [];
+          if (crashed > 0) optional.push(theme.fg("error", ` ${crashed}💥`));
+          if (checksFailed > 0) optional.push(theme.fg("error", ` ${checksFailed}⚠`));
 
-        // Show confidence score
-        if (state.confidence !== null) {
-          const confStr = state.confidence.toFixed(1);
-          const confColor: Parameters<typeof theme.fg>[0] = state.confidence >= 2.0 ? "success" : state.confidence >= 1.0 ? "warning" : "error";
-          parts.push(theme.fg("dim", " │ "));
-          parts.push(theme.fg(confColor, `conf: ${confStr}×`));
-        }
+          if (baseline !== null && bestPrimary !== null && baseline !== 0 && bestPrimary !== baseline) {
+            const pct = ((bestPrimary - baseline) / baseline) * 100;
+            const sign = pct > 0 ? "+" : "";
+            const deltaColor = isBetter(bestPrimary, baseline, state.bestDirection)
+              ? "success"
+              : "error";
+            optional.push(theme.fg(deltaColor, ` (${sign}${pct.toFixed(1)}%)`));
+          }
 
-        // Show secondary metrics with delta %
-        if (state.secondaryMetrics.length > 0) {
-          for (const sm of state.secondaryMetrics) {
-            const val = bestSec[sm.name];
-            const bv = baselineSec[sm.name];
-            if (val !== undefined) {
-              parts.push(theme.fg("dim", "  "));
-              // Color value and delta separately to avoid color bleed
-              parts.push(theme.fg("muted", `${sm.name}: ${formatNum(val, sm.unit)}`));
+          if (state.confidence !== null) {
+            const confStr = state.confidence.toFixed(1);
+            const confColor: Parameters<typeof theme.fg>[0] = state.confidence >= 2.0 ? "success" : state.confidence >= 1.0 ? "warning" : "error";
+            optional.push(theme.fg("dim", " │ "));
+            optional.push(theme.fg(confColor, `conf: ${confStr}×`));
+          }
+
+          if (state.secondaryMetrics.length > 0) {
+            for (const sm of state.secondaryMetrics) {
+              const val = bestSec[sm.name];
+              const bv = baselineSec[sm.name];
+              if (val === undefined) continue;
+              let secText = `${sm.name}: ${formatNum(val, sm.unit)}`;
               if (bv !== undefined && bv !== 0 && val !== bv) {
                 const p = ((val - bv) / bv) * 100;
                 const s = p > 0 ? "+" : "";
                 const c = val <= bv ? "success" : "error";
-                parts.push(theme.fg(c, ` ${s}${p.toFixed(1)}%`));
+                secText += theme.fg(c, ` ${s}${p.toFixed(1)}%`);
               }
+              optional.push(theme.fg("dim", "  "));
+              optional.push(theme.fg("muted", secText));
+              break;
             }
           }
-        }
 
-        if (state.name) {
-          parts.push(theme.fg("dim", ` │ ${state.name}`));
-        }
+          if (state.name) optional.push(theme.fg("dim", ` │ ${state.name}`));
 
-        parts.push(theme.fg("dim", "  (ctrl+x expand • ctrl+shift+x fullscreen)"));
-
-        return new Text(parts.join(""), 0, 0);
-      });
+          const left = [...essential, ...optional].join("");
+          return [
+            appendRightAlignedAdaptiveHint(left, safeWidth, theme, [
+              "ctrl+x expand • ctrl+shift+x fullscreen",
+              "ctrl+x expand • full: c-s-x",
+              "ctrl+x • c-s-x",
+            ]),
+          ];
+        },
+        invalidate(): void {},
+      }));
     }
   };
 
   pi.on("session_start", async (_e, ctx) => reconstructState(ctx));
-  pi.on("session_switch", async (_e, ctx) => reconstructState(ctx));
-  pi.on("session_fork", async (_e, ctx) => reconstructState(ctx));
   pi.on("session_tree", async (_e, ctx) => reconstructState(ctx));
   pi.on("session_before_switch", async () => {
     clearOverlay();
@@ -2340,110 +2437,84 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
       await ctx.ui.custom<void>(
         (tui, theme, _kb, done) => {
           let scrollOffset = 0;
-          // Store tui ref so run_experiment can trigger re-renders
+          let lastViewportRows = 8;
+          let lastTotalRows = 0;
           overlayTui = tui;
 
-          // Start spinner interval for elapsed time animation
           spinnerInterval = setInterval(() => {
             spinnerFrame = (spinnerFrame + 1) % SPINNER.length;
             if (runtime.runningExperiment) tui.requestRender();
           }, 80);
 
-          const computeViewportRows = () => {
-            const termH = process.stdout.rows || 40;
-            const overlayMaxH = Math.floor(termH * 0.9);
-            return Math.max(4, overlayMaxH - 4);
+          const buildOverlayContent = (renderWidth: number): string[] => {
+            const content = renderDashboardLines(state, renderWidth, theme, 0);
+            if (runtime.runningExperiment) {
+              const elapsed = formatElapsed(Date.now() - runtime.runningExperiment.startedAt);
+              const frame = SPINNER[spinnerFrame % SPINNER.length];
+              const nextIdx = state.results.length + 1;
+              content.push(
+                truncateToWidth(
+                  `  ${theme.fg("dim", String(nextIdx).padEnd(3))}` +
+                    theme.fg("warning", `${frame} running… ${elapsed}`),
+                  renderWidth,
+                  "…",
+                  true
+                )
+              );
+            }
+            return content;
           };
 
           return {
             render(width: number): string[] {
-              const border = (s: string) => theme.fg("accent", s);
-
-              // Inner content width: │ + space + content + space + │
-              const innerWidth = Math.max(10, width - 4);
-              const content = renderDashboardLines(state, innerWidth, theme, 0);
-
-              // Add running experiment as next row in the list
-              if (runtime.runningExperiment) {
-                const elapsed = formatElapsed(Date.now() - runtime.runningExperiment.startedAt);
-                const frame = SPINNER[spinnerFrame % SPINNER.length];
-                const nextIdx = state.results.length + 1;
-                content.push(
-                  truncateToWidth(
-                    `  ${theme.fg("dim", String(nextIdx).padEnd(3))}` +
-                    theme.fg("warning", `${frame} running… ${elapsed}`),
-                    innerWidth
-                  )
-                );
-              }
+              const { height } = getTuiSize(tui);
+              const safeWidth = Math.max(1, width || getTuiSize(tui).width);
+              const viewportRows = Math.max(4, height - 4);
+              const content = buildOverlayContent(safeWidth);
 
               const totalRows = content.length;
-              const viewportRows = computeViewportRows();
-
-              // Clamp scroll
               const maxScroll = Math.max(0, totalRows - viewportRows);
-              if (scrollOffset > maxScroll) scrollOffset = maxScroll;
-              if (scrollOffset < 0) scrollOffset = 0;
+              scrollOffset = clamp(scrollOffset, 0, maxScroll);
+              lastViewportRows = viewportRows;
+              lastTotalRows = totalRows;
 
               const out: string[] = [];
 
-              // Top border with embedded title: ┌── 🔬 autoresearch: name ──────┐
-              const titlePrefix = "🔬 autoresearch";
-              const nameStr = state.name ? `: ${state.name}` : "";
-              let title = titlePrefix + nameStr;
-              const titleVisW = visibleWidth(title);
-              // Budget: ┌── (3) + space (1) + title + space (1) + fill + ┐ (1) = width
-              const maxTitleVisW = width - 6;
-              if (titleVisW > maxTitleVisW) {
-                title = truncateToWidth(title, Math.max(5, maxTitleVisW));
-              }
-              const titleActualVisW = visibleWidth(title);
-              const topFillLen = Math.max(0, width - 6 - titleActualVisW);
+              const title = truncateDisplayText(
+                `🔬 autoresearch${state.name ? `: ${state.name}` : ""}`,
+                Math.max(0, safeWidth - 5)
+              );
+              const fillLen = Math.max(0, safeWidth - 3 - 1 - visibleWidth(title) - 1);
+
               out.push(
                 truncateToWidth(
-                  border("┌──") +
-                  border(" " + title + " ") +
-                  border("─".repeat(topFillLen) + "┐"),
-                  width
+                  theme.fg("borderMuted", "───") +
+                    theme.fg("accent", ` ${title} `) +
+                    theme.fg("borderMuted", "─".repeat(fillLen)),
+                  safeWidth,
+                  "…",
+                  true
                 )
               );
 
-              // Content rows with side borders: │ content │
               const visible = content.slice(scrollOffset, scrollOffset + viewportRows);
-              for (const line of visible) {
-                const lineVisW = visibleWidth(line);
-                const padding = Math.max(0, innerWidth - lineVisW);
-                out.push(
-                  truncateToWidth(
-                    border("│") + " " + line + " ".repeat(padding) + " " + border("│"),
-                    width
-                  )
-                );
-              }
-              // Fill remaining viewport with empty bordered rows
-              for (let i = visible.length; i < viewportRows; i++) {
-                out.push(
-                  truncateToWidth(
-                    border("│") + " ".repeat(width - 2) + border("│"),
-                    width
-                  )
-                );
-              }
+              for (const line of visible) out.push(truncateToWidth(line, safeWidth, "…", true));
+              for (let i = visible.length; i < viewportRows; i++) out.push("");
 
-              // Bottom border with help text: └─────── ↑↓/j/k scroll • esc close ──┘
               const scrollInfo = totalRows > viewportRows
                 ? ` ${scrollOffset + 1}-${Math.min(scrollOffset + viewportRows, totalRows)}/${totalRows}`
                 : "";
-              const helpText = `↑↓/j/k scroll • esc close${scrollInfo}`;
-              const helpVisW = visibleWidth(helpText);
-              // Budget: └ (1) + fill + space (1) + help + space (1) + ──┘ (3) = width
-              const bottomFillLen = Math.max(0, width - 6 - helpVisW);
+              const helpText = safeWidth >= 85
+                ? ` ↑↓/j/k scroll • pgup/pgdn • g/G • esc close${scrollInfo} `
+                : ` j/k scroll • esc close${scrollInfo} `;
+              const footFill = Math.max(0, safeWidth - visibleWidth(helpText));
+
               out.push(
                 truncateToWidth(
-                  border("└" + "─".repeat(bottomFillLen)) +
-                  theme.fg("dim", " " + helpText + " ") +
-                  border("──┘"),
-                  width
+                  theme.fg("borderMuted", "─".repeat(footFill)) + theme.fg("dim", helpText),
+                  safeWidth,
+                  "…",
+                  true
                 )
               );
 
@@ -2451,10 +2522,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
             },
 
             handleInput(data: string): void {
-              const viewportRows = computeViewportRows();
-              const actualContent = renderDashboardLines(state, process.stdout.columns || 120, theme, 0);
-              const totalRows = actualContent.length + (runtime.runningExperiment ? 1 : 0);
-              const maxScroll = Math.max(0, totalRows - viewportRows);
+              const maxScroll = Math.max(0, lastTotalRows - lastViewportRows);
 
               if (matchesKey(data, "escape") || data === "q") {
                 done(undefined);
@@ -2465,9 +2533,9 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
               } else if (matchesKey(data, "down") || data === "j") {
                 scrollOffset = Math.min(maxScroll, scrollOffset + 1);
               } else if (matchesKey(data, "pageUp") || data === "u") {
-                scrollOffset = Math.max(0, scrollOffset - viewportRows);
+                scrollOffset = Math.max(0, scrollOffset - lastViewportRows);
               } else if (matchesKey(data, "pageDown") || data === "d") {
-                scrollOffset = Math.min(maxScroll, scrollOffset + viewportRows);
+                scrollOffset = Math.min(maxScroll, scrollOffset + lastViewportRows);
               } else if (data === "g") {
                 scrollOffset = 0;
               } else if (data === "G") {
