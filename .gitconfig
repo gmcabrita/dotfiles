@@ -55,7 +55,7 @@
   private = yes
 [alias]
   # Push and open PR
-  ppr = !git push && gh pr create --web --assignee="@me" --reviewer="amplemarket/ai-reviewers"
+  ppr = !git push && gh pr create --web --assignee="@me"
 
   web = !gh repo view --web
 
