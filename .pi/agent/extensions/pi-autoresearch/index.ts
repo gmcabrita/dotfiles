@@ -24,6 +24,9 @@ import { Text, truncateToWidth, matchesKey, visibleWidth } from "@mariozechner/p
 import { Type } from "@sinclair/typebox";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
+import { createServer, type Server, type ServerResponse } from "node:http";
+
 import { spawn } from "node:child_process";
 import { createWriteStream } from "node:fs";
 import { randomBytes } from "node:crypto";
@@ -1008,15 +1011,18 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
 
   const autoresearchHelp = () =>
     [
-      "Usage: /autoresearch [off|clear|<text>]",
+      "Usage: /autoresearch [off|clear|export|<text>]",
       "",
       "<text> enters autoresearch mode and starts or resumes the loop.",
       "off leaves autoresearch mode.",
       "clear deletes autoresearch.jsonl and turns autoresearch mode off.",
+      "export opens a local live dashboard for autoresearch.jsonl in your browser.",
+
       "",
       "Examples:",
       "  /autoresearch optimize unit test runtime, monitor correctness",
       "  /autoresearch model training, run 5 minutes of train.py and note the loss ratio as optimization target",
+      "  /autoresearch export",
     ].join("\n");
 
   // -----------------------------------------------------------------------
@@ -1318,6 +1324,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
   pi.on("session_shutdown", async (_e, ctx) => {
     clearSessionUi(ctx);
     runtimeStore.clear(getSessionKey(ctx));
+    stopDashboardServer();
   });
 
   // Reset per-session experiment counter when agent starts
@@ -1474,6 +1481,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
         } else {
           fs.writeFileSync(jsonlPath, config + "\n");
         }
+        broadcastDashboardUpdate(workDir);
       } catch (e) {
         return {
           content: [{
@@ -2276,6 +2284,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
         // Only write asi if present (keep lines compact when no ASI)
         if (!mergedASI) delete jsonlEntry.asi;
         fs.appendFileSync(jsonlPath, JSON.stringify(jsonlEntry) + "\n");
+        broadcastDashboardUpdate(workDir);
       } catch (e) {
         text += `\n⚠️ Failed to write autoresearch.jsonl: ${e instanceof Error ? e.message : String(e)}`;
       }
@@ -2564,6 +2573,239 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
   });
 
   // -----------------------------------------------------------------------
+  // Export: local live dashboard
+  // -----------------------------------------------------------------------
+
+  const TITLE_PLACEHOLDER = "__AUTORESEARCH_TITLE__";
+  const LOGO_PLACEHOLDER = "__AUTORESEARCH_LOGO__";
+
+  let cachedPackageRoot: string | null = null;
+
+  function packageRoot(): string {
+    if (cachedPackageRoot) return cachedPackageRoot;
+    const extensionDir = fs.realpathSync(path.dirname(fileURLToPath(import.meta.url)));
+    cachedPackageRoot = path.resolve(extensionDir, "../..");
+    return cachedPackageRoot;
+  }
+
+  function templatePath(): string {
+    return path.join(packageRoot(), "assets/template.html");
+  }
+
+  function readTemplate(): string {
+    return fs.readFileSync(templatePath(), "utf-8");
+  }
+
+  let cachedLogoDataUrl: string | null = null;
+
+  function logoDataUrl(): string {
+    if (cachedLogoDataUrl) return cachedLogoDataUrl;
+    const logoPath = path.join(packageRoot(), "assets/logo.webp");
+    const bytes = fs.readFileSync(logoPath);
+    cachedLogoDataUrl = `data:image/webp;base64,${bytes.toString("base64")}`;
+    return cachedLogoDataUrl;
+  }
+
+  function readJsonlContent(workDir: string): string {
+    return fs.readFileSync(path.join(workDir, "autoresearch.jsonl"), "utf-8").trim();
+  }
+
+  function extractSessionName(jsonlContent: string): string {
+    const firstLine = jsonlContent.split("\n").find((l) => l.trim());
+    if (!firstLine) return "Autoresearch";
+    try {
+      const config = JSON.parse(firstLine);
+      return config.name || "Autoresearch";
+    } catch {
+      return "Autoresearch";
+    }
+  }
+
+  function escapeHtml(text: string): string {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function injectDataIntoTemplate(template: string, title: string): string {
+    const escapedTitle = escapeHtml(title);
+    return template.replace(TITLE_PLACEHOLDER, () => escapedTitle);
+  }
+
+  let dashboardServer: Server | null = null;
+  let dashboardServerPort: number | null = null;
+  let dashboardServerWorkDir: string | null = null;
+  let dashboardServerHtmlPath: string | null = null;
+  const dashboardSseClients = new Set<ServerResponse>();
+
+  function openInBrowser(url: string): void {
+    if (process.platform === "win32") {
+      spawn("cmd", ["/c", "start", "", url], {
+        detached: true,
+        shell: true,
+        stdio: "ignore",
+      }).unref();
+      return;
+    }
+
+    const openCmd = process.platform === "darwin" ? "open" : "xdg-open";
+    spawn(openCmd, [url], { detached: true, stdio: "ignore" }).unref();
+  }
+
+  function stopDashboardServer(): void {
+    for (const client of dashboardSseClients) {
+      try { client.end(); } catch { /* ignore */ }
+    }
+    dashboardSseClients.clear();
+
+    if (dashboardServer) {
+      try { dashboardServer.close(); } catch { /* ignore */ }
+    }
+
+    dashboardServer = null;
+    dashboardServerPort = null;
+    dashboardServerWorkDir = null;
+    dashboardServerHtmlPath = null;
+  }
+
+  function writeDashboardFile(workDir: string): string {
+    const jsonlContent = readJsonlContent(workDir);
+    const sessionName = extractSessionName(jsonlContent);
+    const html = injectDataIntoTemplate(readTemplate(), sessionName)
+      .replace(LOGO_PLACEHOLDER, logoDataUrl());
+    const exportDir = fs.mkdtempSync(path.join(tmpdir(), "pi-autoresearch-dashboard-"));
+    const dest = path.join(exportDir, "index.html");
+    fs.writeFileSync(dest, html);
+    return dest;
+  }
+
+  const CONTENT_TYPES: Record<string, string> = {
+    ".html": "text/html; charset=utf-8",
+    ".jsonl": "text/plain; charset=utf-8",
+    ".json": "application/json; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".png": "image/png",
+    ".webp": "image/webp",
+  };
+
+  function fileContentType(filePath: string): string {
+    const ext = path.extname(filePath).toLowerCase();
+    return CONTENT_TYPES[ext] ?? "application/octet-stream";
+  }
+
+  function resolveServedFile(workDir: string, requestPath: string): string | null {
+    if (requestPath === "/") return dashboardServerHtmlPath;
+    if (requestPath === "/autoresearch.jsonl") return path.join(workDir, "autoresearch.jsonl");
+    return null;
+  }
+
+  function registerSseClient(res: ServerResponse): void {
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    });
+    res.write("retry: 1000\n\n");
+    dashboardSseClients.add(res);
+    res.on("close", () => dashboardSseClients.delete(res));
+  }
+
+  function broadcastDashboardUpdate(workDir: string): void {
+    if (!dashboardServer || dashboardServerWorkDir !== workDir) return;
+    for (const res of dashboardSseClients) {
+      try {
+        res.write("event: jsonl-updated\n");
+        res.write(`data: ${Date.now()}\n\n`);
+      } catch {
+        dashboardSseClients.delete(res);
+      }
+    }
+  }
+
+  function startStaticServer(workDir: string, dashboardHtmlPath: string): Promise<number> {
+    return new Promise((resolve, reject) => {
+      const resolvedWorkDir = path.resolve(workDir);
+      const resolvedDashboardHtmlPath = path.resolve(dashboardHtmlPath);
+
+      if (dashboardServer && dashboardServerWorkDir === resolvedWorkDir && dashboardServerPort) {
+        dashboardServerHtmlPath = resolvedDashboardHtmlPath;
+        resolve(dashboardServerPort);
+        return;
+      }
+
+      stopDashboardServer();
+      dashboardServerHtmlPath = resolvedDashboardHtmlPath;
+
+      const server = createServer((req, res) => {
+        const url = new URL(req.url ?? "/", "http://127.0.0.1");
+
+        if (url.pathname === "/events") {
+          registerSseClient(res);
+          return;
+        }
+
+        const filePath = resolveServedFile(resolvedWorkDir, url.pathname);
+        if (!filePath) {
+          res.writeHead(404);
+          res.end();
+          return;
+        }
+
+        fs.readFile(filePath, (err, data) => {
+          if (err) {
+            res.writeHead(404);
+            res.end();
+            return;
+          }
+          res.writeHead(200, { "Content-Type": fileContentType(filePath) });
+          res.end(data);
+        });
+      });
+
+      server.listen(0, "127.0.0.1", () => {
+        const address = server.address();
+        if (!address || typeof address === "string") {
+          reject(new Error("Failed to bind dashboard server"));
+          return;
+        }
+        dashboardServer = server;
+        dashboardServerPort = address.port;
+        dashboardServerWorkDir = resolvedWorkDir;
+        resolve(address.port);
+      });
+
+      server.on("error", reject);
+    });
+  }
+
+  async function exportDashboard(ctx: ExtensionContext): Promise<void> {
+    const workDir = resolveWorkDir(ctx.cwd);
+    const jsonlPath = path.join(workDir, "autoresearch.jsonl");
+
+    if (!fs.existsSync(jsonlPath)) {
+      ctx.ui.notify("No autoresearch.jsonl found \u2014 run some experiments first", "error");
+      return;
+    }
+
+    try {
+      const dashboardHtmlPath = writeDashboardFile(workDir);
+      const port = await startStaticServer(workDir, dashboardHtmlPath);
+      const url = `http://127.0.0.1:${port}`;
+      openInBrowser(url);
+      ctx.ui.notify(`Dashboard at ${url} (live updates)`, "info");
+    } catch (error) {
+      ctx.ui.notify(
+        `Export failed: ${error instanceof Error ? error.message : String(error)}`,
+        "error"
+      );
+    }
+  }
+
+  // -----------------------------------------------------------------------
   // /autoresearch command — enter autoresearch mode
   // -----------------------------------------------------------------------
 
@@ -2586,7 +2828,13 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
         runtime.experimentsThisSession = 0;
         runtime.lastRunChecks = null;
         runtime.runningExperiment = null;
+        stopDashboardServer();
         ctx.ui.notify("Autoresearch mode OFF", "info");
+        return;
+      }
+
+      if (command === "export") {
+        await exportDashboard(ctx);
         return;
       }
 
@@ -2600,6 +2848,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
         runtime.lastRunChecks = null;
         runtime.runningExperiment = null;
         runtime.state = createExperimentState();
+        stopDashboardServer();
         updateWidget(ctx);
 
         if (fs.existsSync(jsonlPath)) {
