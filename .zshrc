@@ -329,6 +329,18 @@ function timestamps() {
   ts '[%Y-%m-%d %H:%M:%.S]'
 }
 
+function pvl() {
+  command pv -betlap -u shaded "$@"
+}
+
+function pvb() {
+  command pv -ptebar -u shaded "$@"
+}
+
+function pvr() {
+  command pv -btrpg --buffer-size 1024 -u shaded "$@"
+}
+
 function update-everything() {
   brew update
   brew bundle install --cleanup --file=~/.config/Brewfile
@@ -344,6 +356,9 @@ function update-everything() {
   echo "\tmo               Deep clean and optimize your Mac"
   echo "\toha              HTTP load generator"
   echo "\tpv               Monitor progress of data through a pipeline"
+  echo "\tpvl              Monitor progress of data through a pipeline (lines)"
+  echo "\tpvb              Monitor progress of data through a pipeline (bytes)"
+  echo "\tpvr              Monitor progress of data through a pipeline (rate)"
   echo "\tspacer           Utility for adding spacers when command output stops"
   echo "\tt                Time program (Clocks, RSS, Context Switches)"
   echo "\ttspin            Log file highlighter"
