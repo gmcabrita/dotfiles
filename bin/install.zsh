@@ -42,7 +42,7 @@ done
 
 # Pointer settings
 defaults write NSGlobalDomain CGDisableCursorLocationMagnification -bool false
-defaults write com.apple.universalaccess mouseDriverCursorSize 1.5
+defaults write com.apple.universalaccess mouseDriverCursorSize -float 1.5
 
 # Show Library folder
 chflags nohidden ~/Library
@@ -68,7 +68,7 @@ defaults write com.apple.dock springboard-hide-duration -float 0
 defaults write com.apple.dock springboard-page-duration -float 0
 defaults write com.apple.dock mineffect -string "scale"
 defaults write com.apple.dock autohide -bool true
-defaults write com.apple.dock autohide-delay -int 0
+defaults write com.apple.dock autohide-delay -int 1000
 defaults write com.apple.dock autohide-time-modifier -float 0
 defaults write com.apple.Accessibility ReduceMotionEnabled -bool true
 defaults write com.apple.universalaccess reduceMotion -bool true
@@ -172,8 +172,8 @@ defaults write NSGlobalDomain NSMenuEnableActionImages -bool false
 # Wipe all default app icons from the dock
 defaults write com.apple.dock persistent-apps -array
 
-# Set Dock icon size to 36 pixels
-defaults write com.apple.dock tilesize -int 36
+# Set Dock icon size to 64 pixels
+defaults write com.apple.dock tilesize -float 64
 
 # Dock on the right
 defaults write com.apple.dock orientation -string "right"
