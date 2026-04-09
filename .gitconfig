@@ -55,8 +55,8 @@
   private = yes
 [alias]
   # Push and open PR
-  ppr = !git push && gh pr create --web --assignee="@me"
-
+  ppr = !git push && (gh pr view --web >/dev/null 2>&1 || gh pr create --web --assignee="@me")
+  pr = !gh pr view --web
   web = !gh repo view --web
 
   # Quick commit
