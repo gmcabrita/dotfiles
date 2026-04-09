@@ -156,7 +156,7 @@ defaults write NSGlobalDomain _FXSortFoldersFirst -bool true
 defaults write NSGlobalDomain _FXSortFoldersFirstOnDesktop -bool true
 
 # Hide desktop icons
-defaults write NSGlobalDomain CreateDesktop false
+defaults write NSGlobalDomain CreateDesktop -bool false
 
 # Expanded Save and Print dialogs by default
 defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
