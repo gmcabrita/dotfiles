@@ -1,5 +1,5 @@
 tap "blacktop/tap"
-tap "boringsql/tap/"
+tap "boringsql/tap"
 tap "orlangure/tap"
 tap "ramonvermeulen/whosthere"
 tap "rockorager/tap"
