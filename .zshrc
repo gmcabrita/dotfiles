@@ -350,14 +350,14 @@ function update-everything() {
   rm -f ~/.cache/macos_sdk_path
 
   echo "Remember that these exist:"
-  echo "\gt                Time program (Clocks, RSS, Context Switches), uses gnutime"
   echo "\tdoggo            DNS Client"
   echo "\tgsa              Analyze the size of Go binaries"
+  echo "\tgt                Time program (Clocks, RSS, Context Switches), uses gnutime"
   echo "\tmo               Deep clean and optimize your Mac"
   echo "\toha              HTTP load generator"
   echo "\tpv               Monitor progress of data through a pipeline"
-  echo "\tpvl              Monitor progress of data through a pipeline (lines)"
   echo "\tpvb              Monitor progress of data through a pipeline (bytes)"
+  echo "\tpvl              Monitor progress of data through a pipeline (lines)"
   echo "\tpvr              Monitor progress of data through a pipeline (rate)"
   echo "\tspacer           Utility for adding spacers when command output stops"
   echo "\tt                Time program (Clocks, RSS, Context Switches)"
