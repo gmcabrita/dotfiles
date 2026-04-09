@@ -80,17 +80,17 @@ defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
 defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
 
 # Disable minimizing windows with cmd+m
-defaults write -g NSUserKeyEquivalents -dict-add 'Minimize' '\0'
+defaults write NSGlobalDomain NSUserKeyEquivalents -dict-add 'Minimize' '\0'
 
 # Enable moving window with ctrl+cmd+click
-defaults write -g NSWindowShouldDragOnGesture -bool true
+defaults write NSGlobalDomain NSWindowShouldDragOnGesture -bool true
 
 # Fast keyboard repeat rate
 defaults write NSGlobalDomain KeyRepeat -int 1
 defaults write NSGlobalDomain InitialKeyRepeat -int 10
 
 # Enable F1, etc by default
-defaults write -g com.apple.keyboard.fnState -bool true
+defaults write NSGlobalDomain com.apple.keyboard.fnState -bool true
 
 # Disable autocapitalize
 defaults write NSGlobalDomain NSAutomaticCapitalizationEnabled -bool false
@@ -111,8 +111,6 @@ defaults write com.apple.Notes ShouldUseSmartQuotes -bool false
 
 # Disable text replacements
 defaults write NSGlobalDomain NSUserDictionaryReplacementItems -array
-
-sudo sed -i.bak 's/^#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
 
 # Set Zed as the default editor for plaintext files
 defaults write com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers -array-add \
@@ -137,10 +135,10 @@ defaults write com.apple.finder NewWindowTarget -string "PfLo"
 defaults write com.apple.finder NewWindowTargetPath -string "file://{$HOME}/"
 
 # Show more things in a Finder window
-defaults write NSGlobalDomain AppleShowAllFiles -bool true # show hidden files
-defaults write NSGlobalDomain AppleShowAllExtensions -bool true # always show extensions
-defaults write NSGlobalDomain ShowStatusBar -bool true # show status bar
-defaults write NSGlobalDomain ShowPathbar -bool true # show path bar
+defaults write NSGlobalDomain AppleShowAllFiles -bool true
+defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+defaults write NSGlobalDomain ShowStatusBar -bool true
+defaults write NSGlobalDomain ShowPathbar -bool true
 
 # Finder trash settings
 defaults write com.apple.finder WarnOnEmptyTrash -bool true
@@ -198,8 +196,6 @@ defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
 
 # Sort users in Contacts by first name
 defaults write -app Contacts ABNameSortingFormat -string "sortingFirstName sortingLastName"
-
-defaults write -app Calendar "number of hours displayed" -int 11
 
 brew bundle install --cleanup --file=~/.config/Brewfile
 
