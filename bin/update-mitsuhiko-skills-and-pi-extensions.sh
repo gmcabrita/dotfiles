@@ -4,7 +4,7 @@ set -e
 REPO_URL="https://github.com/mitsuhiko/agent-stuff.git"
 SKILLS_PATH="skills"
 TARGET_DIR="$(git rev-parse --show-toplevel)/.agents/skills"
-EXTENSIONS_PATH="pi-extensions"
+EXTENSIONS_PATH="extensions"
 EXTENSIONS_TARGET_DIR="$(git rev-parse --show-toplevel)/.pi/agent/extensions"
 
 # Clone to temp directory
