@@ -134,6 +134,10 @@ interface AutoresearchRuntime {
   iterationStartTokens: number | null;
   /** Token cost of each completed iteration (for predicting context exhaustion). */
   iterationTokenHistory: number[];
+  /** Pending auto-resume timer; cancelled when the agent starts a new run or compacts. */
+  pendingResumeTimer: ReturnType<typeof setTimeout> | null;
+  /** Resume message to send when the pending timer fires. */
+  pendingResumeMessage: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -181,7 +185,7 @@ const InitParams = Type.Object({
   ),
 });
 
-const LogParams = Type.Object({
+export const LogParams = Type.Object({
   commit: Type.String({ description: "Git commit hash (short, 7 chars)" }),
   metric: Type.Number({
     description:
@@ -192,7 +196,8 @@ const LogParams = Type.Object({
     description: "Short description of what this experiment tried",
   }),
   metrics: Type.Optional(
-    Type.Record(Type.String(), Type.Number(), {
+    Type.Object({}, {
+      additionalProperties: Type.Number(),
       description:
         'Additional metrics to track as { name: value } pairs, e.g. { "compile_µs": 4200, "render_µs": 9800 }. These are shown alongside the primary metric for tradeoff monitoring.',
     })
@@ -204,7 +209,8 @@ const LogParams = Type.Object({
     })
   ),
   asi: Type.Optional(
-    Type.Record(Type.String(), Type.Unknown(), {
+    Type.Object({}, {
+      additionalProperties: Type.Unknown(),
       description:
         'Actionable Side Information — structured diagnostics for this run. Free-form key/value pairs. Parsed ASI from run_experiment output is merged automatically; use this to add or override fields.',
     })
@@ -643,6 +649,8 @@ function createSessionRuntime(): AutoresearchRuntime {
     state: createExperimentState(),
     iterationStartTokens: null,
     iterationTokenHistory: [],
+    pendingResumeTimer: null,
+    pendingResumeMessage: null,
   };
 }
 
@@ -980,13 +988,123 @@ function renderDashboardLines(
 
 export default function autoresearchExtension(pi: ExtensionAPI) {
   const MAX_AUTORESUME_TURNS = 20;
+  const AUTORESUME_COOLDOWN_MS = 5 * 60 * 1000;
   const BENCHMARK_GUARDRAIL =
     "Be careful not to overfit to the benchmarks and do not cheat on the benchmarks.";
+
+  // Outlasts pi's internal retry (setTimeout 0) and compaction-continue
+  // (setTimeout 100); see badlogic/pi-mono#2023, #2110.
+  const SETTLED_WINDOW_MS = 800;
 
   const runtimeStore = createRuntimeStore();
   const getSessionKey = (ctx: ExtensionContext) => ctx.sessionManager.getSessionId();
   const getRuntime = (ctx: ExtensionContext): AutoresearchRuntime =>
     runtimeStore.ensure(getSessionKey(ctx));
+
+  const isAgentSettled = (ctx: ExtensionContext): boolean =>
+    ctx.isIdle() && !ctx.hasPendingMessages();
+
+  const hasPendingResume = (runtime: AutoresearchRuntime): boolean =>
+    runtime.pendingResumeMessage !== null;
+
+  const pausePendingResume = (runtime: AutoresearchRuntime): void => {
+    if (!runtime.pendingResumeTimer) return;
+    clearTimeout(runtime.pendingResumeTimer);
+    runtime.pendingResumeTimer = null;
+  };
+
+  const cancelPendingResume = (runtime: AutoresearchRuntime): void => {
+    pausePendingResume(runtime);
+    runtime.pendingResumeMessage = null;
+  };
+
+  const markAutoResumeSent = (runtime: AutoresearchRuntime): void => {
+    runtime.autoResumeTurns++;
+    runtime.lastAutoResumeTime = Date.now();
+  };
+
+  const sendPendingResumeIfReady = (ctx: ExtensionContext, runtime: AutoresearchRuntime): void => {
+    const message = runtime.pendingResumeMessage;
+
+    if (!message) return;
+    if (!runtime.autoresearchMode) {
+      cancelPendingResume(runtime);
+      return;
+    }
+    if (!isAgentSettled(ctx)) return;
+    if (hasReachedAutoResumeLimit(runtime)) {
+      cancelPendingResume(runtime);
+      notifyAutoResumeLimitReached(ctx);
+      return;
+    }
+    if (isWithinAutoResumeCooldown(runtime)) return;
+
+    cancelPendingResume(runtime);
+    markAutoResumeSent(runtime);
+    pi.sendUserMessage(message);
+  };
+
+  const schedulePendingResume = (ctx: ExtensionContext, runtime: AutoresearchRuntime, message: string): void => {
+    pausePendingResume(runtime);
+    runtime.pendingResumeMessage = message;
+    runtime.pendingResumeTimer = setTimeout(
+      () => sendPendingResumeIfReady(ctx, runtime),
+      SETTLED_WINDOW_MS,
+    );
+  };
+
+  const reschedulePendingResume = (ctx: ExtensionContext, runtime: AutoresearchRuntime): void => {
+    if (!hasPendingResume(runtime)) return;
+    schedulePendingResume(ctx, runtime, runtime.pendingResumeMessage!);
+  };
+
+  const hasRunExperimentsThisSession = (runtime: AutoresearchRuntime): boolean =>
+    runtime.experimentsThisSession > 0;
+
+  const isWithinAutoResumeCooldown = (runtime: AutoresearchRuntime): boolean =>
+    Date.now() - runtime.lastAutoResumeTime < AUTORESUME_COOLDOWN_MS;
+
+  const shouldAutoResume = (runtime: AutoresearchRuntime): boolean => {
+    if (!runtime.autoresearchMode) return false;
+    if (!hasRunExperimentsThisSession(runtime)) return false;
+    if (isWithinAutoResumeCooldown(runtime)) return false;
+    return true;
+  };
+
+  const hasReachedAutoResumeLimit = (runtime: AutoresearchRuntime): boolean =>
+    runtime.autoResumeTurns >= MAX_AUTORESUME_TURNS;
+
+  const notifyAutoResumeLimitReached = (ctx: ExtensionContext): void => {
+    ctx.ui.notify(
+      `Autoresearch auto-resume limit reached (${MAX_AUTORESUME_TURNS} turns)`,
+      "info",
+    );
+  };
+
+  const hasIdeasFile = (ctx: ExtensionContext): boolean =>
+    fs.existsSync(path.join(resolveWorkDir(ctx.cwd), "autoresearch.ideas.md"));
+
+  const composeResumeMessage = (ctx: ExtensionContext): string => {
+    const parts = [
+      "Autoresearch loop ended (likely context limit). Resume the experiment loop — read autoresearch.md and git log for context.",
+    ];
+    if (hasIdeasFile(ctx)) {
+      parts.push("Check autoresearch.ideas.md for promising paths to explore. Prune stale/tried ideas.");
+    }
+    parts.push(BENCHMARK_GUARDRAIL);
+    return parts.join(" ");
+  };
+
+  const sendWhenReady = (ctx: ExtensionContext, message: string): void => {
+    if (ctx.isIdle()) {
+      pi.sendUserMessage(message);
+      return;
+    }
+    pi.sendUserMessage(message, { deliverAs: "followUp" });
+  };
+
+  const hasAutoresearchRules = (ctx: ExtensionContext): boolean =>
+    fs.existsSync(path.join(resolveWorkDir(ctx.cwd), "autoresearch.md"));
 
   // Running experiment state (for spinner in fullscreen overlay)
   let overlayTui: { requestRender: () => void } | null = null;
@@ -1031,6 +1149,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
 
   const reconstructState = (ctx: ExtensionContext) => {
     const runtime = getRuntime(ctx);
+    cancelPendingResume(runtime);
     runtime.lastRunChecks = null;
     runtime.lastRunDuration = null;
     runtime.runningExperiment = null;
@@ -1323,53 +1442,41 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
   });
   pi.on("session_shutdown", async (_e, ctx) => {
     clearSessionUi(ctx);
+    cancelPendingResume(getRuntime(ctx));
     runtimeStore.clear(getSessionKey(ctx));
     stopDashboardServer();
   });
 
-  // Reset per-session experiment counter when agent starts
   pi.on("agent_start", async (_event, ctx) => {
-    getRuntime(ctx).experimentsThisSession = 0;
+    const runtime = getRuntime(ctx);
+    runtime.experimentsThisSession = 0;
+    pausePendingResume(runtime);
   });
 
-  // Clear running experiment state when agent stops; check ideas file for continuation
+  pi.on("session_before_compact", async (_event, ctx) => {
+    pausePendingResume(getRuntime(ctx));
+  });
+
+  pi.on("session_compact", async (_event, ctx) => {
+    reschedulePendingResume(ctx, getRuntime(ctx));
+  });
+
   pi.on("agent_end", async (_event, ctx) => {
     const runtime = getRuntime(ctx);
     runtime.runningExperiment = null;
     if (overlayTui) overlayTui.requestRender();
 
-    if (!runtime.autoresearchMode) return;
-
-    // Don't auto-resume if no experiments ran this session (user likely stopped manually)
-    if (runtime.experimentsThisSession === 0) return;
-
-    // Rate-limit auto-resume to once every 5 minutes
-    const now = Date.now();
-    if (now - runtime.lastAutoResumeTime < 5 * 60 * 1000) return;
-    runtime.lastAutoResumeTime = now;
-
-    if (runtime.autoResumeTurns >= MAX_AUTORESUME_TURNS) {
-      ctx.ui.notify(
-        `Autoresearch auto-resume limit reached (${MAX_AUTORESUME_TURNS} turns)`,
-        "info"
-      );
+    if (hasPendingResume(runtime)) {
+      reschedulePendingResume(ctx, runtime);
+      return;
+    }
+    if (!shouldAutoResume(runtime)) return;
+    if (hasReachedAutoResumeLimit(runtime)) {
+      notifyAutoResumeLimitReached(ctx);
       return;
     }
 
-    // Auto-continue: send a message to resume the loop
-    // The agent reads autoresearch.md on startup which has all context
-    const workDir = resolveWorkDir(ctx.cwd);
-    const ideasPath = path.join(workDir, "autoresearch.ideas.md");
-    const hasIdeas = fs.existsSync(ideasPath);
-
-    let resumeMsg = "Autoresearch loop ended (likely context limit). Resume the experiment loop — read autoresearch.md and git log for context.";
-    if (hasIdeas) {
-      resumeMsg += " Check autoresearch.ideas.md for promising paths to explore. Prune stale/tried ideas.";
-    }
-    resumeMsg += ` ${BENCHMARK_GUARDRAIL}`;
-
-    runtime.autoResumeTurns++;
-    pi.sendUserMessage(resumeMsg);
+    schedulePendingResume(ctx, runtime, composeResumeMessage(ctx));
   });
 
   // When in autoresearch mode, add a static note to the system prompt.
@@ -2822,6 +2929,8 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
       }
 
       if (command === "off") {
+        const wasRunning = !ctx.isIdle();
+
         runtime.autoresearchMode = false;
         runtime.dashboardExpanded = false;
         runtime.lastAutoResumeTime = 0;
@@ -2831,9 +2940,14 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
         runtime.lastRunChecks = null;
         runtime.lastRunDuration = null;
         runtime.runningExperiment = null;
+        cancelPendingResume(runtime);
         stopDashboardServer();
         clearSessionUi(ctx);
-        ctx.ui.notify("Autoresearch mode OFF", "info");
+        if (wasRunning) ctx.abort();
+        ctx.ui.notify(
+          wasRunning ? "Autoresearch mode OFF — aborting current run" : "Autoresearch mode OFF",
+          "info"
+        );
         return;
       }
 
@@ -2851,6 +2965,7 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
         runtime.experimentsThisSession = 0;
         runtime.lastRunChecks = null;
         runtime.runningExperiment = null;
+        cancelPendingResume(runtime);
         runtime.state = createExperimentState();
         stopDashboardServer();
         updateWidget(ctx);
@@ -2879,17 +2994,12 @@ export default function autoresearchExtension(pi: ExtensionAPI) {
       runtime.autoresearchMode = true;
       runtime.autoResumeTurns = 0;
 
-      const mdPath = path.join(resolveWorkDir(ctx.cwd), "autoresearch.md");
-      const hasRules = fs.existsSync(mdPath);
-
-      if (hasRules) {
+      if (hasAutoresearchRules(ctx)) {
         ctx.ui.notify("Autoresearch mode ON — rules loaded from autoresearch.md", "info");
-        pi.sendUserMessage(`Autoresearch mode active. ${trimmedArgs} ${BENCHMARK_GUARDRAIL}`);
+        sendWhenReady(ctx, `Autoresearch mode active. ${trimmedArgs} ${BENCHMARK_GUARDRAIL}`);
       } else {
         ctx.ui.notify("Autoresearch mode ON — no autoresearch.md found, setting up", "info");
-        pi.sendUserMessage(
-          `Start autoresearch: ${trimmedArgs} ${BENCHMARK_GUARDRAIL}`
-        );
+        sendWhenReady(ctx, `Start autoresearch: ${trimmedArgs} ${BENCHMARK_GUARDRAIL}`);
       }
     },
   });
