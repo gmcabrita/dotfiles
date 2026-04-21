@@ -504,8 +504,4 @@ function zig-ast-check-all() {
   find . -name '.zig-cache' -prune -o -type f -name "*.zig" -exec zig ast-check {} \;
 }
 
-function notes() {
-  e "/Users/gmcabrita/iCloud Drive/Notes"
-}
-
 [[ $ZPROF == 1 ]] && zprof
