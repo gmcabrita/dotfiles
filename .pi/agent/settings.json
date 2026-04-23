@@ -10,6 +10,9 @@
   "hideThinkingBlock": true,
   "lastChangelogVersion": "999.999.999",
   "quietStartup": true,
+  "terminal": {
+    "showTerminalProgress": true
+  },
   "theme": "light",
   "toolPolicy": {
     "all": {
