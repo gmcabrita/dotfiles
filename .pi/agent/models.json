@@ -1,7 +1,18 @@
 {
   "providers": {
     "openai": {
-      "baseUrl": "http://codexlb00.usce1.mgmt.internal.amplemarket.com:2455/v1"
+      "baseUrl": "http://codexlb00.usce1.mgmt.internal.amplemarket.com:2455/v1",
+      "models": [
+        {
+          "id": "gpt-5.5",
+          "name": "GPT-5.5",
+          "api": "openai-responses",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "contextWindow": 400000,
+          "maxTokens": 128000
+        }
+      ]
     }
   }
 }
