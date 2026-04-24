@@ -8,6 +8,7 @@
 // from the command palette or from `Zed` application menu.
 {
   "agent_ui_font_size": 17.0,
+  "cli_default_open_behavior": "new_window",
   "ui_font_weight": 400.0,
   "ui_font_size": 16.0,
   "buffer_line_height": "comfortable",
