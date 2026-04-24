@@ -465,11 +465,10 @@ function _tradegate_loop() {
   for _ in {1..9}; do sleep 1; _tradegate_quote "$isin" 0; done
 }
 
-# ETF aliases
-function sxr8() { _tradegate_quote IE00B5BMR087 1; }
-function sxr8loop() { _tradegate_loop IE00B5BMR087; }
-function sppw() { _tradegate_quote IE00BFY0GT14 1; }
-function sppwloop() { _tradegate_loop IE00BFY0GT14; }
+# function sxr8() { _tradegate_quote IE00B5BMR087 1; }
+# function sxr8loop() { _tradegate_loop IE00B5BMR087; }
+# function sppw() { _tradegate_quote IE00BFY0GT14 1; }
+# function sppwloop() { _tradegate_loop IE00BFY0GT14; }
 function uetw() { _tradegate_quote IE00BD4TXV59 1; }
 function uetwloop() { _tradegate_loop IE00BD4TXV59; }
 
