@@ -42,13 +42,11 @@ info() { echo -e "${GREEN}$1${NC}"; }
 cleanup_data() { if [ -d "${DATA_DIR:-}" ]; then rm -rf "$DATA_DIR"; fi; }
 fail() { cleanup_data; echo -e "${RED}ERROR: $1${NC}" >&2; exit 1; }
 
-# Session artifacts are matched by basename so they're excluded regardless of
-# directory depth — autoresearch runs may happen in subdirectories (e.g.
-# libs/polaris/autoresearch.jsonl) and none should leak into PR branches.
 is_session_file() {
-  local base
-  base=$(basename "$1")
-  case "$base" in autoresearch.*) return 0;; *) return 1;; esac
+  case "/$1/" in
+    */autoresearch.*/*) return 0;;
+    *) return 1;;
+  esac
 }
 
 # ---------------------------------------------------------------------------
