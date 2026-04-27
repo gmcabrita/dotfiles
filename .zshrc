@@ -420,7 +420,7 @@ function update-everything() {
   brew bundle install --cleanup --file=~/.config/Brewfile
   brew upgrade
   update-programming-languages
-  pi update
+  pi update --extensions
   rm -f ~/.cache/macos_sdk_path
 
   echo "Remember that these exist:"
