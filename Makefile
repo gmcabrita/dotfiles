@@ -18,13 +18,14 @@ update:
 	for script in \
 	  "pnpm update --prefix .pi/agent" \
 		./bin/update-chrome-cdp-skills.sh \
-		./bin/update-database-skills.sh \
 		./bin/update-cloudflare-skills.sh \
-		./bin/update-mitsuhiko-skills-and-pi-extensions.sh \
-		./bin/update-pi-autoresearch-skills-and-extensions.sh \
+		./bin/update-database-skills.sh \
 		./bin/update-emilkowalski-design-skills.sh \
 		./bin/update-hegel-skills.sh \
-		./bin/update-modern-go-skills.sh; do \
+		./bin/update-mitsuhiko-skills-and-pi-extensions.sh \
+		./bin/update-modern-go-skills.sh \
+		./bin/update-pi-autoresearch-skills-and-extensions.sh \
+		./bin/update-warden-skills.sh; do \
 		$$script & pids="$$pids $$!"; \
 	done; \
 	status=0; \
