@@ -220,6 +220,7 @@ PKG_CONFIG_PATH="$(brew --prefix openssl@3)/lib/pkgconfig:$(brew --prefix gmp)/l
 RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
   mise use -g cargo:hurlfmt@latest \
               cargo:oha@latest \
+              bun@latest \
               deno@latest \
               elixir@latest \
               erlang@latest \
