@@ -10,7 +10,7 @@
   "hideThinkingBlock": true,
   "lastChangelogVersion": "999.999.999",
   "quietStartup": true,
-  "transport": "websocket",
+  "transport": "websocket-cached",
   "terminal": {
     "showTerminalProgress": true
   },
