@@ -232,6 +232,7 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               npm:@mariozechner/pi-coding-agent@latest \
               npm:hunkdiff@latest \
               npm:portless@latest \
+              npm:@kitlangton/ghui@latest \
               odin@latest \
               pitchfork@latest \
               pkl@latest \
