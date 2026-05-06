@@ -32,9 +32,12 @@
     - Application windows
   - App Shortcuts
     - All Applications
-      - Show Fonts = `Hyperkey + F12`
-    - Apple Notes
+      - Show Help Menu = `⇧ ⌘ /` (disabled?)
+    - Notes.app
       - Note List Search... = `⌘ P`
+    - Google Chrome.app
+      - New Tab = `⌥ ⌘ T`
+      - New Tab to the Right = `⌘ T`
   - Input Sources > Edit
     - Disable everything
 - Trackpad:
@@ -62,9 +65,18 @@
   - uBlacklist import from Google Drive
   - Import uBlock Origin Lite settings
   - https://github.com/corbindavenport/just-the-browser/tree/main/chrome
-  - Disable chrome://flags/#side-by-side
-  - Disable chrome://flags/#optimization-guide-on-device-model
-  - chrome://flags/#vertical-tabs
+  - Disable:
+    - chrome://flags/#side-by-side
+    - chrome://flags/#optimization-guide-on-device-model
+    - chrome://flags/#prompt-api-for-gemini-nano
+    - chrome://flags/#prompt-api-for-gemini-nano-multimodal-input
+    - chrome://flags/#writer-api-for-gemini-nano
+    - chrome://flags/#rewriter-api-for-gemini-nano
+    - chrome://flags/#proofreader-api-for-gemini-nano
+    - chrome://flags/#summarizer-api-for-gemini-nano
+  - Enable:
+    - chrome://flags/#vertical-tabs
+    - chrome://flags/#read-anything-immersive-reading-mode
 - 1Password
 - `gh auth login`
   - Add ssh key as gpg key
