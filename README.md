@@ -36,7 +36,7 @@
     - Notes.app
       - Note List Search... = `⌘ P`
     - Google Chrome.app
-      - New Tab = `⌥ ⌘ T`
+      - New Tab = `⌃ ⌘ T`
       - New Tab to the Right = `⌘ T`
   - Input Sources > Edit
     - Disable everything
