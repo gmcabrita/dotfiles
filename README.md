@@ -36,8 +36,8 @@
     - Notes.app
       - Note List Search... = `⌘ P`
     - Google Chrome.app
-      - New Tab = `⌃ ⌘ T`
-      - New Tab to the Right = `⌘ T`
+      - New Tab to the Right = `⌃ ⌘ T`
+      - New Tab = `⌘ T`
   - Input Sources > Edit
     - Disable everything
 - Trackpad:
