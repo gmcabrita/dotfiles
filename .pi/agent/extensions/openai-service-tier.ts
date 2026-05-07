@@ -2,7 +2,7 @@ import type {
   ExtensionAPI,
   ExtensionContext,
   BeforeProviderRequestEvent,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 
 export default function (pi: ExtensionAPI) {
   pi.on("before_provider_request", (event: BeforeProviderRequestEvent, ctx: ExtensionContext) => {
