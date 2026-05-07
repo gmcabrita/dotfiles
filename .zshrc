@@ -369,6 +369,7 @@ function update-programming-languages() {
   mise up --bump
   mise reshim
   go install golang.org/x/tools/gopls@latest
+  mise reshim
   mix local.hex --force
   rm -rf "$HOME/Library/Application Support/Zed/extensions/work/elixir"/expert-*(N)
 

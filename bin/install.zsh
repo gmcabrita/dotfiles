@@ -247,4 +247,5 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               zls@latest
 
 go install golang.org/x/tools/gopls@latest
+mise reshim
 mix local.hex --force
