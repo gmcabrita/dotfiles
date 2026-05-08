@@ -1,2 +1,2 @@
 allowBuilds:
-  "@google/genai": true
+  koffi: true
