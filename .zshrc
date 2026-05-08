@@ -504,4 +504,31 @@ function zig-ast-check-all() {
   find . -name '.zig-cache' -prune -o -type f -name "*.zig" -exec zig ast-check {} \;
 }
 
+function go() {
+  local should_reshim=0
+  local go_status
+
+  case "${1:-}" in
+    install)
+      should_reshim=1
+      ;;
+    -C)
+      [[ "${3:-}" == "install" ]] && should_reshim=1
+      ;;
+    -C=*)
+      [[ "${2:-}" == "install" ]] && should_reshim=1
+      ;;
+  esac
+
+  command go "$@"
+  go_status=$?
+
+  if [[ $go_status -eq 0 && $should_reshim -eq 1 ]]; then
+    mise reshim
+  fi
+
+  return "$go_status"
+}
+
+
 [[ $ZPROF == 1 ]] && zprof
