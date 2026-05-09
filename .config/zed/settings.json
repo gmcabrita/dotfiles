@@ -107,6 +107,9 @@
   "cursor_shape": "block",
   "cursor_blink": false,
   "git": {
+    "blame": {
+      "show_avatar": false,
+    },
     "git_gutter": "tracked_files",
     "inline_blame": {
       "enabled": true,
