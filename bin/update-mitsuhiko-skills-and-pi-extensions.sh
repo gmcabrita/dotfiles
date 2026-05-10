@@ -29,6 +29,7 @@ SYNC_EXTENSIONS=(
   "btw.ts"
   "context.ts"
   "control.ts"
+  "goal.ts"
   "loop.ts"
   "multi-edit.ts"
   "review.ts"
