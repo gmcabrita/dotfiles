@@ -127,3 +127,4 @@
   - `gh repo set-default`
   - `git pull origin`
   - `zig build install -Doptimize=ReleaseFast --prefix $HOME/.local`
+- Balance Lock
