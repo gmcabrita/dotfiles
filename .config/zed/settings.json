@@ -783,6 +783,7 @@
         "!sorbet",
         "!solargraph",
         "!rubocop",
+        "!fuzzy-ruby-server",
         "...",
       ],
     },
