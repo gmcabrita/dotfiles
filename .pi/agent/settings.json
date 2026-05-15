@@ -5,12 +5,7 @@
     "provider": "openai",
     "thinkingLevel": "high"
   },
-  "enabledModels": [
-    "openai-codex/gpt-5.5",
-    "openai/gpt-5.5",
-    "opencode/deepseek-v4-flash-free",
-    "opencode/minimax-m2.5-free"
-  ],
+  "enabledModels": ["openai-codex/gpt-5.5", "openai/gpt-5.5"],
   "enableInstallTelemetry": false,
   "hideThinkingBlock": true,
   "lastChangelogVersion": "999.999.999",
