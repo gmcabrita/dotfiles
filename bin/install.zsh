@@ -220,6 +220,7 @@ PKG_CONFIG_PATH="$(brew --prefix openssl@3)/lib/pkgconfig:$(brew --prefix gmp)/l
 RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
   mise use -g cargo:hurlfmt@latest \
               cargo:oha@latest \
+              cargo:rustdoc-text@latest \
               bun@latest \
               deno@latest \
               elixir@latest \
@@ -247,5 +248,6 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               zls@latest
 
 go install golang.org/x/tools/gopls@latest
+rustup component add rust-analyzer rust-src clippy rustfmt rust-docs llvm-tools
 mise reshim
 mix local.hex --force
