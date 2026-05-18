@@ -77,6 +77,7 @@
   - Enable:
     - chrome://flags/#vertical-tabs
     - chrome://flags/#read-anything-immersive-reading-mode
+  - https://gitflic.ru/project/magnolia1234/bypass-paywalls-chrome-clean
 - 1Password
 - `gh auth login`
   - Add ssh key as gpg key
