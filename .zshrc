@@ -14,6 +14,7 @@ if [[ -z "$MACOS_SDK_PATH" ]]; then
 fi
 
 PATH="$HOME/.local/bin:$HOME/go/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$HOMEBREW_PREFIX/opt/gnu-tar/libexec/gnubin:$PATH"
+export GIT_MERGE_AUTOEDIT=no
 export HOMEBREW_CLEANUP_MAX_AGE_DAYS=30
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export PI_SKIP_VERSION_CHECK=1
