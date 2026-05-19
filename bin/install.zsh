@@ -251,3 +251,4 @@ go install golang.org/x/tools/gopls@latest
 rustup component add rust-analyzer rust-src clippy rustfmt rust-docs llvm-tools
 mise reshim
 mix local.hex --force
+pi install npm:pi-cursor-sdk
