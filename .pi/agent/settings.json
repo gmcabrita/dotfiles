@@ -6,13 +6,6 @@
     "provider": "openai",
     "thinkingLevel": "medium"
   },
-  "enabledModels": [
-    "openai-codex/gpt-5.5",
-    "openai/gpt-5.5",
-    "cursor/composer-2.5",
-    "opencode/deepseek-v4-flash-free",
-    "opencode/qwen3.6-plus-free"
-  ],
   "enableInstallTelemetry": false,
   "hideThinkingBlock": true,
   "lastChangelogVersion": "999.999.999",
