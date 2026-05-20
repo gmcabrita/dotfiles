@@ -1,6 +1,6 @@
 {
   "modelRecommendations": "https://repoprompt.com/docs#s=workflows&ss=model-recommendations",
-  "packages": ["npm:pi-cursor-sdk"],
+  "packages.bak": ["npm:pi-cursor-sdk"],
   "startup": {
     "model": "gpt-5.5",
     "provider": "openai",
