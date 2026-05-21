@@ -1,0 +1,12 @@
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+model_provider = "codex-lb"
+personality = "pragmatic"
+service_tier = "fast"
+
+[model_providers.codex-lb]
+name = "OpenAI"
+base_url = "http://codexlb00.usce1.mgmt.internal.amplemarket.com:2455/backend-api/codex"
+wire_api = "responses"
+supports_websockets = true
+requires_openai_auth = true

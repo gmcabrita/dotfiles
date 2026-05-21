@@ -27,6 +27,9 @@ rsync -a ".ssh/" "$HOME/.ssh/"
 mkdir -p "$HOME/.agents"
 rsync -a ".agents/" "$HOME/.agents/"
 
+mkdir -p "$HOME/.codex"
+rsync -a ".codex/" "$HOME/.codex/"
+
 mkdir -p "$HOME/.config"
 rsync -a ".config/" "$HOME/.config/"
 cp .AGENTS.md "$HOME/.config/opencode/AGENTS.md"
