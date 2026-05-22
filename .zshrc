@@ -377,7 +377,7 @@ function update-programming-languages() {
 
   EDITOR_APP_ID="dev.zed.Zed"
   for ext in \
-    rb py js jsx ts tsx json yml yaml toml go rs java kt swift \
+    rb py js jsx ts tsx json jsonc yml yaml toml go rs java kt swift \
     c h cc cpp cxx m mm cs php css scss md sh bash zsh sql xml zig ex exs heex
   do
     duti -s "$EDITOR_APP_ID" ".$ext" all
