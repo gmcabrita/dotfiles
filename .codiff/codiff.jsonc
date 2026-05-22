@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nkzw-tech/codiff/main/src/config/codiff-config.schema.json",
+  "keymap": {
+    "closeSearch": "Escape",
+    "commandBar": "Mod+k",
+    "diffSearch": "Mod+f",
+    "discardComment": "Escape",
+    "fileFilter": "Mod+p",
+    "nextSearchMatch": "Enter",
+    "prevSearchMatch": "Shift+Enter",
+    "submitComment": "Mod+Enter",
+    "toggleSidebar": "Mod+b",
+  },
+  "settings": {
+    "copyCommentsOnClose": false,
+    "lastRepositoryPath": "/Users/gmcabrita/Developer/Amplemarket/ampledash",
+    "openAIModel": "gpt-5.3-codex-spark",
+    "showWhitespace": false,
+    "theme": "system",
+  },
+}
