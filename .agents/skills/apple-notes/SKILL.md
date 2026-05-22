@@ -14,29 +14,29 @@ Search local Apple Notes via the Notes SQLite store instead of manual `strings`/
 Run from any directory:
 
 ```bash
-python3 /Users/gmcabrita/Developer/dotfiles/.agents/skills/apple-notes/scripts/search_notes.py fingerprint bypass --all-terms
+python3 scripts/search_notes.py fingerprint bypass --all-terms
 ```
 
 Common tasks:
 
 ```bash
 # Search notes and show context
-python3 /Users/gmcabrita/Developer/dotfiles/.agents/skills/apple-notes/scripts/search_notes.py fingerprint bypass
+python3 scripts/search_notes.py fingerprint bypass
 
 # Require every term in the same note
-python3 /Users/gmcabrita/Developer/dotfiles/.agents/skills/apple-notes/scripts/search_notes.py fingerprint bypass --all-terms
+python3 scripts/search_notes.py fingerprint bypass --all-terms
 
 # GitHub links near matching terms
-python3 /Users/gmcabrita/Developer/dotfiles/.agents/skills/apple-notes/scripts/search_notes.py fingerprint bypass --github-only --all-terms
+python3 scripts/search_notes.py fingerprint bypass --github-only --all-terms
 
 # Show all URLs near matching terms
-python3 /Users/gmcabrita/Developer/dotfiles/.agents/skills/apple-notes/scripts/search_notes.py "TLS fingerprinting" --show-urls
+python3 scripts/search_notes.py "TLS fingerprinting" --show-urls
 
 # Require at least one URL, any domain
-python3 /Users/gmcabrita/Developer/dotfiles/.agents/skills/apple-notes/scripts/search_notes.py "TLS fingerprinting" --require-urls
+python3 scripts/search_notes.py "TLS fingerprinting" --require-urls
 
 # Wider context for long scratchpad notes
-python3 /Users/gmcabrita/Developer/dotfiles/.agents/skills/apple-notes/scripts/search_notes.py botguard recaptcha --context 1200
+python3 scripts/search_notes.py botguard recaptcha --context 1200
 ```
 
 ## Workflow
@@ -63,5 +63,5 @@ The script reads `ZICCLOUDSYNCINGOBJECT` joined to `ZICNOTEDATA`, gzip-decompres
 After editing the script, run:
 
 ```bash
-python3 /Users/gmcabrita/Developer/dotfiles/.agents/skills/apple-notes/scripts/test_search_notes.py
+python3 scripts/test_search_notes.py
 ```
