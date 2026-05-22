@@ -122,7 +122,7 @@ def render_markdown(matches: list[Match]) -> str:
         return "No matches."
     lines: list[str] = []
     for match in matches:
-        lines.append(f"## {note_label(match.note)} (`{match.note.pk}`)")
+        lines.append(f"## {note_label(match.note)}")
         if match.urls:
             lines.append("URLs:")
             lines.extend(f"- {url}" for url in match.urls)
