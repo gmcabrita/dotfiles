@@ -56,7 +56,7 @@ Default database:
 
 `~/Library/Group Containers/group.com.apple.notes/NoteStore.sqlite`
 
-The script reads `ZICCLOUDSYNCINGOBJECT` joined to `ZICNOTEDATA`, gzip-decompresses `ZDATA` when needed, decodes UTF-8 leniently, prints context windows around term matches, and extracts `http(s)` URLs when present.
+The script reads `ZICCLOUDSYNCINGOBJECT` joined to `ZICNOTEDATA`, uses `ZTITLE1` as the Apple Notes title (falling back to other title fields), gzip-decompresses `ZDATA` when needed, decodes UTF-8 leniently, prints context windows around term matches, and extracts `http(s)` URLs when present.
 
 ## Validation
 

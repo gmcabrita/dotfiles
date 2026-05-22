@@ -16,9 +16,9 @@ class SearchNotesTests(unittest.TestCase):
         self.addCleanup(temp.cleanup)
         path = Path(temp.name) / "NoteStore.sqlite"
         con = sqlite3.connect(path)
-        con.execute("create table ZICCLOUDSYNCINGOBJECT (Z_PK integer primary key, ZTITLE text, ZSNIPPET text)")
+        con.execute("create table ZICCLOUDSYNCINGOBJECT (Z_PK integer primary key, ZTITLE text, ZTITLE1 text, ZUSERTITLE text, ZSNIPPET text)")
         con.execute("create table ZICNOTEDATA (ZNOTE integer, ZDATA blob)")
-        con.execute("insert into ZICCLOUDSYNCINGOBJECT values (1, 'bot note', 'fingerprint snippet')")
+        con.execute("insert into ZICCLOUDSYNCINGOBJECT values (1, 'first line fallback', 'bot note', null, 'fingerprint snippet')")
         con.execute("insert into ZICNOTEDATA values (1, ?)", (data,))
         con.commit()
         con.close()
@@ -48,6 +48,11 @@ class SearchNotesTests(unittest.TestCase):
         db = self.make_db(gzip.compress(b"fingerprinting https://github.com/example/pkg"))
         matches = search_notes.find_matches(search_notes.load_notes(db), ["fingerprinting"], 100, False, False, False, False)
         self.assertEqual(matches[0].urls, ())
+
+    def test_uses_actual_note_title(self) -> None:
+        db = self.make_db(gzip.compress(b"fingerprinting"))
+        note = search_notes.load_notes(db)[0]
+        self.assertEqual(search_notes.note_label(note), "bot note")
 
 
 if __name__ == "__main__":

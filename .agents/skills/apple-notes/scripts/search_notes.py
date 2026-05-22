@@ -65,7 +65,7 @@ def load_notes(db_path: Path) -> list[Note]:
     con = sqlite3.connect(uri, uri=True)
     rows = con.execute(
         """
-        select n.Z_PK, coalesce(n.ZTITLE, ''), coalesce(n.ZSNIPPET, ''), d.ZDATA
+        select n.Z_PK, coalesce(n.ZTITLE1, n.ZTITLE, n.ZUSERTITLE, ''), coalesce(n.ZSNIPPET, ''), d.ZDATA
         from ZICCLOUDSYNCINGOBJECT n
         join ZICNOTEDATA d on d.ZNOTE = n.Z_PK
         where d.ZDATA is not null
