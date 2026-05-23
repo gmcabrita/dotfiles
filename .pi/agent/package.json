@@ -3,9 +3,9 @@
   "type": "module",
   "private": true,
   "dependencies": {
-    "@earendil-works/pi-ai": "^0.74.1",
-    "@earendil-works/pi-coding-agent": "^0.74.1",
-    "@earendil-works/pi-tui": "^0.74.1",
+    "@earendil-works/pi-ai": "^0.74.2",
+    "@earendil-works/pi-coding-agent": "^0.74.2",
+    "@earendil-works/pi-tui": "^0.74.2",
     "diff": "^8.0.4"
   },
   "peerDependencies": {
