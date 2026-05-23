@@ -95,6 +95,9 @@ keybind = cmd+shift+j=write_screen_file:paste
 keybind = shift+enter=text:\x1b\r
 keybind = super+i=inspector:toggle
 keybind = super+r=reload_config
+keybind = alt+backspace=text:\x1b\x7f
+# allow pasting in search bar
+keybind = super+v=paste_from_clipboard
 macos-non-native-fullscreen = visible-menu
 macos-option-as-alt = false
 macos-titlebar-style = tabs
