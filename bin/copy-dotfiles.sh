@@ -35,7 +35,6 @@ rsync -a ".codiff/" "$HOME/.codiff/"
 
 mkdir -p "$HOME/.config"
 rsync -a ".config/" "$HOME/.config/"
-cp .AGENTS.md "$HOME/.config/opencode/AGENTS.md"
 
 mkdir -p "$HOME/.pi"
 if [ ! -f "$HOME/.pi/agent/auth.json" ]; then

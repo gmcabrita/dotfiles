@@ -1,3 +1,0 @@
-[install]
-linker = "hoisted"
-minimumReleaseAge = 0

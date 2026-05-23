@@ -26,7 +26,6 @@ export default function (pi: ExtensionAPI) {
     /\b(chmod|chown)\b.*777/i,
   ];
 
-  // Closest to OpenCode's "session.idle"
   pi.on("agent_end", async (_event, ctx) => {
     if (!isMainInteractiveSession(ctx)) return;
     if (ctx.hasPendingMessages()) return;
