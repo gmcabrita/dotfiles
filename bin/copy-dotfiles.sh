@@ -49,3 +49,6 @@ rsync -a ".raycast-scripts/" "$HOME/.raycast-scripts/"
 
 mkdir -p "$HOME/Library/Application Support/go/telemetry"
 rsync -a "Library/Application Support/go/telemetry/" "$HOME/Library/Application Support/go/telemetry/"
+
+mkdir -p "$HOME/Library/Preferences/pnpm"
+rsync -a "Library/Preferences/pnpm/" "$HOME/Library/Preferences/pnpm/"
