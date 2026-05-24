@@ -228,6 +228,7 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               fnox@latest \
               github:lexiforest/curl-impersonate \
               github:rockorager/ziglint \
+              github:expert-lsp/expert\
               go@latest \
               hk@latest \
               node@lts \
