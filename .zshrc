@@ -21,6 +21,7 @@ export PI_SKIP_VERSION_CHECK=1
 export HK_MISE=1
 export DISABLE_SPRING=1
 export PORTLESS_HTTPS=1
+export HEX_COOLDOWN=2d
 export MIX_OS_DEPS_COMPILE_PARTITION_COUNT=$(sysctl -n hw.perflevel0.logicalcpu 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || nproc --all 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
 export JEMALLOC_LIBS="-L$HOMEBREW_PREFIX/opt/jemalloc/lib -ljemalloc"
 export JEMALLOC_CFLAGS="-I$HOMEBREW_PREFIX/opt/jemalloc/include"
