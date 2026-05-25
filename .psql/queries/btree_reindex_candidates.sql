@@ -201,7 +201,7 @@ from (
 where
     bloat_size > 10737418240 -- More than 10 GiB bloat
     or (
-        bloat_pct > 40 -- More than 40% bloat
+        bloat_pct > 50 -- More than 50% bloat
         and bloat_size > 2147483648 -- More than 2 GiB bloat
     )
 order by bloat_size desc, bloat_pct desc;
