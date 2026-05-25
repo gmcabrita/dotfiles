@@ -1,4 +1,20 @@
 -- https://docs.aws.amazon.com/prescriptive-guidance/latest/postgresql-maintenance-rds-aurora/reindex.html
+with constants as (
+    select
+        current_setting('block_size')::numeric as bs,
+        24 as pagehdr,
+        16 as pageopqdata,
+        90::smallint as default_fillfactor,
+        1024 as default_avg_width,
+        0 as min_index_pages,
+        case -- maxalign: 4 on 32bits, 8 on 64bits (and mingw32 ?)
+            when
+                version() ~ 'mingw32'
+                or version() ~ '64-bit|x86_64|ppc64|ia64|amd64'
+                then 8
+            else 4
+        end as maxalign
+)
 select
     tbl,
     idx,
@@ -86,18 +102,12 @@ from (
                     i.relpages,
                     i.idxoid,
                     i.fillfactor,
-                    current_setting('block_size')::numeric as bs,
-                    case -- maxalign: 4 on 32bits, 8 on 64bits (and mingw32 ?)
-                        when
-                            version() ~ 'mingw32'
-                            or version() ~ '64-bit|x86_64|ppc64|ia64|amd64'
-                            then 8
-                        else 4
-                    end as maxalign,
+                    c.bs,
+                    c.maxalign,
                     /* per page header, fixed size: 20 for 7.x, 24 for others */
-                    24 as pagehdr,
+                    c.pagehdr,
                     /* per page btree opaque data */
-                    16 as pageopqdata,
+                    c.pageopqdata,
                     /* per tuple header: add indexattributebitmapdata if some cols are null-able */
                     case
                         when max(coalesce(s.null_frac, 0)) = 0
@@ -107,7 +117,7 @@ from (
                     /* data len: we remove null values save space using it fractionnal part from stats */
                     sum(
                         (1 - coalesce(s.null_frac, 0))
-                        * coalesce(s.avg_width, 1024)
+                        * coalesce(s.avg_width, c.default_avg_width)
                     ) as nulldatawidth,
                     max(
                         case
@@ -159,20 +169,21 @@ from (
                                 coalesce(substring(
                                     array_to_string(ci.reloptions, ' ')
                                     from 'fillfactor=([0-9]+)'
-                                )::smallint, 90) as fillfactor,
+                                )::smallint, c.default_fillfactor) as fillfactor,
                                 i.indnatts,
                                 pg_catalog.string_to_array(pg_catalog.textin(
                                     pg_catalog.int2vectorout(i.indkey)
                                 ), ' ')::int [] as indkey
                             from pg_catalog.pg_index i
                             join pg_catalog.pg_class ci on ci.oid = i.indexrelid
+                            cross join constants c
                             where
                                 ci.relam
                                 = (
                                     select oid from pg_am
                                     where amname = 'btree'
                                 )
-                                and ci.relpages > 0
+                                and ci.relpages > c.min_index_pages
                         ) as idx_data
                     ) as ic
                     join pg_catalog.pg_class ct on ct.oid = ic.tbloid
@@ -186,7 +197,11 @@ from (
                         and a2.attrelid = ic.idxoid
                         and a2.attnum = ic.attpos
                 ) i
-                join pg_catalog.pg_namespace n on n.oid = i.relnamespace
+                cross join constants c
+                join pg_catalog.pg_namespace n
+                    on
+                        n.oid = i.relnamespace
+                        and n.nspname <> 'pg_catalog'
                 join pg_catalog.pg_stats s
                     on
                         s.schemaname = n.nspname
@@ -196,6 +211,5 @@ from (
             ) as rows_data_stats
         ) as rows_hdr_pdg_stats
     ) as relation_stats
-    where nspname <> 'pg_catalog'
 ) as bloated_indexes
 order by bloat_size desc, bloat_pct desc;
