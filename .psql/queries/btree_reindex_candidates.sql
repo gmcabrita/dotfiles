@@ -1,4 +1,15 @@
 -- https://docs.aws.amazon.com/prescriptive-guidance/latest/postgresql-maintenance-rds-aurora/reindex.html
+with constants as (
+    select
+        current_setting('block_size')::numeric as bs,
+        case -- maxalign: 4 on 32bits, 8 on 64bits (and mingw32 ?)
+            when
+                version() ~ 'mingw32'
+                or version() ~ '64-bit|x86_64|ppc64|ia64|amd64'
+                then 8
+            else 4
+        end as maxalign
+)
 select
     tbl,
     idx,
@@ -86,14 +97,8 @@ from (
                     i.relpages,
                     i.idxoid,
                     i.fillfactor,
-                    current_setting('block_size')::numeric as bs,
-                    case -- maxalign: 4 on 32bits, 8 on 64bits (and mingw32 ?)
-                        when
-                            version() ~ 'mingw32'
-                            or version() ~ '64-bit|x86_64|ppc64|ia64|amd64'
-                            then 8
-                        else 4
-                    end as maxalign,
+                    c.bs,
+                    c.maxalign,
                     /* per page header, fixed size: 20 for 7.x, 24 for others */
                     24 as pagehdr,
                     /* per page btree opaque data */
@@ -166,6 +171,7 @@ from (
                                 ), ' ')::int [] as indkey
                             from pg_catalog.pg_index i
                             join pg_catalog.pg_class ci on ci.oid = i.indexrelid
+                            cross join constants c
                             where
                                 ci.relam
                                 = (
@@ -173,7 +179,7 @@ from (
                                     where amname = 'btree'
                                 )
                                 -- and ci.relpages > 0
-                                and ci.relpages * current_setting('block_size')::bigint > 2147483648
+                                and ci.relpages * c.bs > 2147483648
                         ) as idx_data
                     ) as ic
                     join pg_catalog.pg_class ct on ct.oid = ic.tbloid
@@ -187,7 +193,11 @@ from (
                         and a2.attrelid = ic.idxoid
                         and a2.attnum = ic.attpos
                 ) i
-                join pg_catalog.pg_namespace n on n.oid = i.relnamespace
+                cross join constants c
+                join pg_catalog.pg_namespace n
+                    on
+                        n.oid = i.relnamespace
+                        and n.nspname <> 'pg_catalog'
                 join pg_catalog.pg_stats s
                     on
                         s.schemaname = n.nspname
@@ -197,7 +207,6 @@ from (
             ) as rows_data_stats
         ) as rows_hdr_pdg_stats
     ) as relation_stats
-    where nspname <> 'pg_catalog'
 ) as bloated_indexes
 where
     bloat_size::numeric > 10737418240 -- More than 10 GiB bloat
