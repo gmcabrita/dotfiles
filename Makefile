@@ -16,7 +16,7 @@ lint:
 update:
 	pids=""; \
 	for script in \
-	  "pnpm update --prefix .pi/agent" \
+	  "sfw pnpm update --prefix .pi/agent" \
 		./bin/update-chrome-cdp-skills.sh \
 		./bin/update-cloudflare-skills.sh \
 		./bin/update-database-skills.sh \
