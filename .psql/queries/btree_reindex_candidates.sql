@@ -1,7 +1,17 @@
 -- https://docs.aws.amazon.com/prescriptive-guidance/latest/postgresql-maintenance-rds-aurora/reindex.html
 with constants as (
     select
+        --- feel free to change these:
+        2147483648::numeric as min_index_size,
+        2147483648::numeric as min_pct_bloat_size,
+        50 as min_bloat_pct,
+        10737418240::numeric as min_bloat_size,
+        --- do not change the ones below unless you know what you are doing
         current_setting('block_size')::numeric as bs,
+        24 as pagehdr,
+        16 as pageopqdata,
+        90::smallint as default_fillfactor,
+        1024 as default_avg_width,
         case -- maxalign: 4 on 32bits, 8 on 64bits (and mingw32 ?)
             when
                 version() ~ 'mingw32'
@@ -100,9 +110,9 @@ from (
                     c.bs,
                     c.maxalign,
                     /* per page header, fixed size: 20 for 7.x, 24 for others */
-                    24 as pagehdr,
+                    c.pagehdr,
                     /* per page btree opaque data */
-                    16 as pageopqdata,
+                    c.pageopqdata,
                     /* per tuple header: add indexattributebitmapdata if some cols are null-able */
                     case
                         when max(coalesce(s.null_frac, 0)) = 0
@@ -112,7 +122,7 @@ from (
                     /* data len: we remove null values save space using it fractionnal part from stats */
                     sum(
                         (1 - coalesce(s.null_frac, 0))
-                        * coalesce(s.avg_width, 1024)
+                        * coalesce(s.avg_width, c.default_avg_width)
                     ) as nulldatawidth,
                     max(
                         case
@@ -164,7 +174,7 @@ from (
                                 coalesce(substring(
                                     array_to_string(ci.reloptions, ' ')
                                     from 'fillfactor=([0-9]+)'
-                                )::smallint, 90) as fillfactor,
+                                )::smallint, c.default_fillfactor) as fillfactor,
                                 i.indnatts,
                                 pg_catalog.string_to_array(pg_catalog.textin(
                                     pg_catalog.int2vectorout(i.indkey)
@@ -179,7 +189,7 @@ from (
                                     where amname = 'btree'
                                 )
                                 -- and ci.relpages > 0
-                                and ci.relpages * c.bs > 2147483648
+                                and ci.relpages * c.bs > c.min_index_size
                         ) as idx_data
                     ) as ic
                     join pg_catalog.pg_class ct on ct.oid = ic.tbloid
@@ -208,10 +218,11 @@ from (
         ) as rows_hdr_pdg_stats
     ) as relation_stats
 ) as bloated_indexes
+cross join constants c
 where
-    bloat_size::numeric > 10737418240 -- More than 10 GiB bloat
+    bloat_size::numeric > c.min_bloat_size -- More than 10 GiB bloat
     or (
-        bloat_pct > 50 -- More than 50% bloat
-        and bloat_size::numeric > 2147483648 -- More than 2 GiB bloat
+        bloat_pct > c.min_bloat_pct -- More than 50% bloat
+        and bloat_size::numeric > c.min_pct_bloat_size -- More than 2 GiB bloat
     )
 order by bloat_size::numeric desc, bloat_pct desc;
