@@ -160,7 +160,6 @@
     "scss": true,
     "sql": true,
     "toml": true,
-    "tsgo": true,
     "xml": true,
   },
   "file_types": {
@@ -802,10 +801,10 @@
       "format_on_save": "off",
     },
     "TypeScript": {
-      "language_servers": ["!typescript-language-server", "!eslint", "tsgo", "vtsls", "..."],
+      "language_servers": ["!typescript-language-server", "!eslint", "vtsls", "..."],
     },
     "JavaScript": {
-      "language_servers": ["!typescript-language-server", "!eslint", "tsgo", "vtsls", "..."],
+      "language_servers": ["!typescript-language-server", "!eslint", "vtsls", "..."],
     },
     "Zig": {
       "tab_size": 4,
