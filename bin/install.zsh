@@ -236,6 +236,7 @@ RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
               npm:hunkdiff@latest \
               npm:portless@latest \
               npm:@kitlangton/ghui@latest \
+              npm:sfw@latest \
               odin@latest \
               pitchfork@latest \
               pkl@latest \
