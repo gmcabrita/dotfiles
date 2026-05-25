@@ -6,7 +6,7 @@ select
     pg_size_pretty(extra_size::numeric) as extra_size,
     extra_pct,
     fillfactor,
-    pg_size_pretty(bloat_size::numeric) as bloat_size,
+    pg_size_pretty(bloat_size::numeric) as bloat_size_pretty,
     bloat_pct
 from (
     select

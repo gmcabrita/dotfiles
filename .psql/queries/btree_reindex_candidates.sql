@@ -6,7 +6,7 @@ select
     pg_size_pretty(extra_size::numeric) as extra_size,
     extra_pct,
     fillfactor,
-    pg_size_pretty(bloat_size::numeric) as bloat_size,
+    pg_size_pretty(bloat_size::numeric) as bloat_size_pretty,
     bloat_pct
 from (
     select
@@ -172,7 +172,8 @@ from (
                                     select oid from pg_am
                                     where amname = 'btree'
                                 )
-                                and ci.relpages > 0
+                                -- and ci.relpages > 0
+                                and ci.relpages * current_setting('block_size')::bigint > 2147483648
                         ) as idx_data
                     ) as ic
                     join pg_catalog.pg_class ct on ct.oid = ic.tbloid
@@ -199,9 +200,9 @@ from (
     where nspname <> 'pg_catalog'
 ) as bloated_indexes
 where
-    bloat_size > 10737418240 -- More than 10 GiB bloat
+    bloat_size::numeric > 10737418240 -- More than 10 GiB bloat
     or (
         bloat_pct > 50 -- More than 50% bloat
-        and bloat_size > 2147483648 -- More than 2 GiB bloat
+        and bloat_size::numeric > 2147483648 -- More than 2 GiB bloat
     )
-order by bloat_size desc, bloat_pct desc;
+order by bloat_size::numeric desc, bloat_pct desc;
