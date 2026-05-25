@@ -218,39 +218,9 @@ CPPFLAGS="-I$(brew --prefix openssl@3)/include -I$(brew --prefix jemalloc)/inclu
 LDFLAGS="-L$(brew --prefix openssl@3)/lib -L$(brew --prefix jemalloc)/lib -L$(brew --prefix gmp)/lib -L$(xcrun --show-sdk-path)/usr/lib -L$(brew --prefix sqlite)/lib" \
 PKG_CONFIG_PATH="$(brew --prefix openssl@3)/lib/pkgconfig:$(brew --prefix gmp)/lib/pkgconfig:$(brew --prefix jemalloc)/lib/pkgconfig:$PKG_CONFIG_PATH" \
 RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
-  mise use -g cargo:hurlfmt@latest \
-              cargo:oha@latest \
-              cargo:rustdoc-text@latest \
-              bun@latest \
-              deno@latest \
-              elixir@latest \
-              erlang@latest \
-              fnox@latest \
-              github:lexiforest/curl-impersonate \
-              github:rockorager/ziglint \
-              github:expert-lsp/expert\
-              go@latest \
-              hk@latest \
-              node@lts \
-              npm:@earendil-works/pi-coding-agent@latest \
-              npm:hunkdiff@latest \
-              npm:portless@latest \
-              npm:@kitlangton/ghui@latest \
-              npm:sfw@latest \
-              odin@latest \
-              pitchfork@latest \
-              pkl@latest \
-              pnpm@latest \
-              python@latest \
-              ruby@latest \
-              rust@latest \
-              uv@latest \
-              watchexec@latest \
-              zig@latest \
-              zls@latest
+  mise install
 
 go install golang.org/x/tools/gopls@latest
 rustup component add rust-analyzer rust-src clippy rustfmt rust-docs llvm-tools
 mise reshim
 mix local.hex --force
-pi install npm:pi-cursor-sdk

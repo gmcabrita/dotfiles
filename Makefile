@@ -4,7 +4,7 @@ install:
 	./bin/install.zsh
 
 sync:
-	pnpm install --prefix .pi/agent
+	pnpm install --prefix .pi/agent || true
 	./bin/copy-dotfiles.sh
 
 fmt:

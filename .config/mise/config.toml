@@ -1,0 +1,43 @@
+[tools]
+"cargo:hurlfmt" = "latest"
+"cargo:oha" = "latest"
+"cargo:rustdoc-text" = "latest"
+"github:expert-lsp/expert" = "latest"
+"github:lexiforest/curl-impersonate" = "latest"
+"github:rockorager/ziglint" = "latest"
+"npm:@earendil-works/pi-coding-agent" = "latest"
+"npm:@kitlangton/ghui" = "latest"
+"npm:hunkdiff" = "latest"
+"npm:portless" = "latest"
+"npm:sfw" = "latest"
+bun = "latest"
+deno = "latest"
+elixir = "latest"
+erlang = "latest"
+fnox = "latest"
+go = "latest"
+hk = "latest"
+node = "latest"
+odin = "latest"
+pitchfork = "latest"
+pkl = "latest"
+pnpm = "latest"
+python = "latest"
+ruby = "latest"
+rust = "latest"
+uv = "latest"
+watchexec = "latest"
+zig = "latest"
+zls = "latest"
+
+[settings]
+idiomatic_version_file_enable_tools = ["rust"]
+
+[settings.python]
+uv_venv_auto = true
+
+[settings.npm]
+package_manager = "pnpm"
+
+[settings.ruby]
+compile = false
