@@ -14,6 +14,7 @@
   "terminal": {
     "showTerminalProgress": true
   },
+  "npmCommand": ["pnpm"],
   "theme": "light",
   "toolPolicy": {
     "all": {
