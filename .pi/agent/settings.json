@@ -14,7 +14,8 @@
   "terminal": {
     "showTerminalProgress": true
   },
-  "npmCommand": ["sfw", "pnpm"],
+  "npmCommand": ["sfw", "npm"],
+  "packages": ["npm:pi-cursor-sdk"],
   "theme": "light",
   "toolPolicy": {
     "all": {
