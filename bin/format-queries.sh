@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-sqlfluff format --dialect postgres ".psql/queries/"*
+sqlfluff format --dialect postgres --ignore linting ".psql/queries/"*
