@@ -1,3 +1,4 @@
+auto-update = off
 auto-update-channel = tip
 background-blur = true
 background-blur-radius = 20
