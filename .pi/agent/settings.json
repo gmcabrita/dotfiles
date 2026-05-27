@@ -1,10 +1,14 @@
 {
   "modelRecommendations": "https://repoprompt.com/docs#s=workflows&ss=model-recommendations",
   "packages.bak": ["npm:pi-cursor-sdk"],
-  "startup": {
+  "startup.bak": {
     "model": "gpt-5.5",
     "provider": "openai",
     "thinkingLevel": "medium"
+  },
+  "startup": {
+    "model": "composer-2.5",
+    "provider": "cursor"
   },
   "enableInstallTelemetry": false,
   "hideThinkingBlock": true,
