@@ -1,8 +1,9 @@
 {
   "modelRecommendations": "https://repoprompt.com/docs#s=workflows&ss=model-recommendations",
   "startup": {
-    "model": "composer-2.5",
-    "provider": "cursor"
+    "model": "gpt-5.5",
+    "provider": "openai",
+    "thinkingLevel": "high"
   },
   "review": {
     "model": "gpt-5.5",
