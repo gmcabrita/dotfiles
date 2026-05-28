@@ -40,4 +40,9 @@
       "cmd-m": "settings_editor::Minimize",
     },
   },
+  {
+    "unbind": {
+      "shift-escape": "workspace::ToggleZoom",
+    },
+  },
 ]
