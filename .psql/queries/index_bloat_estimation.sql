@@ -1,10 +1,8 @@
 -- noqa: disable=all
 -- https://docs.aws.amazon.com/prescriptive-guidance/latest/postgresql-maintenance-rds-aurora/reindex.html
--- Catalog-only estimate for btree, hash, GiST, and SP-GiST indexes.
+-- Catalog-only estimate for btree and hash indexes.
 -- Hash estimates model PostgreSQL bucket sizing. REINDEX uses heap reltuples, so stale table stats affect expected size.
 -- Hash overflow from skew/collisions is not visible without pageinspect.
--- GiST/SP-GiST operator classes can store compressed or derived values, so bloat can be overstated.
--- SP-GiST also has inner tuples; this estimates leaf tuple pages plus fixed pages.
 with constants as (
     select
         current_setting('block_size')::numeric as bs,
@@ -30,9 +28,7 @@ method_config as (
     from (
         values
             ('btree', 90, 16, 1, 1),
-            ('hash', 75, 16, 4, 2),
-            ('gist', 90, 16, 1, 1),
-            ('spgist', 80, 8, 3, 2)
+            ('hash', 75, 16, 4, 2)
     ) as method_config(
         index_method,
         default_fillfactor,
@@ -87,7 +83,7 @@ keyed_ic as (
         estimation_base_pages,
         pg_catalog.generate_series(1, indnatts) as attpos
     from idx_data
-    where index_method in ('btree', 'gist', 'spgist')
+    where index_method = 'btree'
 ),
 
 keyed_index_columns as (
@@ -145,16 +141,8 @@ keyed_rows_data_stats as (
         /* per tuple header: add indexattributebitmapdata if some cols are null-able */
         case
             when max(coalesce(s.null_frac, 0)) = 0
-                then case
-                    when i.index_method = 'spgist' then 12 -- SpGistLeafTupleData size
-                    else 8 -- IndexTupleData size
-                end
-            else
-                case
-                    when i.index_method = 'spgist' then 12 -- SpGistLeafTupleData size
-                    else 8 -- IndexTupleData size
-                end
-                + ((32 + 8 - 1) / 8) -- IndexAttributeBitMapData size (INDEX_MAX_KEYS + 8 - 1 / 8)
+                then 8 -- IndexTupleData size
+            else 8 + ((32 + 8 - 1) / 8) -- IndexTupleData size + IndexAttributeBitMapData size (INDEX_MAX_KEYS + 8 - 1 / 8)
         end as tuple_hdr_bm,
         /* data len: we remove null values save space using it fractionnal part from stats */
         sum(
