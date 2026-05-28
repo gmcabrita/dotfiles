@@ -12,7 +12,7 @@ cleanup() {
 
 trap cleanup EXIT
 
-SQL_FILE="${HOME}/.psql/queries/index_reindex_candidates.sql"
+SQL_FILE="${HOME}/.psql/queries/btree_reindex_candidates.sql"
 INPUT_TARGETS=()
 TARGETS=()
 
