@@ -1,6 +1,8 @@
 -- noqa: disable=all
 -- https://docs.aws.amazon.com/prescriptive-guidance/latest/postgresql-maintenance-rds-aurora/reindex.html
 -- Catalog-only estimate for btree, hash, GiST, and SP-GiST indexes.
+-- Hash estimates model PostgreSQL bucket sizing. REINDEX uses heap reltuples, so stale table stats affect expected size.
+-- Hash overflow from skew/collisions is not visible without pageinspect.
 -- GiST/SP-GiST operator classes can store compressed or derived values, so bloat can be overstated.
 -- SP-GiST also has inner tuples; this estimates leaf tuple pages plus fixed pages.
 with constants as (
@@ -28,7 +30,7 @@ method_config as (
     from (
         values
             ('btree', 90, 16, 1, 1),
-            ('hash', 75, 16, 2, 1),
+            ('hash', 75, 16, 4, 2),
             ('gist', 90, 16, 1, 1),
             ('spgist', 80, 8, 3, 2)
     ) as method_config(
@@ -74,7 +76,7 @@ keyed_ic as (
     select
         index_method,
         idxname,
-        reltuples,
+        greatest(reltuples, 0)::numeric as reltuples,
         relpages,
         tbloid,
         idxoid,
@@ -204,56 +206,14 @@ keyed_tuple_stats as (
     from keyed_rows_data_stats
 ),
 
-hash_tuple_stats as (
-    select
-        d.index_method,
-        c.bs,
-        n.nspname,
-        ct.relname as tblname,
-        d.idxname,
-        d.reltuples,
-        d.relpages,
-        d.fillfactor,
-        c.pagehdr,
-        d.pageopqdata,
-        d.min_pages,
-        d.estimation_base_pages,
-        (
-            8 -- IndexTupleData size
-            + c.maxalign - case
-                when 8 % c.maxalign = 0 then c.maxalign
-                else 8 % c.maxalign
-            end
-            + 4 -- uint32 hash key
-            + c.maxalign - case
-                when 4 % c.maxalign = 0 then c.maxalign
-                else 4 % c.maxalign
-            end
-        )::numeric as tuple_width
-    from idx_data d
-    cross join constants c
-    join pg_catalog.pg_class ct on ct.oid = d.tbloid
-    join pg_catalog.pg_namespace n
-        on
-            n.oid = ct.relnamespace
-            and n.nspname <> 'pg_catalog'
-    where d.index_method = 'hash'
-),
-
-tuple_stats as (
-    select * from keyed_tuple_stats
-    union all
-    select * from hash_tuple_stats
-),
-
-relation_stats as (
+keyed_relation_stats as (
     select
         greatest(
             min_pages,
             coalesce(
                 estimation_base_pages
                 + ceil(
-                    reltuples::numeric
+                    reltuples
                     / nullif(floor(
                         (bs - pageopqdata - pagehdr) / (4 + tuple_width)
                     ), 0)
@@ -266,7 +226,7 @@ relation_stats as (
             coalesce(
                 estimation_base_pages
                 + ceil(
-                    reltuples::numeric
+                    reltuples
                     / nullif(floor(
                         (bs - pageopqdata - pagehdr)
                         * fillfactor
@@ -283,7 +243,150 @@ relation_stats as (
         idxname,
         relpages,
         fillfactor
-    from tuple_stats
+    from keyed_tuple_stats
+),
+
+hash_tuple_stats as (
+    select
+        d.index_method,
+        c.bs,
+        n.nspname,
+        ct.relname as tblname,
+        d.idxname,
+        greatest(d.reltuples, 0)::numeric as reltuples,
+        case
+            when ct.reltuples >= 0 then ct.reltuples
+            else greatest(d.reltuples, 0)
+        end::numeric as build_reltuples,
+        d.relpages,
+        d.fillfactor,
+        c.pagehdr,
+        d.pageopqdata,
+        (
+            8 -- IndexTupleData size
+            + c.maxalign - case
+                when 8 % c.maxalign = 0 then c.maxalign
+                else 8 % c.maxalign
+            end
+            + 4 -- uint32 hash key
+            + c.maxalign - case
+                when 4 % c.maxalign = 0 then c.maxalign
+                else 4 % c.maxalign
+            end
+            + 4 -- ItemIdData line pointer
+        )::numeric as item_width
+    from idx_data d
+    cross join constants c
+    join pg_catalog.pg_class ct on ct.oid = d.tbloid
+    join pg_catalog.pg_namespace n
+        on
+            n.oid = ct.relnamespace
+            and n.nspname <> 'pg_catalog'
+    where d.index_method = 'hash'
+),
+
+hash_ffactors as (
+    select
+        *,
+        greatest(
+            10::numeric,
+            floor(floor(bs * fillfactor / 100) / item_width)
+        ) as hash_ffactor,
+        greatest(
+            10::numeric,
+            floor(bs / item_width)
+        ) as hash_full_ffactor,
+        greatest(
+            1::numeric,
+            floor((bs - pageopqdata - pagehdr) / item_width)
+        ) as physical_tuple_capacity
+    from hash_tuple_stats
+),
+
+hash_estimate_inputs as (
+    select
+        h.*,
+        estimate_config.estimate_kind,
+        estimate_config.ffactor_for_est
+    from hash_ffactors h
+    cross join lateral (
+        values
+            ('ff'::text, h.hash_ffactor),
+            ('full'::text, h.hash_full_ffactor)
+    ) as estimate_config(estimate_kind, ffactor_for_est)
+),
+
+hash_bucket_inputs as (
+    select
+        *,
+        floor(greatest(build_reltuples, 0) / ffactor_for_est) as initial_bucket_floor,
+        greatest(2::numeric, ceil(reltuples / ffactor_for_est)) as required_buckets,
+        greatest(2::numeric, ceil(reltuples / physical_tuple_capacity)) as required_tuple_pages
+    from hash_estimate_inputs
+),
+
+hash_bucket_groups as (
+    select
+        *,
+        ceil(ln(greatest(initial_bucket_floor, 1)) / ln(2::numeric)) as bucket_group
+    from hash_bucket_inputs
+),
+
+hash_bucket_estimates as (
+    select
+        *,
+        case
+            when build_reltuples / ffactor_for_est <= 2 then 2::numeric
+            when build_reltuples / ffactor_for_est >= 1073741824::numeric then 1073741824::numeric
+            when initial_bucket_floor <= 512
+                then power(2::numeric, bucket_group)
+            else
+                power(2::numeric, bucket_group - 1)
+                + (power(2::numeric, bucket_group - 1) / 4)
+                * (
+                    mod(
+                        floor(
+                            (initial_bucket_floor - 1)
+                            / (power(2::numeric, bucket_group - 1) / 4)
+                        ),
+                        4
+                    )
+                    + 1
+                )
+        end as initial_buckets
+    from hash_bucket_groups
+),
+
+hash_estimated_pages as (
+    select
+        *,
+        greatest(
+            initial_buckets,
+            required_buckets,
+            required_tuple_pages
+        ) + 2 as estimated_pages
+    from hash_bucket_estimates
+),
+
+hash_relation_stats as (
+    select
+        max(estimated_pages) filter (where estimate_kind = 'full') as est_pages,
+        max(estimated_pages) filter (where estimate_kind = 'ff') as est_pages_ff,
+        index_method,
+        bs,
+        nspname,
+        tblname,
+        idxname,
+        relpages,
+        fillfactor
+    from hash_estimated_pages
+    group by 3, 4, 5, 6, 7, 8, 9
+),
+
+relation_stats as (
+    select * from keyed_relation_stats
+    union all
+    select * from hash_relation_stats
 ),
 
 bloated_indexes as (
