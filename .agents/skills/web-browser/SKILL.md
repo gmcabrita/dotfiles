@@ -63,10 +63,12 @@ Commands like `nav.js`, `eval.js`, `pick.js`, `dismiss-cookies.js`, and `screens
 ```bash
 ./scripts/eval.js 'document.title'
 ./scripts/eval.js 'document.querySelectorAll("a").length'
+./scripts/eval.js 'document.querySelector("button")?.click(); "clicked"'
+./scripts/eval.js 'await Promise.resolve(document.title)'
 ./scripts/eval.js 'JSON.stringify(Array.from(document.querySelectorAll("a")).map(a => ({ text: a.textContent.trim(), href: a.href })).filter(link => !link.href.startsWith("https://")))'
 ```
 
-Execute JavaScript in active tab (async context). Be careful with string escaping, best to use single quotes.
+Execute JavaScript in the active tab. Input can be an expression or statement list; the console-style completion value is printed and promises/top-level `await` are awaited. Be careful with string escaping, best to use single quotes.
 
 ## Screenshot
 
