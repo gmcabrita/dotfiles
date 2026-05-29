@@ -2,6 +2,7 @@
 set -euo pipefail
 
 PROXY_PIDS=()
+PROXY_PORT=""
 
 cleanup() {
   for pid in "${PROXY_PIDS[@]}"; do
@@ -132,7 +133,7 @@ ensure_proxy() {
   if [ -n "$(pgrep -xf "cloud-sql-proxy --auto-iam-authn --port ${port} ${connection_name}" || true)" ]; then
     log "Using existing cloud-sql-proxy on port ${port} for ${connection_name}"
     wait_for_port "${port}"
-    echo "${port}"
+    PROXY_PORT="${port}"
     return
   fi
 
@@ -140,7 +141,7 @@ ensure_proxy() {
   cloud-sql-proxy --auto-iam-authn --port "${port}" "${connection_name}" >&2 &
   PROXY_PIDS+=("$!")
   wait_for_port "${port}"
-  echo "${port}"
+  PROXY_PORT="${port}"
 }
 
 run_query() {
@@ -219,8 +220,8 @@ echo "database,tbl,idx,bloat_size_pretty,bloat_pct,real_size"
 
 for target in "${TARGETS[@]}"; do
   IFS='|' read -r connection_name db_name <<< "${target}"
-  port=$(ensure_proxy "${connection_name}")
-  run_query "${db_name}" "${db_name}" "${port}" "${PSQL_USERNAME}"
+  ensure_proxy "${connection_name}"
+  run_query "${db_name}" "${db_name}" "${PROXY_PORT}" "${PSQL_USERNAME}"
 done
 
 log "Done."
