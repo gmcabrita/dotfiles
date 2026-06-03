@@ -3,10 +3,11 @@
   "type": "module",
   "private": true,
   "dependencies": {
-    "@earendil-works/pi-ai": "^0.74.2",
-    "@earendil-works/pi-coding-agent": "^0.74.2",
-    "@earendil-works/pi-tui": "^0.74.2",
-    "diff": "^8.0.4"
+    "@earendil-works/pi-agent-core": "^0.78.0",
+    "@earendil-works/pi-ai": "^0.78.0",
+    "@earendil-works/pi-coding-agent": "^0.78.0",
+    "@earendil-works/pi-tui": "^0.78.0",
+    "diff": "^9.0.0"
   },
   "peerDependencies": {
     "typescript": "^5"
