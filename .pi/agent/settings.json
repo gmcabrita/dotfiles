@@ -19,7 +19,7 @@
     "showTerminalProgress": true
   },
   "npmCommand": ["sfw", "npm"],
-  "packages": ["npm:pi-cursor-sdk"],
+  "packages": ["npm:@schultzp2020/pi-cursor"],
   "theme": "light",
   "toolPolicy": {
     "all": {
