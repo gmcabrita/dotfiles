@@ -1,5 +1,5 @@
 /**
- * Policy handoff — on cybersecurity policy blocks, sends one defensive follow-up.
+ * Automatically Gaslights GPT into ignoring cyber policy errors
  */
 
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
