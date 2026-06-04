@@ -417,7 +417,7 @@ function pvr() {
 
 function update-everything() {
   brew update
-  brew bundle install --cleanup --file=~/.config/Brewfile
+  brew bundle install --force-cleanup --file=~/.config/Brewfile
   brew upgrade
   update-programming-languages
   pi update --extensions
