@@ -11,8 +11,6 @@ import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 const MACOS = process.platform === "darwin";
 const COFFEE = "☕";
-const ANSI_PATTERN = /^\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/;
-const STRIP_ANSI_PATTERN = /\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g;
 
 type Scope = "agent" | "session";
 type Level = "info" | "warning" | "error";
@@ -61,94 +59,15 @@ function notify(ctx: ExtensionContext | undefined, message: string, level: Level
   }
 }
 
-function stripAnsi(text: string): string {
-  return text.replace(STRIP_ANSI_PATTERN, "");
-}
-
-function readAnsiSequence(text: string, index: number): string | undefined {
-  const match = ANSI_PATTERN.exec(text.slice(index));
-  return match?.[0];
-}
-
-function nextCodePoint(text: string, index: number): string | undefined {
-  const codePoint = text.codePointAt(index);
-  if (codePoint === undefined) {
-    return undefined;
-  }
-  return String.fromCodePoint(codePoint);
-}
-
-function rawIndexForVisibleColumn(text: string, targetColumn: number): number {
-  let column = 0;
-  let index = 0;
-
-  while (index < text.length) {
-    if (column >= targetColumn) {
-      return index;
-    }
-
-    const ansiSequence = readAnsiSequence(text, index);
-    if (ansiSequence) {
-      index += ansiSequence.length;
-      continue;
-    }
-
-    const character = nextCodePoint(text, index);
-    if (character === undefined) {
-      return index;
-    }
-
-    column += visibleWidth(character);
-    index += character.length;
-  }
-
-  return text.length;
-}
-
-function dropVisibleColumns(text: string, columns: number): string {
-  let remaining = columns;
-  let index = 0;
-  let prefix = "";
-
-  while (index < text.length) {
-    const ansiSequence = readAnsiSequence(text, index);
-    if (ansiSequence) {
-      prefix += ansiSequence;
-      index += ansiSequence.length;
-      continue;
-    }
-
-    const character = nextCodePoint(text, index);
-    if (character === undefined) {
-      return prefix;
-    }
-
-    const width = visibleWidth(character);
-    if (remaining >= width) {
-      remaining -= width;
-      index += character.length;
-      continue;
-    }
-
-    return prefix + text.slice(index);
-  }
-
-  return prefix;
-}
-
-function addCoffeeAfterContext(line: string, width: number): string {
-  const visibleLine = stripAnsi(line);
-  const separator = / {2,}/.exec(visibleLine);
-  const insertionColumn = separator?.index ?? visibleWidth(visibleLine);
+function addCoffeeAfterCwd(line: string, width: number): string {
   const coffee = ` ${COFFEE}`;
   const coffeeWidth = visibleWidth(coffee);
-  const rawInsertionIndex = rawIndexForVisibleColumn(line, insertionColumn);
-  const prefix = line.slice(0, rawInsertionIndex);
-  const suffix = line.slice(rawInsertionIndex);
-  const adjustedSuffix = separator ? dropVisibleColumns(suffix, Math.min(coffeeWidth, separator[0].length)) : suffix;
-  const nextLine = prefix + coffee + adjustedSuffix;
 
-  return visibleWidth(nextLine) > width ? truncateToWidth(nextLine, width, "") : nextLine;
+  if (visibleWidth(line) + coffeeWidth <= width) {
+    return line + coffee;
+  }
+
+  return truncateToWidth(line, Math.max(0, width - coffeeWidth), "") + coffee;
 }
 
 function patchNativeFooter(): void {
@@ -162,7 +81,7 @@ function patchNativeFooter(): void {
       return lines;
     }
 
-    return [lines[0], addCoffeeAfterContext(lines[1], width), ...lines.slice(2)];
+    return [addCoffeeAfterCwd(lines[0], width), ...lines.slice(1)];
   };
   footerPatched = true;
 }
