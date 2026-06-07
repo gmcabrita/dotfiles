@@ -1,17 +1,18 @@
 /**
  * Prevent macOS from sleeping while pi's agent is running.
  *
- * Uses caffeinate(8). Renders current sleep-prevention state in the pi status
- * bar.
+ * Uses caffeinate(8). Shows ☕ inline in pi's native footer while active.
  */
 
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { FooterComponent, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { spawn } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
-import { isAbsolute, relative, resolve, sep } from "node:path";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 const MACOS = process.platform === "darwin";
+const COFFEE = "☕";
+const ANSI_PATTERN = /^\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/;
+const STRIP_ANSI_PATTERN = /\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g;
 
 type Scope = "agent" | "session";
 type Level = "info" | "warning" | "error";
@@ -22,7 +23,10 @@ let enabled = readBooleanEnv("PI_NO_SLEEP", true);
 let scope: Scope = readScopeEnv();
 let agentActive = false;
 let lastError: string | undefined;
-let thinkingLevel = "off";
+let showCoffeeInFooter = false;
+let footerPatched = false;
+
+const originalFooterRender = FooterComponent.prototype.render;
 
 function readBooleanEnv(name: string, defaultValue: boolean): boolean {
   const value = process.env[name];
@@ -57,186 +61,131 @@ function notify(ctx: ExtensionContext | undefined, message: string, level: Level
   }
 }
 
-function sanitizeStatusText(text: string): string {
-  return text
-    .replace(/[\r\n\t]/g, " ")
-    .replace(/ +/g, " ")
-    .trim();
+function stripAnsi(text: string): string {
+  return text.replace(STRIP_ANSI_PATTERN, "");
 }
 
-function formatTokens(count: number): string {
-  if (count < 1_000) return count.toString();
-  if (count < 10_000) return `${(count / 1_000).toFixed(1)}k`;
-  if (count < 1_000_000) return `${Math.round(count / 1_000)}k`;
-  if (count < 10_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
-  return `${Math.round(count / 1_000_000)}M`;
+function readAnsiSequence(text: string, index: number): string | undefined {
+  const match = ANSI_PATTERN.exec(text.slice(index));
+  return match?.[0];
 }
 
-function formatCwdForFooter(cwd: string, home: string | undefined): string {
-  if (!home) return cwd;
-
-  const resolvedCwd = resolve(cwd);
-  const resolvedHome = resolve(home);
-  const relativeToHome = relative(resolvedHome, resolvedCwd);
-  const isInsideHome =
-    relativeToHome === "" ||
-    (relativeToHome !== ".." &&
-      !relativeToHome.startsWith(`..${sep}`) &&
-      !isAbsolute(relativeToHome));
-
-  if (!isInsideHome) return cwd;
-  return relativeToHome === "" ? "~" : `~${sep}${relativeToHome}`;
+function nextCodePoint(text: string, index: number): string | undefined {
+  const codePoint = text.codePointAt(index);
+  if (codePoint === undefined) {
+    return undefined;
+  }
+  return String.fromCodePoint(codePoint);
 }
 
-function updateFooter(ctx: ExtensionContext | undefined): void {
-  if (ctx?.mode !== "tui") {
+function rawIndexForVisibleColumn(text: string, targetColumn: number): number {
+  let column = 0;
+  let index = 0;
+
+  while (index < text.length) {
+    if (column >= targetColumn) {
+      return index;
+    }
+
+    const ansiSequence = readAnsiSequence(text, index);
+    if (ansiSequence) {
+      index += ansiSequence.length;
+      continue;
+    }
+
+    const character = nextCodePoint(text, index);
+    if (character === undefined) {
+      return index;
+    }
+
+    column += visibleWidth(character);
+    index += character.length;
+  }
+
+  return text.length;
+}
+
+function dropVisibleColumns(text: string, columns: number): string {
+  let remaining = columns;
+  let index = 0;
+  let prefix = "";
+
+  while (index < text.length) {
+    const ansiSequence = readAnsiSequence(text, index);
+    if (ansiSequence) {
+      prefix += ansiSequence;
+      index += ansiSequence.length;
+      continue;
+    }
+
+    const character = nextCodePoint(text, index);
+    if (character === undefined) {
+      return prefix;
+    }
+
+    const width = visibleWidth(character);
+    if (remaining >= width) {
+      remaining -= width;
+      index += character.length;
+      continue;
+    }
+
+    return prefix + text.slice(index);
+  }
+
+  return prefix;
+}
+
+function addCoffeeAfterContext(line: string, width: number): string {
+  const visibleLine = stripAnsi(line);
+  const separator = / {2,}/.exec(visibleLine);
+  const insertionColumn = separator?.index ?? visibleWidth(visibleLine);
+  const coffee = ` ${COFFEE}`;
+  const coffeeWidth = visibleWidth(coffee);
+  const rawInsertionIndex = rawIndexForVisibleColumn(line, insertionColumn);
+  const prefix = line.slice(0, rawInsertionIndex);
+  const suffix = line.slice(rawInsertionIndex);
+  const adjustedSuffix = separator ? dropVisibleColumns(suffix, Math.min(coffeeWidth, separator[0].length)) : suffix;
+  const nextLine = prefix + coffee + adjustedSuffix;
+
+  return visibleWidth(nextLine) > width ? truncateToWidth(nextLine, width, "") : nextLine;
+}
+
+function patchNativeFooter(): void {
+  if (footerPatched) {
     return;
   }
 
-  ctx.ui.setStatus("no-sleep", undefined);
+  FooterComponent.prototype.render = function renderWithNoSleep(this: FooterComponent, width: number): string[] {
+    const lines = originalFooterRender.call(this, width);
+    if (!showCoffeeInFooter || lines.length < 2) {
+      return lines;
+    }
 
-  if (!caffeinateReady) {
-    ctx.ui.setFooter(undefined);
+    return [lines[0], addCoffeeAfterContext(lines[1], width), ...lines.slice(2)];
+  };
+  footerPatched = true;
+}
+
+function restoreNativeFooter(): void {
+  if (!footerPatched) {
     return;
   }
 
-  ctx.ui.setFooter((tui, theme, footerData) => {
-    const unsubscribe = footerData.onBranchChange(() => tui.requestRender());
+  FooterComponent.prototype.render = originalFooterRender;
+  footerPatched = false;
+}
 
-    return {
-      dispose: unsubscribe,
-      invalidate() {},
-      render(width: number): string[] {
-        let totalInput = 0;
-        let totalOutput = 0;
-        let totalCacheRead = 0;
-        let totalCacheWrite = 0;
-        let totalCost = 0;
-
-        for (const entry of ctx.sessionManager.getEntries()) {
-          if (entry.type === "message" && entry.message.role === "assistant") {
-            totalInput += entry.message.usage.input;
-            totalOutput += entry.message.usage.output;
-            totalCacheRead += entry.message.usage.cacheRead;
-            totalCacheWrite += entry.message.usage.cacheWrite;
-            totalCost += entry.message.usage.cost.total;
-          }
-        }
-
-        const contextUsage = ctx.getContextUsage();
-        const contextWindow = contextUsage?.contextWindow ?? ctx.model?.contextWindow ?? 0;
-        const contextPercentValue = contextUsage?.percent ?? 0;
-        const contextPercent =
-          contextUsage?.percent !== null ? contextPercentValue.toFixed(1) : "?";
-
-        let pwd = formatCwdForFooter(
-          ctx.sessionManager.getCwd(),
-          process.env.HOME || process.env.USERPROFILE,
-        );
-        const branch = footerData.getGitBranch();
-        if (branch) {
-          pwd = `${pwd} (${branch})`;
-        }
-
-        const sessionName = ctx.sessionManager.getSessionName();
-        if (sessionName) {
-          pwd = `${pwd} • ${sessionName}`;
-        }
-
-        const statsParts: string[] = [];
-        if (totalInput) statsParts.push(`↑${formatTokens(totalInput)}`);
-        if (totalOutput) statsParts.push(`↓${formatTokens(totalOutput)}`);
-        if (totalCacheRead) statsParts.push(`R${formatTokens(totalCacheRead)}`);
-        if (totalCacheWrite) statsParts.push(`W${formatTokens(totalCacheWrite)}`);
-
-        const usingSubscription = ctx.model ? ctx.modelRegistry.isUsingOAuth(ctx.model) : false;
-        if (totalCost || usingSubscription) {
-          statsParts.push(`$${totalCost.toFixed(3)}${usingSubscription ? " (sub)" : ""}`);
-        }
-
-        const contextPercentDisplay =
-          contextPercent === "?"
-            ? `?/${formatTokens(contextWindow)} (auto)`
-            : `${contextPercent}%/${formatTokens(contextWindow)} (auto)`;
-        if (contextPercentValue > 90) {
-          statsParts.push(theme.fg("error", contextPercentDisplay));
-        } else if (contextPercentValue > 70) {
-          statsParts.push(theme.fg("warning", contextPercentDisplay));
-        } else {
-          statsParts.push(contextPercentDisplay);
-        }
-        statsParts.push("☕");
-
-        let statsLeft = statsParts.join(" ");
-        let statsLeftWidth = visibleWidth(statsLeft);
-        if (statsLeftWidth > width) {
-          statsLeft = truncateToWidth(statsLeft, width, "...");
-          statsLeftWidth = visibleWidth(statsLeft);
-        }
-
-        const modelName = ctx.model?.id || "no-model";
-        let rightSideWithoutProvider = modelName;
-        if (ctx.model?.reasoning) {
-          rightSideWithoutProvider =
-            thinkingLevel === "off"
-              ? `${modelName} • thinking off`
-              : `${modelName} • ${thinkingLevel}`;
-        }
-
-        let rightSide = rightSideWithoutProvider;
-        if (footerData.getAvailableProviderCount() > 1 && ctx.model) {
-          rightSide = `(${ctx.model.provider}) ${rightSideWithoutProvider}`;
-          if (statsLeftWidth + 2 + visibleWidth(rightSide) > width) {
-            rightSide = rightSideWithoutProvider;
-          }
-        }
-
-        const rightSideWidth = visibleWidth(rightSide);
-        const totalNeeded = statsLeftWidth + 2 + rightSideWidth;
-        let statsLine: string;
-        if (totalNeeded <= width) {
-          const padding = " ".repeat(width - statsLeftWidth - rightSideWidth);
-          statsLine = statsLeft + padding + rightSide;
-        } else {
-          const availableForRight = width - statsLeftWidth - 2;
-          if (availableForRight > 0) {
-            const truncatedRight = truncateToWidth(rightSide, availableForRight, "");
-            const truncatedRightWidth = visibleWidth(truncatedRight);
-            const padding = " ".repeat(Math.max(0, width - statsLeftWidth - truncatedRightWidth));
-            statsLine = statsLeft + padding + truncatedRight;
-          } else {
-            statsLine = statsLeft;
-          }
-        }
-
-        const dimStatsLeft = theme.fg("dim", statsLeft);
-        const dimRemainder = theme.fg("dim", statsLine.slice(statsLeft.length));
-        const lines = [
-          truncateToWidth(theme.fg("dim", pwd), width, theme.fg("dim", "...")),
-          dimStatsLeft + dimRemainder,
-        ];
-
-        const extensionStatuses = footerData.getExtensionStatuses();
-        if (extensionStatuses.size > 0) {
-          const sortedStatuses = Array.from(extensionStatuses.entries())
-            .filter(([key]) => key !== "no-sleep")
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([, text]) => sanitizeStatusText(text))
-            .filter((text) => text !== "");
-          if (sortedStatuses.length > 0) {
-            lines.push(truncateToWidth(sortedStatuses.join(" "), width, theme.fg("dim", "...")));
-          }
-        }
-
-        return lines;
-      },
-    };
-  });
+function updateFooterIndicator(ctx: ExtensionContext | undefined): void {
+  showCoffeeInFooter = caffeinateReady;
+  if (ctx?.mode === "tui") {
+    ctx.ui.setStatus("no-sleep", undefined);
+  }
 }
 
 function start(ctx?: ExtensionContext): void {
   if (!enabled || !MACOS || caffeinate) {
-    updateFooter(ctx);
+    updateFooterIndicator(ctx);
     return;
   }
 
@@ -249,7 +198,7 @@ function start(ctx?: ExtensionContext): void {
   child.once("spawn", () => {
     if (caffeinate === child) {
       caffeinateReady = true;
-      updateFooter(ctx);
+      updateFooterIndicator(ctx);
     }
   });
 
@@ -260,7 +209,7 @@ function start(ctx?: ExtensionContext): void {
     caffeinate = undefined;
     caffeinateReady = false;
     lastError = error.message;
-    updateFooter(ctx);
+    updateFooterIndicator(ctx);
     notify(ctx, `No Sleep: failed to caffeinate: ${error.message}`, "error");
   });
 
@@ -270,7 +219,7 @@ function start(ctx?: ExtensionContext): void {
     }
     caffeinate = undefined;
     caffeinateReady = false;
-    updateFooter(ctx);
+    updateFooterIndicator(ctx);
 
     if (code && code !== 0) {
       lastError = `caffeinate exited with code ${code}`;
@@ -286,7 +235,7 @@ function stop(ctx?: ExtensionContext): void {
   const child = caffeinate;
   caffeinate = undefined;
   caffeinateReady = false;
-  updateFooter(ctx);
+  updateFooterIndicator(ctx);
 
   if (!child) {
     return;
@@ -335,8 +284,11 @@ function describeState(): string {
 }
 
 export default function noSleepExtension(pi: ExtensionAPI) {
+  patchNativeFooter();
+
   const cleanupOnProcessExit = () => {
     stop(undefined);
+    restoreNativeFooter();
   };
   process.once("exit", cleanupOnProcessExit);
 
@@ -355,18 +307,10 @@ export default function noSleepExtension(pi: ExtensionAPI) {
     reconcile(ctx);
   });
 
-  pi.on("model_select", (_event, ctx) => {
-    updateFooter(ctx);
-  });
-
-  pi.on("thinking_level_select", (event, ctx) => {
-    thinkingLevel = event.level;
-    updateFooter(ctx);
-  });
-
   pi.on("session_shutdown", (_event, ctx) => {
     agentActive = false;
     stop(ctx);
+    restoreNativeFooter();
     process.off("exit", cleanupOnProcessExit);
   });
 
@@ -395,7 +339,7 @@ export default function noSleepExtension(pi: ExtensionAPI) {
         return;
       }
 
-      updateFooter(ctx);
+      updateFooterIndicator(ctx);
       notify(ctx, describeState(), lastError ? "warning" : "info");
     },
   });
