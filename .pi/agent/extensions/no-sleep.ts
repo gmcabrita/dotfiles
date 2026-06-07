@@ -4,13 +4,14 @@
  * Uses caffeinate(8). Shows ☕ inline in pi's native footer while active.
  */
 
-import { FooterComponent, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { spawn } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
-import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
+import { registerFooterEmoji, setFooterEmojiActive } from "./lib/footer-inline-emojis";
 
 const MACOS = process.platform === "darwin";
 const COFFEE = "☕";
+const FOOTER_KEY = "no-sleep";
 
 type Scope = "agent" | "session";
 type Level = "info" | "warning" | "error";
@@ -21,10 +22,6 @@ let enabled = readBooleanEnv("PI_NO_SLEEP", true);
 let scope: Scope = readScopeEnv();
 let agentActive = false;
 let lastError: string | undefined;
-let showCoffeeInFooter = false;
-let footerPatched = false;
-
-const originalFooterRender = FooterComponent.prototype.render;
 
 function readBooleanEnv(name: string, defaultValue: boolean): boolean {
   const value = process.env[name];
@@ -59,47 +56,8 @@ function notify(ctx: ExtensionContext | undefined, message: string, level: Level
   }
 }
 
-function addCoffeeAfterCwd(line: string, width: number): string {
-  const coffee = ` ${COFFEE}`;
-  const coffeeWidth = visibleWidth(coffee);
-
-  if (visibleWidth(line) + coffeeWidth <= width) {
-    return line + coffee;
-  }
-
-  return truncateToWidth(line, Math.max(0, width - coffeeWidth), "") + coffee;
-}
-
-function patchNativeFooter(): void {
-  if (footerPatched) {
-    return;
-  }
-
-  FooterComponent.prototype.render = function renderWithNoSleep(this: FooterComponent, width: number): string[] {
-    const lines = originalFooterRender.call(this, width);
-    if (!showCoffeeInFooter || lines.length < 2) {
-      return lines;
-    }
-
-    return [addCoffeeAfterCwd(lines[0], width), ...lines.slice(1)];
-  };
-  footerPatched = true;
-}
-
-function restoreNativeFooter(): void {
-  if (!footerPatched) {
-    return;
-  }
-
-  FooterComponent.prototype.render = originalFooterRender;
-  footerPatched = false;
-}
-
 function updateFooterIndicator(ctx: ExtensionContext | undefined): void {
-  showCoffeeInFooter = caffeinateReady;
-  if (ctx?.mode === "tui") {
-    ctx.ui.setStatus("no-sleep", undefined);
-  }
+  setFooterEmojiActive(FOOTER_KEY, caffeinateReady, ctx);
 }
 
 function start(ctx?: ExtensionContext): void {
@@ -203,11 +161,11 @@ function describeState(): string {
 }
 
 export default function noSleepExtension(pi: ExtensionAPI) {
-  patchNativeFooter();
+  const unregisterFooterEmoji = registerFooterEmoji(FOOTER_KEY, COFFEE, 20);
 
   const cleanupOnProcessExit = () => {
     stop(undefined);
-    restoreNativeFooter();
+    unregisterFooterEmoji();
   };
   process.once("exit", cleanupOnProcessExit);
 
@@ -229,7 +187,7 @@ export default function noSleepExtension(pi: ExtensionAPI) {
   pi.on("session_shutdown", (_event, ctx) => {
     agentActive = false;
     stop(ctx);
-    restoreNativeFooter();
+    unregisterFooterEmoji();
     process.off("exit", cleanupOnProcessExit);
   });
 
