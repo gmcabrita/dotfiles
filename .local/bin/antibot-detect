@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -eu
+
+exec uvx --from git+https://github.com/mmewni/antibot-detect antibot-detect "$@"
