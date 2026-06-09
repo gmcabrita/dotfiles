@@ -441,7 +441,7 @@ function update-everything() {
 }
 
 function nosleep() {
-  caffeinate -isd
+  caffeinate -ims
 }
 
 # Generic tradegate quote fetcher
