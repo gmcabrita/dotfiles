@@ -31,11 +31,13 @@ interface CronField {
 }
 
 interface CronSchedule {
+	second: CronField;
 	minute: CronField;
 	hour: CronField;
 	dayOfMonth: CronField;
 	month: CronField;
 	dayOfWeek: CronField;
+	hasSeconds: boolean;
 }
 
 interface ScheduledTask {
@@ -184,23 +186,27 @@ function parseCronField(raw: string, min: number, max: number, mapSunday = false
 
 function parseCron(expression: string): CronSchedule {
 	const parts = expression.trim().replace(/\s+/g, " ").split(" ");
-	if (parts.length !== 5) {
-		throw new Error("Expected 5-field cron: minute hour day-of-month month day-of-week");
+	if (parts.length !== 5 && parts.length !== 6) {
+		throw new Error("Expected 5-field cron or 6-field cron with seconds");
 	}
-	const minute = parts[0];
-	const hour = parts[1];
-	const dayOfMonth = parts[2];
-	const month = parts[3];
-	const dayOfWeek = parts[4];
-	if (!minute || !hour || !dayOfMonth || !month || !dayOfWeek) {
-		throw new Error("Expected 5-field cron: minute hour day-of-month month day-of-week");
+	const hasSeconds = parts.length === 6;
+	const second = hasSeconds ? parts[0] : "0";
+	const minute = hasSeconds ? parts[1] : parts[0];
+	const hour = hasSeconds ? parts[2] : parts[1];
+	const dayOfMonth = hasSeconds ? parts[3] : parts[2];
+	const month = hasSeconds ? parts[4] : parts[3];
+	const dayOfWeek = hasSeconds ? parts[5] : parts[4];
+	if (!second || !minute || !hour || !dayOfMonth || !month || !dayOfWeek) {
+		throw new Error("Expected 5-field cron or 6-field cron with seconds");
 	}
 	return {
+		second: parseCronField(second, 0, 59),
 		minute: parseCronField(minute, 0, 59),
 		hour: parseCronField(hour, 0, 23),
 		dayOfMonth: parseCronField(dayOfMonth, 1, 31),
 		month: parseCronField(month, 1, 12),
 		dayOfWeek: parseCronField(dayOfWeek, 0, 7, true),
+		hasSeconds,
 	};
 }
 
@@ -209,6 +215,7 @@ function fieldMatches(field: CronField, value: number): boolean {
 }
 
 function scheduleMatches(schedule: CronSchedule, date: Date): boolean {
+	if (!fieldMatches(schedule.second, date.getSeconds())) return false;
 	if (!fieldMatches(schedule.minute, date.getMinutes())) return false;
 	if (!fieldMatches(schedule.hour, date.getHours())) return false;
 	if (!fieldMatches(schedule.month, date.getMonth() + 1)) return false;
@@ -223,12 +230,20 @@ function scheduleMatches(schedule: CronSchedule, date: Date): boolean {
 
 function nextRunAt(cron: string, afterMs: number): number {
 	const schedule = parseCron(cron);
-	const candidate = new Date(afterMs + 60_000);
-	candidate.setSeconds(0, 0);
+	const candidate = new Date(afterMs + (schedule.hasSeconds ? 1_000 : 60_000));
+	if (schedule.hasSeconds) {
+		candidate.setMilliseconds(0);
+	} else {
+		candidate.setSeconds(0, 0);
+	}
 	const deadline = afterMs + 370 * 24 * 60 * 60 * 1000;
 	while (candidate.getTime() <= deadline) {
 		if (scheduleMatches(schedule, candidate)) return candidate.getTime();
-		candidate.setMinutes(candidate.getMinutes() + 1);
+		if (schedule.hasSeconds) {
+			candidate.setSeconds(candidate.getSeconds() + 1);
+		} else {
+			candidate.setMinutes(candidate.getMinutes() + 1);
+		}
 	}
 	throw new Error("Cron expression has no matching time in the next year");
 }
@@ -300,6 +315,9 @@ function buildTask(cron: string, prompt: string, recurring: boolean, source: Tas
 
 function candidateIntervals(): IntervalPlan[] {
 	const plans: IntervalPlan[] = [];
+	for (const second of [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30]) {
+		plans.push({ cron: `*/${second} * * * * *`, label: `${second}s` });
+	}
 	for (const minute of [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30]) {
 		plans.push({ cron: `*/${minute} * * * *`, label: `${minute}m` });
 	}
@@ -309,37 +327,38 @@ function candidateIntervals(): IntervalPlan[] {
 	return plans;
 }
 
-function labelMinutes(label: string): number {
+function labelSeconds(label: string): number {
 	const unit = label.slice(-1);
 	const amount = Number(label.slice(0, -1));
-	if (unit === "m") return amount;
-	if (unit === "h") return amount * 60;
-	return amount * 24 * 60;
+	if (unit === "s") return amount;
+	if (unit === "m") return amount * 60;
+	if (unit === "h") return amount * 60 * 60;
+	return amount * 24 * 60 * 60;
 }
 
-function intervalMinutes(amountRaw: string, unitRaw: string): number {
+function intervalSeconds(amountRaw: string, unitRaw: string): number {
 	const amount = Number(amountRaw);
 	if (!Number.isInteger(amount) || amount <= 0) throw new Error(`Invalid interval: ${amountRaw}${unitRaw}`);
 	const unit = unitRaw.toLowerCase();
-	if (unit.startsWith("s")) return Math.max(1, Math.ceil(amount / 60));
-	if (unit.startsWith("m")) return amount;
-	if (unit.startsWith("h")) return amount * 60;
-	if (unit.startsWith("d")) return amount * 24 * 60;
+	if (unit.startsWith("s")) return amount;
+	if (unit.startsWith("m")) return amount * 60;
+	if (unit.startsWith("h")) return amount * 60 * 60;
+	if (unit.startsWith("d")) return amount * 24 * 60 * 60;
 	throw new Error(`Invalid interval unit: ${unitRaw}`);
 }
 
 function intervalToCron(amountRaw: string, unitRaw: string): IntervalPlan {
-	const minutes = intervalMinutes(amountRaw, unitRaw);
+	const seconds = intervalSeconds(amountRaw, unitRaw);
 	const plans = candidateIntervals();
 	let best = plans[0];
 	for (const plan of plans) {
-		if (!best || Math.abs(labelMinutes(plan.label) - minutes) < Math.abs(labelMinutes(best.label) - minutes)) {
+		if (!best || Math.abs(labelSeconds(plan.label) - seconds) < Math.abs(labelSeconds(best.label) - seconds)) {
 			best = plan;
 		}
 	}
 	if (!best) throw new Error("No interval candidates available");
 	const requested = `${amountRaw}${unitRaw}`;
-	const note = labelMinutes(best.label) === minutes ? undefined : `Rounded ${requested} to ${best.label}.`;
+	const note = labelSeconds(best.label) === seconds ? undefined : `Rounded ${requested} to ${best.label}.`;
 	return { ...best, note };
 }
 
@@ -503,14 +522,14 @@ export default function scheduledTasksExtension(pi: ExtensionAPI): void {
 	pi.registerTool({
 		name: "cron_create",
 		label: "CronCreate",
-		description: "Schedule a session-scoped prompt. Accepts a standard 5-field cron expression, prompt, and recurring flag. Tasks require pi to stay open and idle to fire.",
-		promptSnippet: "Schedule a session-scoped prompt using a 5-field cron expression",
+		description: "Schedule a session-scoped prompt. Accepts a 5-field cron expression or a 6-field cron expression with seconds, prompt, and recurring flag. Tasks require pi to stay open and idle to fire.",
+		promptSnippet: "Schedule a session-scoped prompt using a 5-field cron expression or 6-field expression with seconds",
 		promptGuidelines: [
 			"Use cron_create when the user asks to remind them later, poll something, check back at a time, or schedule repeated work in this pi session.",
-			"cron_create times use local timezone and 5-field cron syntax: minute hour day-of-month month day-of-week.",
+			"cron_create times use local timezone and 5-field cron syntax: minute hour day-of-month month day-of-week, or 6-field syntax: second minute hour day-of-month month day-of-week.",
 		],
 		parameters: Type.Object({
-			cron: Type.String({ description: "5-field cron expression: minute hour day-of-month month day-of-week" }),
+			cron: Type.String({ description: "5-field cron expression, or 6-field with seconds: second minute hour day-of-month month day-of-week" }),
 			prompt: Type.String({ description: "Prompt to send when the task fires" }),
 			recurring: Type.Boolean({ description: "true for repeated tasks, false for one-shot reminders" }),
 		}),
@@ -580,7 +599,7 @@ export default function scheduledTasksExtension(pi: ExtensionAPI): void {
 	});
 
 	pi.registerCommand("cron", {
-		description: "Manage scheduled tasks. Usage: /cron list | /cron clear | /cron delete <id> | /cron create <5-field cron> once|recurring <prompt>",
+		description: "Manage scheduled tasks. Usage: /cron list | /cron clear | /cron delete <id> | /cron create <5-or-6-field cron> once|recurring <prompt>",
 		handler: async (args, ctx) => {
 			const trimmed = args?.trim() || "list";
 			const parts = trimmed.split(/\s+/);
@@ -604,16 +623,18 @@ export default function scheduledTasksExtension(pi: ExtensionAPI): void {
 					return;
 				}
 				if (action === "create") {
-					const cronParts = parts.slice(1, 6);
-					if (cronParts.length !== 5) throw new Error("create requires 5 cron fields");
-					const recurrence = parts[6];
+					const recurrenceIndex = parts.findIndex((part, index) => index > 0 && (part === "once" || part === "recurring"));
+					if (recurrenceIndex === -1) throw new Error("use once or recurring after cron expression");
+					const cronParts = parts.slice(1, recurrenceIndex);
+					if (cronParts.length !== 5 && cronParts.length !== 6) throw new Error("create requires 5 cron fields, or 6 fields with seconds");
+					const recurrence = parts[recurrenceIndex];
 					if (recurrence !== "once" && recurrence !== "recurring") throw new Error("use once or recurring after cron expression");
-					const prompt = parts.slice(7).join(" ").trim();
+					const prompt = parts.slice(recurrenceIndex + 1).join(" ").trim();
 					const task = addTask(buildTask(cronParts.join(" "), prompt, recurrence === "recurring", "command"), ctx);
 					ctx.ui.notify(`Created ${task.id}`, "info");
 					return;
 				}
-				ctx.ui.notify("Usage: /cron list | /cron clear | /cron delete <id> | /cron create <5-field cron> once|recurring <prompt>", "warning");
+				ctx.ui.notify("Usage: /cron list | /cron clear | /cron delete <id> | /cron create <5-or-6-field cron> once|recurring <prompt>", "warning");
 			} catch (error) {
 				const message = error instanceof Error ? error.message : String(error);
 				ctx.ui.notify(`Cron error: ${message}`, "error");
