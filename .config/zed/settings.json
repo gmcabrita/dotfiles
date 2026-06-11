@@ -53,13 +53,15 @@
     "button": false,
     "inline_assistant_model": {
       "provider": "openai",
-      "model": "gpt-5.4",
-      "effort": "xhigh",
+      "model": "gpt-5.5",
+      "effort": "high",
+      "speed": "fast",
     },
     "default_model": {
       "provider": "openai",
-      "model": "gpt-5.4",
-      "effort": "xhigh",
+      "model": "gpt-5.5",
+      "effort": "high",
+      "speed": "fast",
     },
   },
   "terminal": {
