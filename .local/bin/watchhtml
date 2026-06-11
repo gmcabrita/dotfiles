@@ -86,7 +86,7 @@ trap cleanup EXIT INT TERM
 
 fetch_body() {
     # stdout: body
-    curl-impersonate --compressed --impersonate "chrome142" --cookie "" -fsS --max-time "$TIMEOUT" -L "$URL" | xmllint --html --format --recover --xpath '//body//*[not(self::script or self::style)]/text() | //body/text()' - 2>/dev/null
+    curl-impersonate --compressed --impersonate "chrome146" --cookie "" -fsS --max-time "$TIMEOUT" -L "$URL" | xmllint --html --format --recover --xpath '//body//*[not(self::script or self::style)]/text() | //body/text()' - 2>/dev/null
 }
 
 hash_of() {
