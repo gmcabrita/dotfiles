@@ -129,3 +129,6 @@
   - `git pull origin`
   - `zig build install -Doptimize=ReleaseFast --prefix $HOME/.local`
 - Balance Lock
+- App Store
+  - https://apps.apple.com/pt/app/actions/id1586435171
+  - https://apps.apple.com/pt/app/ai-actions-for-shortcuts/id6465250302
