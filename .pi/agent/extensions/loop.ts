@@ -580,7 +580,7 @@ export default function scheduledTasksExtension(pi: ExtensionAPI): void {
 	});
 
 	pi.registerCommand("cron", {
-		description: "Manage scheduled tasks. Usage: /cron list | /cron delete <id> | /cron create <5-field cron> once|recurring <prompt>",
+		description: "Manage scheduled tasks. Usage: /cron list | /cron clear | /cron delete <id> | /cron create <5-field cron> once|recurring <prompt>",
 		handler: async (args, ctx) => {
 			const trimmed = args?.trim() || "list";
 			const parts = trimmed.split(/\s+/);
@@ -597,6 +597,12 @@ export default function scheduledTasksExtension(pi: ExtensionAPI): void {
 					ctx.ui.notify(deleted ? `Deleted ${deleted.id}` : `No task ${id}`, deleted ? "info" : "warning");
 					return;
 				}
+				if (action === "clear") {
+					const count = tasks.length;
+					setTasks([], ctx);
+					ctx.ui.notify(count === 0 ? "No scheduled tasks." : `Cleared ${count} scheduled task${count === 1 ? "" : "s"}.`, "info");
+					return;
+				}
 				if (action === "create") {
 					const cronParts = parts.slice(1, 6);
 					if (cronParts.length !== 5) throw new Error("create requires 5 cron fields");
@@ -607,7 +613,7 @@ export default function scheduledTasksExtension(pi: ExtensionAPI): void {
 					ctx.ui.notify(`Created ${task.id}`, "info");
 					return;
 				}
-				ctx.ui.notify("Usage: /cron list | /cron delete <id> | /cron create <5-field cron> once|recurring <prompt>", "warning");
+				ctx.ui.notify("Usage: /cron list | /cron clear | /cron delete <id> | /cron create <5-field cron> once|recurring <prompt>", "warning");
 			} catch (error) {
 				const message = error instanceof Error ? error.message : String(error);
 				ctx.ui.notify(`Cron error: ${message}`, "error");
