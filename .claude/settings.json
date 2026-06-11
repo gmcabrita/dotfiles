@@ -1,6 +1,7 @@
 {
   "permissions": {
-    "deny": ["Read(.dev.vars)", "Read(.envrc)", "Read(.env.local)", "Read(.env)"]
+    "deny": ["Read(.dev.vars)", "Read(.envrc)", "Read(.env.local)", "Read(.env)"],
+    "defaultMode": "bypassPermissions"
   },
   "hooks": {
     "Stop": [
@@ -28,6 +29,5 @@
     "enabled": false
   },
   "skipDangerousModePermissionPrompt": true,
-  "defaultMode": "bypassPermissions",
   "model": "claude-fable-5"
 }
