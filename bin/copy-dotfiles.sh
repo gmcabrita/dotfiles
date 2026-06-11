@@ -30,6 +30,9 @@ rsync -a ".agents/" "$HOME/.agents/"
 mkdir -p "$HOME/.codex"
 rsync -a ".codex/" "$HOME/.codex/"
 
+mkdir -p "$HOME/.claude"
+rsync -a ".claude/" "$HOME/.claude/"
+
 mkdir -p "$HOME/.codiff"
 rsync -a ".codiff/" "$HOME/.codiff/"
 
