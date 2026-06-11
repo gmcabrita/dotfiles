@@ -30,7 +30,6 @@ SYNC_EXTENSIONS=(
   "context.ts"
   "control.ts"
   "goal.ts"
-  "loop.ts"
   "multi-edit.ts"
   "review.ts"
   "session-breakdown.ts"
