@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Defaults
+URL=""
+INTERVAL=30
+TIMEOUT=15
+
+usage() {
+    cat <<'EOF'
+Usage:
+    watchnoerror <URL> [--interval|-i SECONDS] [--timeout|-t SECONDS]
+
+Examples:
+    watchnoerror "https://example.com/page"
+    watchnoerror "https://example.com/page" --interval 10 --timeout 8
+EOF
+}
+
+# Parse argv
+if [[ $# -eq 0 ]]; then
+    usage >&2
+    exit 1
+fi
+
+# First non-flag argument is URL
+while (( $# > 0 )); do
+    case "$1" in
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -i|--interval)
+            shift
+            [[ $# -gt 0 ]] || { echo "Missing value for --interval" >&2; exit 2; }
+            INTERVAL="$1"
+            ;;
+        -t|--timeout)
+            shift
+            [[ $# -gt 0 ]] || { echo "Missing value for --timeout" >&2; exit 2; }
+            TIMEOUT="$1"
+            ;;
+        --) # explicit end of flags
+            shift
+            break
+            ;;
+        -*)
+            echo "Unknown option: $1" >&2
+            usage >&2
+            exit 2
+            ;;
+        *)
+            # First positional -> URL
+            if [[ -z "$URL" ]]; then
+                URL="$1"
+            else
+                echo "Unexpected positional argument: $1" >&2
+                usage >&2
+                exit 2
+            fi
+            ;;
+    esac
+    shift
+done
+
+# If something remains after --, treat first as URL if not set
+if [[ -z "$URL" && $# -gt 0 ]]; then
+    URL="$1"
+    shift
+fi
+
+if [[ -z "$URL" ]]; then
+    echo "URL is required." >&2
+    usage >&2
+    exit 2
+fi
+
+fetch_status() {
+    curl-impersonate --compressed --impersonate "chrome146" --cookie "" -sS -o /dev/null -w '%{http_code}' --max-time "$TIMEOUT" -L "$URL"
+}
+
+is_http_error() {
+    local status="$1"
+
+    [[ "$status" =~ ^[45][0-9][0-9]$ ]]
+}
+
+alert_until_ack() {
+    (
+        while true; do
+            say "stopped erroring" -v zarvox &
+            SAY_PID=$!
+            if read -t 2 -r; then
+                kill $SAY_PID 2>/dev/null || true
+                wait $SAY_PID 2>/dev/null || true
+                break
+            fi
+            wait $SAY_PID 2>/dev/null || true
+        done
+    ) 2>/dev/null
+}
+
+attempt=1
+
+echo "Watching: $URL"
+echo "Interval: ${INTERVAL}s, Timeout: ${TIMEOUT}s"
+
+while true; do
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+
+    if ! status=$(fetch_status); then
+        echo "[$timestamp] Attempt $attempt: fetch failed; retrying in ${INTERVAL}s..." >&2
+        sleep "$INTERVAL"
+        attempt=$((attempt + 1))
+        continue
+    fi
+
+    if is_http_error "$status"; then
+        echo "[$timestamp] Attempt $attempt: HTTP $status; retrying in ${INTERVAL}s..."
+        sleep "$INTERVAL"
+        attempt=$((attempt + 1))
+        continue
+    fi
+
+    echo "[$timestamp] Attempt $attempt: HTTP $status; stopped erroring."
+    alert_until_ack
+    break
+done
