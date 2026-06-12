@@ -6,14 +6,17 @@ set -euo pipefail
 URL=""
 INTERVAL=30
 TIMEOUT=15
+ALERT_MESSAGE="change detected"
+ALERT_MESSAGE_SET=0
 
 usage() {
     cat <<'EOF'
 Usage:
-    watchhtml <URL> [--interval|-i SECONDS] [--timeout|-t SECONDS] [--cmd|-c "COMMAND ..."]
+    watchhtml <URL> [ALERT_MESSAGE] [--interval|-i SECONDS] [--timeout|-t SECONDS] [--message|-m TEXT]
 
 Examples:
     watchhtml "https://example.com/page"
+    watchhtml "https://example.com/page" "site changed"
     watchhtml "https://example.com/page" --interval 10 --timeout 8
 EOF
 }
@@ -41,6 +44,12 @@ while (( $# > 0 )); do
             [[ $# -gt 0 ]] || { echo "Missing value for --timeout" >&2; exit 2; }
             TIMEOUT="$1"
             ;;
+        -m|--message)
+            shift
+            [[ $# -gt 0 ]] || { echo "Missing value for --message" >&2; exit 2; }
+            ALERT_MESSAGE="$1"
+            ALERT_MESSAGE_SET=1
+            ;;
         --) # explicit end of flags
             shift
             break
@@ -54,6 +63,9 @@ while (( $# > 0 )); do
             # First positional -> URL
             if [[ -z "$URL" ]]; then
                 URL="$1"
+            elif [[ "$ALERT_MESSAGE_SET" -eq 0 ]]; then
+                ALERT_MESSAGE="$1"
+                ALERT_MESSAGE_SET=1
             else
                 echo "Unexpected positional argument: $1" >&2
                 usage >&2
@@ -68,6 +80,18 @@ done
 if [[ -z "$URL" && $# -gt 0 ]]; then
     URL="$1"
     shift
+fi
+
+if [[ "$ALERT_MESSAGE_SET" -eq 0 && $# -gt 0 ]]; then
+    ALERT_MESSAGE="$1"
+    ALERT_MESSAGE_SET=1
+    shift
+fi
+
+if [[ $# -gt 0 ]]; then
+    echo "Unexpected positional argument: $1" >&2
+    usage >&2
+    exit 2
 fi
 
 if [[ -z "$URL" ]]; then
@@ -137,7 +161,7 @@ while true; do
         # Loop the alert until user presses Enter or kills the script
         (
             while true; do
-                say "change detected" -v zarvox &
+                say "$ALERT_MESSAGE" -v zarvox &
                 SAY_PID=$!
                 if read -t 2 -r; then
                     kill $SAY_PID 2>/dev/null || true
