@@ -77,7 +77,7 @@ if [[ -z "$URL" ]]; then
 fi
 
 fetch_status() {
-    curl-impersonate --compressed --impersonate "chrome146" --cookie "" -sS -o /dev/null -w '%{http_code}' --max-time "$TIMEOUT" -L "$URL"
+    curl-impersonate --compressed --impersonate "chrome146" -H 'Cache-Control: no-cache' --cookie "" -sS -o /dev/null -w '%{http_code}' --max-time "$TIMEOUT" -L "$URL"
 }
 
 is_http_error() {
