@@ -1,0 +1,171 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Defaults
+URL=""
+NEEDLE=""
+INTERVAL=30
+TIMEOUT=15
+ALERT_MESSAGE="string found"
+ALERT_MESSAGE_SET=0
+
+usage() {
+    cat <<'EOF'
+Usage:
+    watchbody <URL> <STRING> [ALERT_MESSAGE] [--interval|-i SECONDS] [--timeout|-t SECONDS] [--message|-m TEXT]
+
+Examples:
+    watchbody "https://example.com/page" "ready"
+    watchbody "https://example.com/page" "ready" "page ready"
+    watchbody "https://example.com/page" "ready" --interval 10 --timeout 8
+EOF
+}
+
+# Parse argv
+if [[ $# -eq 0 ]]; then
+    usage >&2
+    exit 1
+fi
+
+# Positional arguments are URL, search string, then optional alert message.
+while (( $# > 0 )); do
+    case "$1" in
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -i|--interval)
+            shift
+            [[ $# -gt 0 ]] || { echo "Missing value for --interval" >&2; exit 2; }
+            INTERVAL="$1"
+            ;;
+        -t|--timeout)
+            shift
+            [[ $# -gt 0 ]] || { echo "Missing value for --timeout" >&2; exit 2; }
+            TIMEOUT="$1"
+            ;;
+        -m|--message)
+            shift
+            [[ $# -gt 0 ]] || { echo "Missing value for --message" >&2; exit 2; }
+            ALERT_MESSAGE="$1"
+            ALERT_MESSAGE_SET=1
+            ;;
+        --)
+            shift
+            break
+            ;;
+        -*)
+            echo "Unknown option: $1" >&2
+            usage >&2
+            exit 2
+            ;;
+        *)
+            if [[ -z "$URL" ]]; then
+                URL="$1"
+            elif [[ -z "$NEEDLE" ]]; then
+                NEEDLE="$1"
+            elif [[ "$ALERT_MESSAGE_SET" -eq 0 ]]; then
+                ALERT_MESSAGE="$1"
+                ALERT_MESSAGE_SET=1
+            else
+                echo "Unexpected positional argument: $1" >&2
+                usage >&2
+                exit 2
+            fi
+            ;;
+    esac
+    shift
+done
+
+# If something remains after --, continue positional parsing.
+if [[ -z "$URL" && $# -gt 0 ]]; then
+    URL="$1"
+    shift
+fi
+
+if [[ -z "$NEEDLE" && $# -gt 0 ]]; then
+    NEEDLE="$1"
+    shift
+fi
+
+if [[ "$ALERT_MESSAGE_SET" -eq 0 && $# -gt 0 ]]; then
+    ALERT_MESSAGE="$1"
+    ALERT_MESSAGE_SET=1
+    shift
+fi
+
+if [[ $# -gt 0 ]]; then
+    echo "Unexpected positional argument: $1" >&2
+    usage >&2
+    exit 2
+fi
+
+if [[ -z "$URL" ]]; then
+    echo "URL is required." >&2
+    usage >&2
+    exit 2
+fi
+
+if [[ -z "$NEEDLE" ]]; then
+    echo "STRING is required." >&2
+    usage >&2
+    exit 2
+fi
+
+BODY_FILE="$(mktemp -t body.XXXXXX)"
+cleanup() {
+    rm -f -- "$BODY_FILE"
+}
+trap cleanup EXIT INT TERM
+
+fetch_body() {
+    curl-impersonate --compressed --impersonate "chrome146" -H 'Cache-Control: no-cache' --cookie "" -fsS --max-time "$TIMEOUT" -L "$URL"
+}
+
+body_contains_needle() {
+    grep -qiF -- "$NEEDLE" "$BODY_FILE"
+}
+
+alert_until_ack() {
+    (
+        while true; do
+            say "$ALERT_MESSAGE" -v zarvox &
+            SAY_PID=$!
+            if read -t 2 -r; then
+                kill $SAY_PID 2>/dev/null || true
+                wait $SAY_PID 2>/dev/null || true
+                break
+            fi
+            wait $SAY_PID 2>/dev/null || true
+        done
+    ) 2>/dev/null
+}
+
+attempt=1
+
+echo "Watching: $URL"
+echo "Needle: $NEEDLE"
+echo "Interval: ${INTERVAL}s, Timeout: ${TIMEOUT}s"
+
+while true; do
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+
+    if ! fetch_body > "$BODY_FILE"; then
+        echo "[$timestamp] Attempt $attempt: fetch failed; retrying in ${INTERVAL}s..." >&2
+        sleep "$INTERVAL"
+        attempt=$((attempt + 1))
+        continue
+    fi
+
+    if body_contains_needle; then
+        echo "[$timestamp] Attempt $attempt: string found."
+        grep -iinF -C 2 -- "$NEEDLE" "$BODY_FILE" || true
+        alert_until_ack
+        break
+    fi
+
+    echo "[$timestamp] Attempt $attempt: string not found; retrying in ${INTERVAL}s..."
+    sleep "$INTERVAL"
+    attempt=$((attempt + 1))
+done
