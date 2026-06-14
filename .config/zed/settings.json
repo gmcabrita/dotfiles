@@ -16,9 +16,6 @@
   "outline_panel": {
     "button": false,
   },
-  "notification_panel": {
-    "button": false,
-  },
   "collaboration_panel": {
     "button": false,
   },
@@ -129,7 +126,6 @@
   "edit_predictions": {
     "provider": "copilot",
     "mode": "subtle",
-    "enabled_in_text_threads": false,
   },
   "show_completions_on_input": true,
   "show_completion_documentation": true,
@@ -149,14 +145,11 @@
     "basher": true,
     "docker-compose": true,
     "dockerfile": true,
-    "elixir": true,
-    "erlang": true,
     "ghostty": true,
     "git-firefly": true,
     "html": true,
     "just": true,
     "make": true,
-    "nginx": true,
     "proto": true,
     "ruby": true,
     "scss": true,
