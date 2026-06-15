@@ -1,5 +1,6 @@
 {
   "modelRecommendations": "https://repoprompt.com/docs#s=workflows&ss=model-recommendations",
+  "packages": ["npm:@ff-labs/pi-fff"],
   "startup": {
     "model": "gpt-5.5",
     "provider": "openai",
