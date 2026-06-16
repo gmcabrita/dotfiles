@@ -8,7 +8,7 @@
     "@earendil-works/pi-coding-agent": "^0.79.4",
     "@earendil-works/pi-tui": "^0.79.4",
     "diff": "^9.0.0",
-    "typebox": "^1.2.9"
+    "typebox": "^1.2.11"
   },
   "peerDependencies": {
     "typescript": "^5"
