@@ -72,6 +72,7 @@ defaults write com.apple.dock autohide-delay -int 1000
 defaults write com.apple.dock autohide-time-modifier -float 0
 defaults write com.apple.Accessibility ReduceMotionEnabled -bool true
 defaults write com.apple.universalaccess reduceMotion -bool true
+defaults write com.apple.WindowManager AnimationSpeed -float 5.0
 
 # Enable full keyboard access for all controls (Accessibility pane)
 defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
