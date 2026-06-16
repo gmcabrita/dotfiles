@@ -259,6 +259,7 @@ alias rmtmp='rm -rf /tmp/$$'
 alias tree='tree -C'
 alias pager='less -cRS'
 alias code="zed"
+alias pisafe='pi --tools read,grep,find,ls,ffgrep,fffind'
 
 alias marked="open -a Marked"
 
