@@ -17,3 +17,4 @@ scripts/ralph/**
 .opencode/**
 __pycache__
 .pi/todos/**
+.rayignore

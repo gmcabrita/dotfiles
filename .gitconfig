@@ -79,6 +79,24 @@
   # Quick switch
   sw = switch
 
+  # Quick worktree
+  w = worktree
+  wt = worktree
+  wa = worktree add
+  wad = 
+  wl = worktree list
+  wlo = worktree lock
+  wlk = worktree lock
+  wm = worktree move
+  wp = worktree prune
+  wr = worktree remove
+  wre = worktree repair
+  wrp = worktree repair
+  wu = worktree unlock
+  wulk = worktree unlock
+  wun = worktree unlock
+  wunlk = worktree unlock
+
   maincheckout = "!f() { if [ -n \"$(git status --porcelain)\" ]; then echo \"Error: You have uncommitted changes, discard or stash them first.\"; exit 1; fi; git checkout $(git symbolic-ref refs/remotes/origin/HEAD | sed \"s@^refs/remotes/origin/@@\") && git checkout -b \"$1\"; }; f"
   mainco = maincheckout
   mco = maincheckout
@@ -197,6 +215,10 @@
   defaultBranch = main
 [credential "helperselector"]
   selected = manager-core
+
+[hook "copy-worktreeinclude"]
+  command = "$HOME/.local/bin/git-copy-worktreeinclude"
+  event = post-checkout
 
 # git 2.54 global hooks:
 # [hook "linter"]

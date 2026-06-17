@@ -3,6 +3,7 @@
 cp .hushlogin "$HOME/"
 cp .gitconfig "$HOME/"
 cp .gitignore "$HOME/"
+cp .worktreeinclude "$HOME/"
 cp .githelpers "$HOME/"
 cp .zshrc "$HOME/"
 cp .default-gems "$HOME/"

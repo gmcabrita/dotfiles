@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+
+MAIN_WORKTREE="$(
+  git worktree list --porcelain |
+    awk '/^worktree / { sub(/^worktree /, ""); print; exit }'
+)"
+
+[[ -n "$MAIN_WORKTREE" ]] || exit 0
+
+# Only act in linked worktrees, not main worktree.
+[[ "$ROOT" == "$MAIN_WORKTREE" ]] && exit 0
+
+copy_include() {
+  local include="$1"
+
+  [[ -f "$include" ]] || return 0
+
+  while IFS= read -r path || [[ -n "$path" ]]; do
+    path="${path%$'\r'}"
+
+    case "$path" in
+      ""|\#*) continue ;;
+      /*|../*|*/../*|..|*/..)
+        echo "skip invalid path: $path"
+        continue
+        ;;
+    esac
+
+    local from="$MAIN_WORKTREE/$path"
+    local to="$ROOT/$path"
+
+    [[ -e "$from" || -L "$from" ]] || continue
+
+    # Do not overwrite existing files/dirs/symlinks.
+    [[ ! -e "$to" && ! -L "$to" ]] || continue
+
+    mkdir -p "$(dirname "$to")"
+
+    if [[ -d "$from" && ! -L "$from" ]]; then
+      rsync -a "$from/" "$to/"
+    else
+      rsync -a "$from" "$to"
+    fi
+
+    echo "Copied $path"
+  done < "$include"
+}
+
+copy_include "$HOME/.worktreeinclude"
+copy_include "${XDG_CONFIG_HOME:-$HOME/.config}/git/worktreeinclude"
+copy_include "$MAIN_WORKTREE/.worktreeinclude"

@@ -531,5 +531,107 @@ function go() {
   return "$go_status"
 }
 
+_gw_worktrees() {
+  git worktree list --porcelain |
+    awk '/^worktree / { sub(/^worktree /, ""); print }'
+}
+
+_gw_state_dir() {
+  printf '%s\n' "${XDG_STATE_HOME:-$HOME/.local/state}/git-worktree-cd"
+}
+
+_gw_key() {
+  printf '%s' "$1" | shasum -a 256 | awk '{print $1}'
+}
+
+# git worktree add + cd into new worktree
+gwad() {
+  local origin before after dst rc state key
+
+  origin="$PWD"
+
+  before="$(mktemp)" || return
+  after="$(mktemp)" || {
+    rm -f "$before"
+    return 1
+  }
+
+  _gw_worktrees | sort > "$before" || {
+    rm -f "$before" "$after"
+    return 1
+  }
+
+  git worktree add "$@"
+  rc=$?
+
+  if [ "$rc" -ne 0 ]; then
+    rm -f "$before" "$after"
+    return "$rc"
+  fi
+
+  _gw_worktrees | sort > "$after" || {
+    rm -f "$before" "$after"
+    return 1
+  }
+
+  dst="$(comm -13 "$before" "$after" | head -n1)"
+
+  rm -f "$before" "$after"
+
+  if [ -z "$dst" ]; then
+    echo "gwad: could not detect new worktree" >&2
+    return 1
+  fi
+
+  state="$(_gw_state_dir)"
+  mkdir -p "$state" || return
+
+  key="$(_gw_key "$dst")"
+  printf '%s\n' "$origin" > "$state/$key" || return
+
+  cd "$dst" || return
+}
+
+# remove current worktree + return to dir where gwad was run
+gwrd() {
+  local root main state key target
+
+  root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+    echo "gwrd: not in a git worktree" >&2
+    return 1
+  }
+
+  main="$(_gw_worktrees | head -n1)"
+
+  if [ "$root" = "$main" ]; then
+    echo "gwrd: refusing to remove main worktree" >&2
+    return 1
+  fi
+
+  state="$(_gw_state_dir)"
+  key="$(_gw_key "$root")"
+
+  if [ -f "$state/$key" ]; then
+    IFS= read -r target < "$state/$key"
+  else
+    target="$main"
+  fi
+
+  [ -d "$target" ] || target="$main"
+
+  # Never return into the worktree being deleted.
+  case "$target/" in
+    "$root/"*) target="$main" ;;
+  esac
+
+  [ -d "$target" ] || target="$(dirname "$root")"
+
+  cd "$target" || return
+
+  git worktree remove "$@" "$root" || return
+
+  rm -f "$state/$key"
+}
+
 
 [[ $ZPROF == 1 ]] && zprof
