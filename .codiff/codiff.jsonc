@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/nkzw-tech/codiff/main/src/config/codiff-config.schema.json",
+  "$schema": "https://raw.githubusercontent.com/nkzw-tech/codiff/main/core/config/codiff-config.schema.json",
   "keymap": {
     "closeSearch": "Escape",
     "commandBar": "Mod+k",
@@ -27,7 +27,6 @@
     "showOutdated": false,
     "showWhitespace": false,
     "theme": "system",
-    "walkthroughOrder": "keys",
     "wordWrap": false,
   },
 }
