@@ -258,6 +258,52 @@ This converts barrel imports like `import { A, B } from './module'` into individ
 
 ## ast-grep CLI Commands
 
+### Outline Code Structure (sg outline, ast-grep >= 0.44.0)
+
+Use `sg outline` as a cheap first pass over unfamiliar code before reading full files. It extracts file/module structure through ast-grep/tree-sitter and returns precise ranges for imports, exports, top-level symbols, and direct members.
+
+```bash
+sg outline [OPTIONS] [PATHS]...
+```
+
+**Availability:** `outline` is expected in ast-grep `0.44.0`. Check `sg --version` before relying on it.
+
+**Defaults:**
+
+- File/stdin input: `--items structure --view digest` (local structure, compact member digests)
+- Directory input: `--items exports --view names` (public surface scan)
+- Mixed file + directory input uses directory defaults
+
+**Useful options:**
+
+- `--items <auto|structure|exports|imports|all>`: choose top-level items
+- `--view <auto|names|signatures|digest|expanded>`: control text detail
+- `--type <TYPE[,TYPE...]>`: filter top-level LSP-style symbol types, e.g. `class,function,struct`
+- `--match <REGEX>`: filter top-level item names/signatures/source lines
+- `--pub-members`: show only public members in member views
+- `--json[=pretty|compact|stream]`: structured output for scripts/agents
+- `--lang <LANG> --stdin`: outline stdin input
+
+**Agent workflow examples:**
+
+```bash
+# Understand a file before reading implementation
+sg outline src/parser.ts
+sg outline src/parser.ts --items imports
+sg outline src/parser.ts --items exports
+
+# Scan public API of a subtree
+sg outline src --items exports --view names
+
+# Inspect a parent symbol and direct members
+sg outline src/parser.ts --match Parser --type class --view expanded
+
+# Build machine-readable symbol inventory
+sg outline src --json=stream
+```
+
+Use `outline` for navigation and structural summaries. Use `run`/`scan` for actual pattern matching, lint-like rule evaluation, or rewrites.
+
 ### Inspect Code Structure (--debug-query)
 
 Dump the AST structure to understand how code is parsed:
