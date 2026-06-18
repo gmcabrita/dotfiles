@@ -423,6 +423,10 @@ function update-everything() {
   brew upgrade
   update-programming-languages
   pi update --extensions
+  echo "If pi extension update failed, review with:"
+  echo "sfw npm --prefix ~/.pi/agent/npm approve-scripts --allow-scripts-pending"
+  echo "Then approve and re-run update:"
+  echo "sfw npm --prefix ~/.pi/agent/npm approve-scripts --all && pi update --extensions"
   rm -f ~/.cache/macos_sdk_path
 
   echo "Remember that these exist:"
