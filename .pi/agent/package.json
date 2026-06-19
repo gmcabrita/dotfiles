@@ -3,10 +3,10 @@
   "type": "module",
   "private": true,
   "dependencies": {
-    "@earendil-works/pi-agent-core": "^0.79.7",
-    "@earendil-works/pi-ai": "^0.79.7",
-    "@earendil-works/pi-coding-agent": "^0.79.7",
-    "@earendil-works/pi-tui": "^0.79.7",
+    "@earendil-works/pi-agent-core": "^0.79.8",
+    "@earendil-works/pi-ai": "^0.79.8",
+    "@earendil-works/pi-coding-agent": "^0.79.8",
+    "@earendil-works/pi-tui": "^0.79.8",
     "diff": "^9.0.0",
     "typebox": "^1.2.16"
   },

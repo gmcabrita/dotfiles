@@ -417,16 +417,38 @@ function pvr() {
   command pv -btrpg --buffer-size 1024 -u shaded "$@"
 }
 
+function pi-update-ext() {
+  local tmp exitcode
+  tmp="$(mktemp)" || return 1
+
+  pi update --extensions >"$tmp" 2>&1
+  exitcode=$?
+  cat "$tmp"
+
+  if grep -q "allow-scripts" "$tmp"; then
+    echo
+    gum style --foreground 214 "pending npm scripts"
+    sfw npm --prefix ~/.pi/agent/npm approve-scripts --allow-scripts-pending
+
+    if gum confirm "Run approve-scripts --all and re-run pi update --extensions?"; then
+      sfw npm --prefix ~/.pi/agent/npm approve-scripts --all
+      pi update --extensions
+      exitcode=$?
+    else
+      gum style --foreground 244 "skipped"
+    fi
+  fi
+
+  rm -f "$tmp"
+  return "$exitcode"
+}
+
 function update-everything() {
   brew update
   brew bundle install --force-cleanup --file=~/.config/Brewfile
   brew upgrade
   update-programming-languages
-  pi update --extensions
-  echo "If pi extension update failed, review with:"
-  echo "sfw npm --prefix ~/.pi/agent/npm approve-scripts --allow-scripts-pending"
-  echo "Then approve and re-run update:"
-  echo "sfw npm --prefix ~/.pi/agent/npm approve-scripts --all && pi update --extensions"
+  pi-update-ext
   rm -f ~/.cache/macos_sdk_path
 
   echo "Remember that these exist:"
