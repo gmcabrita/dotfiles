@@ -26,7 +26,7 @@ check_gcp_auth() {
   exit_code=$(
     set +e
 
-    output=$(expect << 'EOF'
+    expect << 'EOF' >/dev/null
       spawn gcloud auth print-identity-token
       expect {
         "Reauthentication required." { exit 4 }
@@ -35,12 +35,11 @@ check_gcp_auth() {
       foreach {pid spawnid os_error_flag exit_status} [wait] break
       exit $exit_status
 EOF
-    )
 
     echo $?
   )
 
-  if [ $exit_code -ne 0 ]; then
+  if [ "${exit_code}" -ne 0 ]; then
       gcloud auth login --update-adc
   fi
 }
@@ -50,17 +49,17 @@ log() {
 }
 
 help() {
-  echo "Run index_reindex_candidates.sql against production databases."
+  echo "Run btree_reindex_candidates.sql against production databases."
   echo ""
-  echo "Usage: index_reindex_candidates_ampledash [<connection-name>|<database> ...]"
-  echo "       index_reindex_candidates_ampledash < targets.txt"
+  echo "Usage: btree_reindex_candidates_ampledash [<connection-name>|<database> ...]"
+  echo "       btree_reindex_candidates_ampledash < targets.txt"
   echo ""
   echo "Targets: one per argument or stdin line, as <connection-name>|<database>."
   echo "Stdin lines may also use whitespace: <connection-name> <database>."
   echo "Blank stdin lines and lines starting with # are ignored."
   echo ""
   echo "Example:"
-  echo "  index_reindex_candidates_ampledash 'connection-name|database_name'"
+  echo "  btree_reindex_candidates_ampledash 'connection-name|database_name'"
   echo ""
   echo "Options:"
   echo "  -h, --help  Show this help"
@@ -160,7 +159,7 @@ run_query() {
 
   log "Running query on ${label} (can take several minutes on large databases)..."
 
-  PGOPTIONS='-c application_name=index_reindex_candidates' \
+  PGOPTIONS='-c application_name=btree_reindex_candidates' \
     psql --csv "${psql_base_args[@]}" "${psql_conn}" -f "${SQL_FILE}" \
     | awk -v db="${label}" '
         BEGIN { FS = "," }
@@ -169,8 +168,8 @@ run_query() {
             return substr(value, 2, length(value) - 2)
           return value
         }
-        NF >= 10 {
-          printf "%s,%s,%s,%s,%s,%s\n", db, unquote($3), unquote($4), unquote($9), unquote($10), unquote($5)
+        NF >= 8 {
+          printf "%s,%s,%s,%s,%s,%s\n", db, unquote($1), unquote($2), unquote($7), unquote($8), unquote($3)
         }'
 }
 
