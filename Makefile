@@ -22,6 +22,7 @@ update:
 		./bin/update-database-skills.sh \
 		./bin/update-emilkowalski-design-skills.sh \
 		./bin/update-hegel-skills.sh \
+		./bin/update-cursor-skills.sh \
 		./bin/update-mitsuhiko-skills-and-pi-extensions.sh \
 		./bin/update-modern-go-skills.sh \
 		./bin/update-pi-autoresearch-skills-and-extensions.sh \
