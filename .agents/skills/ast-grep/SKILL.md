@@ -42,8 +42,8 @@ If searching for "async functions that use await", create a test file:
 ```javascript
 // test_example.js
 async function example() {
-	const result = await fetchData()
-	return result
+  const result = await fetchData();
+  return result;
 }
 ```
 
@@ -193,7 +193,7 @@ ast-grep preserves indentation in rewrites. If your fix template has indentation
 
 ```yaml
 rule:
-  pattern: '$B = lambda: $R'
+  pattern: "$B = lambda: $R"
 fix: |-
   def $B():
     return $R
@@ -210,8 +210,8 @@ rule:
     field: key
     regex: Remove
 fix:
-  template: ''
-  expandEnd: { regex: ',' } # Also deletes trailing comma
+  template: ""
+  expandEnd: { regex: "," } # Also deletes trailing comma
 ```
 
 This removes the matched node _plus_ any trailing comma.
@@ -258,15 +258,13 @@ This converts barrel imports like `import { A, B } from './module'` into individ
 
 ## ast-grep CLI Commands
 
-### Outline Code Structure (sg outline, ast-grep >= 0.44.0)
+### Outline Code Structure (sg outline)
 
 Use `sg outline` as a cheap first pass over unfamiliar code before reading full files. It extracts file/module structure through ast-grep/tree-sitter and returns precise ranges for imports, exports, top-level symbols, and direct members.
 
 ```bash
 sg outline [OPTIONS] [PATHS]...
 ```
-
-**Availability:** `outline` is expected in ast-grep `0.44.0`. Check `sg --version` before relying on it.
 
 **Defaults:**
 
