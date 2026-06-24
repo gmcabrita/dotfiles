@@ -572,9 +572,55 @@ _gw_key() {
 
 # git worktree add + cd into new worktree
 gwad() {
-  local origin before after dst rc state key
+  local origin before after dst rc state key branch arg i
+  local -a args positionals
 
   origin="$PWD"
+  args=("$@")
+  branch=""
+
+  i=1
+  while (( i <= $#args )); do
+    arg="${args[$i]}"
+
+    case "$arg" in
+      --)
+        (( i++ ))
+        while (( i <= $#args )); do
+          positionals+=("${args[$i]}")
+          (( i++ ))
+        done
+        break
+        ;;
+      -b|-B)
+        (( i++ ))
+        if (( i <= $#args )); then
+          branch="${args[$i]}"
+        fi
+        ;;
+      -b?*|-B?*)
+        branch="${arg[3,-1]}"
+        ;;
+      --reason)
+        (( i++ ))
+        ;;
+      --reason=*)
+        ;;
+      -*)
+        ;;
+      *)
+        positionals+=("$arg")
+        ;;
+    esac
+
+    (( i++ ))
+  done
+
+  if [[ -n "$branch" ]]; then
+    if (( $#positionals == 0 )) || { (( $#positionals == 1 )) && git rev-parse --verify --quiet "${positionals[1]}^{commit}" >/dev/null 2>&1; }; then
+      args=("../$branch" "$@")
+    fi
+  fi
 
   before="$(mktemp)" || return
   after="$(mktemp)" || {
@@ -587,7 +633,7 @@ gwad() {
     return 1
   }
 
-  git worktree add "$@"
+  git worktree add "${args[@]}"
   rc=$?
 
   if [ "$rc" -ne 0 ]; then
