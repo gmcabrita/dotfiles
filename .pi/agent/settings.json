@@ -14,8 +14,11 @@
   "enabledModels": [
     "openai-codex/gpt-5.5",
     "openai/gpt-5.5",
-    "deepseek/deepseek-v4-pro",
-    "deepseek/deepseek-v4-flash"
+    "openrouter/deepseek/deepseek-v4-pro",
+    "openrouter/deepseek/deepseek-v4-flash",
+    "openrouter/sakana/fugu-ultra",
+    "openrouter/x-ai/grok-build-0.1",
+    "openrouter/z-ai/glm-5.2"
   ],
   "enableInstallTelemetry": false,
   "hideThinkingBlock": true,
