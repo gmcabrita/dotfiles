@@ -11,6 +11,7 @@ brew "ast-grep"
 brew "autoconf"
 brew "bash"
 brew "blacktop/tap/ipsw", trusted: true
+brew "blacktop/tap/ipsw-frida", trusted: true
 brew "btop"
 brew "cloud-sql-proxy"
 brew "colordiff"
