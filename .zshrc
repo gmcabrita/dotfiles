@@ -527,6 +527,29 @@ function sound-prompt() {
   (afplay /System/Library/Sounds/Ping.aiff &>/dev/null &)
 }
 
+function gh() {
+  if [[ "${1:-}" == "run" && "${2:-}" == "watch" ]]; then
+    local -a gh_args
+    local i arg owner repo run_id
+    gh_args=("$@")
+
+    for (( i = 3; i <= $#; i++ )); do
+      arg="${gh_args[$i]}"
+      if [[ "$arg" =~ "^https://github\\.com/([^/]+)/([^/]+)/actions/runs/([0-9]+)([/?#].*)?$" ]]; then
+        owner="${match[1]}"
+        repo="${match[2]}"
+        run_id="${match[3]}"
+        gh_args[$i]="$run_id"
+
+        command gh run watch --repo "$owner/$repo" "${gh_args[@]:2}"
+        return $?
+      fi
+    done
+  fi
+
+  command gh "$@"
+}
+
 function zig-ast-check-all() {
   find . -name '.zig-cache' -prune -o -type f -name "*.zig" -exec zig ast-check {} \;
 }
