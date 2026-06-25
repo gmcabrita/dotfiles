@@ -15,7 +15,11 @@
     "openai-codex/gpt-5.5",
     "openai/gpt-5.5",
     "deepseek/deepseek-v4-pro",
-    "deepseek/deepseek-v4-flash"
+    "deepseek/deepseek-v4-flash",
+    "yunwu-ai-openai/gpt-5.5",
+    "yunwu-ai-openai/gpt-5.5-pro",
+    "yunwu-ai-anthropic/claude-opus-4-8",
+    "yunwu-ai-anthropic/claude-opus-4-7"
   ],
   "enableInstallTelemetry": false,
   "hideThinkingBlock": true,
