@@ -1,17 +1,16 @@
-tap "blacktop/tap"
-tap "nkzw-tech/tap"
-tap "orlangure/tap"
-tap "ramonvermeulen/whosthere"
-tap "rockorager/tap"
-tap "tw93/tap"
-tap "wader/tap"
+tap "blacktop/tap", trusted: true
+tap "nkzw-tech/tap", trusted: true
+tap "orlangure/tap", trusted: true
+tap "ramonvermeulen/whosthere", trusted: true
+tap "rockorager/tap", trusted: true
+tap "tw93/tap", trusted: true
+tap "wader/tap", trusted: true
 
 brew "asciinema"
 brew "ast-grep"
 brew "autoconf"
 brew "bash"
-brew "blacktop/tap/ipsw", trusted: true
-brew "blacktop/tap/ipsw-frida", trusted: true
+brew "blacktop/tap/ipsw"
 brew "btop"
 brew "cloud-sql-proxy"
 brew "colordiff"
@@ -65,7 +64,7 @@ brew "moreutils"
 brew "mosh"
 brew "ncdu"
 brew "neovim"
-brew "orlangure/tap/gocovsh", trusted: true
+brew "orlangure/tap/gocovsh"
 brew "p7zip"
 brew "pcre"
 brew "pg_top"
@@ -80,7 +79,7 @@ brew "rclone"
 brew "rga"
 brew "ripgrep"
 brew "rlwrap"
-brew "rockorager/tap/zigdoc", trusted: true
+brew "rockorager/tap/zigdoc"
 brew "sad"
 brew "scc"
 brew "shellcheck"
@@ -95,12 +94,12 @@ brew "tokei"
 brew "tree"
 brew "tree-sitter-cli"
 brew "trufflehog"
-brew "tw93/tap/mole", trusted: true
+brew "tw93/tap/mole"
 brew "typst"
 brew "ugrep"
 brew "vegeta"
 brew "vhs"
-brew "wader/tap/fq", trusted: true
+brew "wader/tap/fq"
 brew "websocat"
 brew "wget"
 brew "xan"
@@ -129,11 +128,11 @@ cask "mitmproxy"
 cask "modern-csv"
 cask "monodraw"
 cask "NetNewsWire"
-cask "nkzw-tech/tap/codiff", trusted: true
+cask "nkzw-tech/tap/codiff"
 cask "openvpn-connect"
 cask "orbstack"
 cask "proxyman"
-cask "ramonvermeulen/whosthere/whosthere", trusted: true
+cask "ramonvermeulen/whosthere/whosthere"
 cask "rar"
 cask "raycast"
 cask "setapp"
