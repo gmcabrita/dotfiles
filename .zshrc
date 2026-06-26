@@ -584,7 +584,7 @@ function go() {
   return "$go_status"
 }
 
-function noquar {
+function noquar() {
     /usr/bin/xattr -dr com.apple.quarantine ${@:-'.'}
 }
 
