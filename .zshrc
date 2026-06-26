@@ -527,6 +527,10 @@ function sound-prompt() {
   (afplay /System/Library/Sounds/Ping.aiff &>/dev/null &)
 }
 
+function watch-deploy() {
+  gh run watch "$@" && sound-done
+}
+
 function gh() {
   if [[ "${1:-}" == "run" && "${2:-}" == "watch" ]]; then
     local -a gh_args
