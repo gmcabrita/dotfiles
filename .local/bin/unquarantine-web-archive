@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+
+for item in "$@"; do
+  /usr/bin/xattr -dr com.apple.quarantine "$item" 2>/dev/null || true
+done
+
+# /usr/bin/xattr -dr com.apple.quarantine "/Users/gmcabrita/Library/Mobile Documents/com~apple~CloudDocs/Web Archive" 2>/dev/null || true
