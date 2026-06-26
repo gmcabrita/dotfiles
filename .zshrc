@@ -580,21 +580,25 @@ function go() {
   return "$go_status"
 }
 
-_gw_worktrees() {
+function noquar {
+    /usr/bin/xattr -dr com.apple.quarantine ${@:-'.'}
+}
+
+function _gw_worktrees() {
   git worktree list --porcelain |
     awk '/^worktree / { sub(/^worktree /, ""); print }'
 }
 
-_gw_state_dir() {
+function _gw_state_dir() {
   printf '%s\n' "${XDG_STATE_HOME:-$HOME/.local/state}/git-worktree-cd"
 }
 
-_gw_key() {
+function _gw_key() {
   printf '%s' "$1" | shasum -a 256 | awk '{print $1}'
 }
 
 # git worktree add + cd into new worktree
-gwad() {
+function gwad() {
   local origin before after dst rc state key branch arg i
   local -a args positionals
 
@@ -688,7 +692,7 @@ gwad() {
 }
 
 # remove current worktree + return to dir where gwad was run
-gwrd() {
+function gwrd() {
   local root main state key target
 
   root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
