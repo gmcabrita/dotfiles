@@ -1,6 +1,6 @@
 {
   "modelRecommendations": "https://repoprompt.com/docs#s=workflows&ss=model-recommendations",
-  "packages": ["npm:@ff-labs/pi-fff"],
+  "packages": ["npm:@ff-labs/pi-fff", "npm:pi-token-speed"],
   "startup": {
     "model": "gpt-5.5",
     "provider": "openai",
@@ -55,5 +55,8 @@
       "id_ed25519": "deny",
       "id_ed25519.*": "deny"
     }
+  },
+  "tokenSpeed": {
+    "display": "ttft"
   }
 }
