@@ -1,7 +1,7 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { Api, Model } from "@earendil-works/pi-ai";
 
-const DEFAULT_CAP = 150_000;
+const DEFAULT_CAP = 110_000;
 
 type OriginalLimits = {
   contextWindow: number;
@@ -68,7 +68,10 @@ function applyCap(ctx: ExtensionContext, cap: number): number {
   return changed;
 }
 
-function restoreModel(model: Model<Api> | undefined, originals: RegistryOriginals | undefined): void {
+function restoreModel(
+  model: Model<Api> | undefined,
+  originals: RegistryOriginals | undefined,
+): void {
   if (!model || !originals) return;
 
   const original = originals.get(modelKey(model));
@@ -90,7 +93,11 @@ function removeCap(ctx: ExtensionContext): void {
   registryOriginals.delete(ctx.modelRegistry);
 }
 
-function patchRegistryRefresh(ctx: ExtensionContext, shouldCap: () => boolean, getCap: () => number): void {
+function patchRegistryRefresh(
+  ctx: ExtensionContext,
+  shouldCap: () => boolean,
+  getCap: () => number,
+): void {
   if (patchedRegistries.has(ctx.modelRegistry)) return;
 
   const refresh = ctx.modelRegistry.refresh.bind(ctx.modelRegistry);
@@ -109,7 +116,11 @@ export default function contextWindowCapExtension(pi: ExtensionAPI) {
   let cap = DEFAULT_CAP;
 
   function install(ctx: ExtensionContext): number {
-    patchRegistryRefresh(ctx, () => enabled, () => cap);
+    patchRegistryRefresh(
+      ctx,
+      () => enabled,
+      () => cap,
+    );
     return enabled ? applyCap(ctx, cap) : 0;
   }
 
@@ -122,7 +133,8 @@ export default function contextWindowCapExtension(pi: ExtensionAPI) {
   });
 
   pi.registerCommand("context-window-cap", {
-    description: "Show/set/toggle model context cap. Usage: /context-window-cap [status|on|off|150000]",
+    description:
+      "Show/set/toggle model context cap. Usage: /context-window-cap [status|on|off|150000]",
     handler: async (args, ctx) => {
       const arg = args.trim();
 
