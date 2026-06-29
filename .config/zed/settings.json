@@ -145,6 +145,8 @@
     "basher": true,
     "docker-compose": true,
     "dockerfile": true,
+    "elixir": true,
+    "erlang": true,
     "ghostty": true,
     "git-firefly": true,
     "html": true,

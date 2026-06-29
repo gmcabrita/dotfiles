@@ -9,6 +9,8 @@
 "npm:sfw" = "latest"
 bun = "latest"
 deno = "latest"
+elixir = "latest"
+erlang = "latest"
 fnox = "latest"
 go = "latest"
 hk = "latest"
