@@ -17,7 +17,7 @@
   autocrlf = false
   editor = "zed -n -w"
   symlinks = true
-  fsmonitor = false
+  fsmonitor = true
   excludesfile = ~/.gitignore
   untrackedCache = true
 [diff]
