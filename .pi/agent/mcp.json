@@ -1,0 +1,15 @@
+{
+  "mcp": {
+    "startup": "lazy",
+    "servers": {
+      "grafana": {
+        "type": "remote",
+        "url": "https://grafana-mcp.gke00.usce1.mgmt.internal.amplemarket.com/mcp"
+      },
+      "pganalyze": {
+        "type": "remote",
+        "url": "https://pganalyze-mcp.gke00.usce1.mgmt.internal.amplemarket.com/mcp"
+      }
+    }
+  }
+}
