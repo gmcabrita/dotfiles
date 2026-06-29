@@ -28,6 +28,10 @@ zls = "latest"
 idiomatic_version_file_enable_tools = ["rust"]
 minimum_release_age = "24h"
 
+[settings.status]
+show_tools = true
+show_env = true
+
 [settings.python]
 uv_venv_auto = true
 
