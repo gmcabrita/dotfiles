@@ -36,6 +36,9 @@ enable_pager = True
 keyring = True
 use_local_timezone = False
 
+[colors]
+output.header = "bold"
+
 [named queries]
 version = "select version();"
 extensions = "select * from pg_available_extensions;"
