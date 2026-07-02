@@ -1,5 +1,4 @@
 # vi: ft=dosini
-# pgcli port of .psqlrc
 
 [main]
 smart_completion = True
@@ -11,16 +10,16 @@ multi_line_mode = psql
 destructive_warning = drop, shutdown, delete, truncate, alter, update, unconditional_update
 destructive_warning_restarts_connection = False
 destructive_statements_require_transaction = False
-expand = False
-auto_expand = True
+expand = True
+auto_expand = False
 auto_retry_closed_connection = True
 keyword_casing = lower
 case_column_headers = True
 history_file = default
 timing = True
-hide_named_query_text = False
+hide_named_query_text = True
 show_bottom_toolbar = True
-table_format = fancy_grid
+table_format = psql
 syntax_style = default
 vi = False
 on_error = STOP
