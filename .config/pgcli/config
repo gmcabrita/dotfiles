@@ -21,7 +21,7 @@ timing = True
 hide_named_query_text = False
 show_bottom_toolbar = True
 table_format = fancy_grid
-syntax_style = default
+syntax_style = pastie
 vi = False
 on_error = STOP
 row_limit = 0
@@ -34,7 +34,7 @@ multiline_continuation_char = '·'
 null_string = '[NULL]'
 enable_pager = True
 keyring = True
-use_local_timezone = True
+use_local_timezone = False
 
 [named queries]
 version = "select version();"
