@@ -4,6 +4,7 @@
 "cargo:rustdoc-text" = "latest"
 "github:lexiforest/curl-impersonate" = "latest"
 "github:rockorager/ziglint" = "latest"
+"github:smol-machines/smolvm" = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
 "npm:portless" = "latest"
 "npm:sfw" = "latest"
