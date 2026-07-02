@@ -1,0 +1,3192 @@
+# vi: ft=dosini
+# pgcli port of .psqlrc
+
+[main]
+smart_completion = True
+auto_suggest = True
+wider_completion_menu = False
+always_use_single_connection = False
+multi_line = True
+multi_line_mode = psql
+destructive_warning = drop, shutdown, delete, truncate, alter, update, unconditional_update
+destructive_warning_restarts_connection = False
+destructive_statements_require_transaction = False
+expand = False
+auto_expand = True
+auto_retry_closed_connection = True
+keyword_casing = lower
+case_column_headers = True
+history_file = default
+timing = True
+hide_named_query_text = False
+show_bottom_toolbar = True
+table_format = fancy_grid
+syntax_style = default
+vi = False
+on_error = STOP
+row_limit = 0
+max_field_width =
+less_chatty = True
+verbose_errors = False
+prompt = '\u@\d=\#\T '
+min_num_menu_lines = 4
+multiline_continuation_char = '·'
+null_string = '[NULL]'
+enable_pager = True
+keyring = True
+use_local_timezone = True
+
+[named queries]
+version = "select version();"
+extensions = "select * from pg_available_extensions;"
+activity = """select
+    coalesce(usename, '** ALL users **') as "User",
+    coalesce(datname, '** ALL databases **') as "DB",
+    coalesce(state, '** ALL states **') as "Current State",
+    count(*) as "Count",
+    count(*) filter (
+        where state_change < now() - interval '1 minute'
+    ) as "State changed >1m ago",
+    count(*) filter (
+        where state_change < now() - interval '1 hour'
+    ) as "State changed >1h ago"
+from pg_stat_activity
+group by grouping sets ((datname, usename, state), (usename, state), ())
+order by usename is null desc, datname is null desc, 2 asc, 3 asc, count(*) desc
+;"""
+analyze_vacuum_stats = """with
+raw_data as (
+    select
+        pg_namespace.nspname,
+        pg_class.relname,
+        pg_class.oid as relid,
+        pg_class.reltuples,
+        pg_stat_all_tables.n_dead_tup,
+        pg_stat_all_tables.n_mod_since_analyze,
+        (
+            select split_part(x, '=', 2)
+            from unnest(pg_class.reloptions) q (x)
+            where x ~ '^autovacuum_analyze_scale_factor='
+        ) as c_analyze_factor,
+        (
+            select split_part(x, '=', 2)
+            from unnest(pg_class.reloptions) q (x)
+            where x ~ '^autovacuum_analyze_threshold='
+        ) as c_analyze_threshold,
+        (
+            select split_part(x, '=', 2)
+            from unnest(pg_class.reloptions) q (x)
+            where x ~ '^autovacuum_vacuum_scale_factor='
+        ) as c_vacuum_factor,
+        (
+            select split_part(x, '=', 2)
+            from unnest(pg_class.reloptions) q (x)
+            where x ~ '^autovacuum_vacuum_threshold='
+        ) as c_vacuum_threshold,
+        to_char(
+            pg_stat_all_tables.last_vacuum, 'YYYY-MM-DD HH24:MI:SS'
+        ) as last_vacuum,
+        to_char(
+            pg_stat_all_tables.last_autovacuum, 'YYYY-MM-DD HH24:MI:SS'
+        ) as last_autovacuum,
+        to_char(
+            pg_stat_all_tables.last_analyze, 'YYYY-MM-DD HH24:MI:SS'
+        ) as last_analyze,
+        to_char(
+            pg_stat_all_tables.last_autoanalyze, 'YYYY-MM-DD HH24:MI:SS'
+        ) as last_autoanalyze
+    from pg_class
+    join pg_namespace on pg_class.relnamespace = pg_namespace.oid
+    left outer join
+        pg_stat_all_tables
+        on pg_class.oid = pg_stat_all_tables.relid
+    where
+        n_dead_tup is not null
+        and nspname not in ('information_schema', 'pg_catalog')
+        and nspname not like 'pg_toast%'
+        and pg_class.relkind = 'r'
+),
+
+data as (
+    select
+        *,
+        coalesce(
+            raw_data.c_analyze_factor,
+            current_setting('autovacuum_analyze_scale_factor')
+        )::float8 as analyze_factor,
+        coalesce(
+            raw_data.c_analyze_threshold,
+            current_setting('autovacuum_analyze_threshold')
+        )::float8 as analyze_threshold,
+        coalesce(
+            raw_data.c_vacuum_factor,
+            current_setting('autovacuum_vacuum_scale_factor')
+        )::float8 as vacuum_factor,
+        coalesce(
+            raw_data.c_vacuum_threshold,
+            current_setting('autovacuum_vacuum_threshold')
+        )::float8 as vacuum_threshold
+    from raw_data
+)
+
+select
+    relname,
+    reltuples,
+    n_dead_tup,
+    n_mod_since_analyze,
+    round(reltuples * vacuum_factor + vacuum_threshold) as v_threshold,
+    round(reltuples * analyze_factor + analyze_threshold) as a_threshold,
+    round(
+        cast(
+            n_dead_tup
+            / (reltuples * vacuum_factor + vacuum_threshold)
+            * 100 as numeric
+        ),
+        2
+    ) as v_percent,
+    round(
+        cast(
+            n_mod_since_analyze
+            / (reltuples * analyze_factor + analyze_threshold)
+            * 100 as numeric
+        ),
+        2
+    ) as a_percent,
+    last_vacuum,
+    last_autovacuum,
+    last_analyze,
+    last_autoanalyze
+from data
+order by a_percent desc
+;"""
+autovacuum_newest = """select
+    relname,
+    last_vacuum,
+    last_autovacuum
+from pg_stat_user_tables
+where last_autovacuum is not null
+order by last_autovacuum asc
+;"""
+autovacuum_oldest = """select
+    relname,
+    last_vacuum,
+    last_autovacuum
+from pg_stat_user_tables
+where last_autovacuum is not null
+order by last_autovacuum desc
+;"""
+autovacuum_progress_and_queue = """with
+table_opts as (
+    select
+        pg_class.oid,
+        relname,
+        nspname,
+        array_to_string(reloptions, '') as relopts
+    from pg_class
+    join pg_namespace ns on relnamespace = ns.oid
+),
+
+vacuum_settings as (
+    select
+        oid,
+        relname,
+        nspname,
+        case
+            when relopts like '%autovacuum_vacuum_threshold%'
+                then
+                    regexp_replace(
+                        relopts,
+                        '.*autovacuum_vacuum_threshold=([0-9.]+).*',
+                        '\1'
+                    )::int8
+            else current_setting('autovacuum_vacuum_threshold')::int8
+        end as autovacuum_vacuum_threshold,
+        case
+            when relopts like '%autovacuum_vacuum_scale_factor%'
+                then
+                    regexp_replace(
+                        relopts,
+                        '.*autovacuum_vacuum_scale_factor=([0-9.]+).*',
+                        '\1'
+                    )::numeric
+            else current_setting('autovacuum_vacuum_scale_factor')::numeric
+        end as autovacuum_vacuum_scale_factor,
+        case
+            when relopts ~ 'autovacuum_enabled=(false|off)' then false else true
+        end as autovacuum_enabled
+    from table_opts
+),
+
+p as (select * from pg_stat_progress_vacuum)
+
+select
+    coalesce(
+        coalesce(nullif(vacuum_settings.nspname, 'public') || '.', '')
+        || vacuum_settings.relname,
+        format('[something in "%I"]', p.datname)
+    ) as table,
+    round(
+        (
+            100 * psat.n_dead_tup::numeric / nullif(pg_class.reltuples, 0)
+        )::numeric,
+        2
+    ) as dead_tup_pct,
+    pg_class.reltuples::numeric,
+    psat.n_dead_tup,
+    'vt: '
+    || vacuum_settings.autovacuum_vacuum_threshold
+    || ', vsf: '
+    || vacuum_settings.autovacuum_vacuum_scale_factor
+    || case
+        when not autovacuum_enabled then ', DISABLED' else ', enabled'
+    end as "effective_settings",
+    case
+        when last_autovacuum > coalesce(last_vacuum, '0001-01-01')
+            then left(last_autovacuum::text, 19) || ' (auto)'
+        when last_vacuum is not null
+            then left(last_vacuum::text, 19) || ' (manual)'
+        else null
+    end as "last_vacuumed",
+    coalesce(p.phase, '~~~ in queue ~~~') as status,
+    p.pid as pid,
+    case
+        when a.query ~ '^autovacuum.*to prevent wraparound'
+            then 'wraparound'
+        when a.query ~ '^vacuum'
+            then 'user'
+        when a.pid is null
+            then null
+        else 'regular'
+    end as mode,
+    case
+        when a.pid is null
+            then null
+        else coalesce(wait_event_type || '.' || wait_event, 'f')
+    end as waiting,
+    round(
+        100.0 * p.heap_blks_scanned / nullif(p.heap_blks_total, 0), 1
+    ) as scanned_pct,
+    round(
+        100.0 * p.heap_blks_vacuumed / nullif(p.heap_blks_total, 0), 1
+    ) as vacuumed_pct,
+    p.index_vacuum_count,
+    case
+        when psat.relid is not null and p.relid is not null
+            then (
+                select count(*) from pg_index
+                where indrelid = psat.relid
+            )
+        else null
+    end as index_count
+from pg_stat_all_tables psat
+join pg_class on psat.relid = pg_class.oid
+join vacuum_settings on pg_class.oid = vacuum_settings.oid
+full outer join p on p.relid = psat.relid and p.datname = current_database()
+left join pg_stat_activity a using (pid)
+where
+    psat.relid is null
+    or autovacuum_vacuum_threshold
+    + (autovacuum_vacuum_scale_factor::numeric * pg_class.reltuples)
+    < psat.n_dead_tup
+;"""
+blockers_of_queries_all = """select
+    a1.pid,
+    a1.usename,
+    (now() - a1.query_start) as running_time,
+    pg_blocking_pids(a1.pid) as blocked_by,
+    a1.query as blocked_query,
+    a2.query as blocking_query
+from pg_stat_activity as a1
+inner join
+    pg_stat_activity as a2
+    on (a2.pid = (pg_blocking_pids(a1.pid)::integer [])[1])
+where cardinality(pg_blocking_pids(a1.pid)) > 0
+;"""
+blockers_of_queries_alter_table = """select
+    blockers.pid,
+    blockers.usename,
+    blockers.query_start,
+    blockers.query
+from pg_stat_activity blockers
+inner join
+    (
+        select pg_blocking_pids(pid) blocking_pids
+        from pg_stat_activity
+        where pid != pg_backend_pid() and query ilike 'alter table%'
+    ) my_query
+    on blockers.pid = any(my_query.blocking_pids)
+;"""
+btree_bloat_estimation = """-- noqa: disable=all
+-- https://docs.aws.amazon.com/prescriptive-guidance/latest/postgresql-maintenance-rds-aurora/reindex.html
+with constants as (
+    select
+        current_setting('block_size')::numeric as bs,
+        24 as pagehdr,
+        16 as pageopqdata,
+        90::smallint as default_fillfactor,
+        1024 as default_avg_width,
+        0 as min_index_pages,
+        case -- maxalign: 4 on 32bits, 8 on 64bits (and mingw32 ?)
+            when
+                version() ~ 'mingw32'
+                or version() ~ '64-bit|x86_64|ppc64|ia64|amd64'
+                then 8
+            else 4
+        end as maxalign
+),
+
+idx_data as (
+    select
+        ci.relname as idxname,
+        ci.reltuples,
+        ci.relpages,
+        i.indrelid as tbloid,
+        i.indexrelid as idxoid,
+        coalesce(substring(
+            array_to_string(ci.reloptions, ' ')
+            from 'fillfactor=([0-9]+)'
+        )::smallint, c.default_fillfactor) as fillfactor,
+        i.indnatts,
+        pg_catalog.string_to_array(pg_catalog.textin(
+            pg_catalog.int2vectorout(i.indkey)
+        ), ' ')::int [] as indkey
+    from pg_catalog.pg_index i
+    join pg_catalog.pg_class ci on ci.oid = i.indexrelid
+    cross join constants c
+    where
+        ci.relam = (
+            select oid from pg_am
+            where amname = 'btree'
+        )
+        and ci.relpages > c.min_index_pages
+),
+
+ic as (
+    select
+        idxname,
+        reltuples,
+        relpages,
+        tbloid,
+        idxoid,
+        fillfactor,
+        indkey,
+        pg_catalog.generate_series(1, indnatts) as attpos
+    from idx_data
+),
+
+index_columns as (
+    select
+        ct.relname as tblname,
+        ct.relnamespace,
+        ic.idxname,
+        ic.attpos,
+        ic.indkey,
+        ic.indkey[ic.attpos],
+        ic.reltuples,
+        ic.relpages,
+        ic.tbloid,
+        ic.idxoid,
+        ic.fillfactor,
+        coalesce(a1.attnum, a2.attnum) as attnum,
+        coalesce(a1.attname, a2.attname) as attname,
+        coalesce(a1.atttypid, a2.atttypid) as atttypid,
+        case
+            when a1.attnum is null
+                then ic.idxname
+            else ct.relname
+        end as attrelname
+    from ic
+    join pg_catalog.pg_class ct on ct.oid = ic.tbloid
+    left join pg_catalog.pg_attribute a1
+        on
+            ic.indkey[ic.attpos] <> 0
+            and a1.attrelid = ic.tbloid
+            and a1.attnum = ic.indkey[ic.attpos]
+    left join pg_catalog.pg_attribute a2 on
+        ic.indkey[ic.attpos] = 0
+        and a2.attrelid = ic.idxoid
+        and a2.attnum = ic.attpos
+),
+
+rows_data_stats as (
+    select
+        n.nspname,
+        i.tblname,
+        i.idxname,
+        i.reltuples,
+        i.relpages,
+        i.idxoid,
+        i.fillfactor,
+        c.bs,
+        c.maxalign,
+        /* per page header, fixed size: 20 for 7.x, 24 for others */
+        c.pagehdr,
+        /* per page btree opaque data */
+        c.pageopqdata,
+        /* per tuple header: add indexattributebitmapdata if some cols are null-able */
+        case
+            when max(coalesce(s.null_frac, 0)) = 0
+                then 8 -- indextupledata size
+            else 8 + ((32 + 8 - 1) / 8) -- indextupledata size + indexattributebitmapdata size ( max num filed per index + 8 - 1 /8)
+        end as index_tuple_hdr_bm,
+        /* data len: we remove null values save space using it fractionnal part from stats */
+        sum(
+            (1 - coalesce(s.null_frac, 0))
+            * coalesce(s.avg_width, c.default_avg_width)
+        ) as nulldatawidth,
+        max(
+            case
+                when
+                    i.atttypid = 'pg_catalog.name'::regtype
+                    then 1
+                else 0
+            end
+        )
+        > 0 as is_na
+    from index_columns i
+    cross join constants c
+    join pg_catalog.pg_namespace n
+        on
+            n.oid = i.relnamespace
+            and n.nspname <> 'pg_catalog'
+    join pg_catalog.pg_stats s
+        on
+            s.schemaname = n.nspname
+            and s.tablename = i.attrelname
+            and s.attname = i.attname
+    group by 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+),
+
+rows_hdr_pdg_stats as (
+    select
+        maxalign,
+        bs,
+        nspname,
+        tblname,
+        idxname,
+        reltuples,
+        relpages,
+        idxoid,
+        fillfactor,
+        (
+            index_tuple_hdr_bm
+            -- add padding to the index tuple header to align on maxalign
+            + maxalign - case
+                when index_tuple_hdr_bm % maxalign = 0 then maxalign
+                else index_tuple_hdr_bm % maxalign
+            end
+            -- add padding to the data to align on maxalign
+            + nulldatawidth + maxalign - case
+                when nulldatawidth = 0 then 0
+                when nulldatawidth::integer % maxalign = 0 then maxalign
+                else nulldatawidth::integer % maxalign
+            end
+        )::numeric as nulldatahdrwidth,
+        pagehdr,
+        pageopqdata,
+        is_na
+    from rows_data_stats
+),
+
+relation_stats as (
+    select
+        coalesce(
+            1
+            -- itemiddata size + computed avg size of a tuple (nulldatahdrwidth)
+            + ceil(
+                reltuples
+                / floor(
+                    (bs - pageopqdata - pagehdr) / (4 + nulldatahdrwidth)::float
+                )
+            ),
+            0
+        ) as est_pages,
+        coalesce(
+            1
+            + ceil(
+                reltuples
+                / floor(
+                    (bs - pageopqdata - pagehdr)
+                    * fillfactor
+                    / (100 * (4 + nulldatahdrwidth)::float)
+                )
+            ),
+            0
+        ) as est_pages_ff,
+        bs,
+        nspname,
+        tblname,
+        idxname,
+        relpages,
+        fillfactor,
+        is_na
+    from rows_hdr_pdg_stats
+),
+
+bloated_indexes as (
+    select
+        tblname as tbl,
+        idxname as idx,
+        bs * (relpages) as real_size,
+        bs * (relpages - est_pages) as extra_size,
+        round(100 * (relpages - est_pages)::float / relpages) as extra_pct,
+        fillfactor,
+        case
+            when relpages > est_pages_ff
+                then (bs * (relpages - est_pages_ff))
+            else 0
+        end as bloat_size,
+        round(100 * (relpages - est_pages_ff)::float / relpages) as bloat_pct
+    -- , 100-(pst).avg_leaf_density as pst_avg_bloat, est_pages, index_tuple_hdr_bm, maxalign, pagehdr, nulldatawidth, nulldatahdrwidth, reltuples, relpages -- (debug info)
+    from relation_stats
+)
+
+select
+    tbl,
+    idx,
+    pg_size_pretty(real_size::numeric) as real_size,
+    pg_size_pretty(extra_size::numeric) as extra_size,
+    extra_pct,
+    fillfactor,
+    pg_size_pretty(bloat_size::numeric) as bloat_size_pretty,
+    bloat_pct
+from bloated_indexes
+order by bloat_size desc, bloat_pct desc;"""
+btree_reindex_candidates = """-- noqa: disable=all
+-- https://docs.aws.amazon.com/prescriptive-guidance/latest/postgresql-maintenance-rds-aurora/reindex.html
+with constants as (
+    select
+        --- feel free to change these:
+        2147483648::numeric as min_index_size,
+        2147483648::numeric as min_pct_bloat_size,
+        50 as min_bloat_pct,
+        10737418240::numeric as min_bloat_size,
+        --- do not change the ones below unless you know what you are doing
+        current_setting('block_size')::numeric as bs,
+        24 as pagehdr,
+        16 as pageopqdata,
+        90::smallint as default_fillfactor,
+        1024 as default_avg_width,
+        case -- maxalign: 4 on 32bits, 8 on 64bits (and mingw32 ?)
+            when
+                version() ~ 'mingw32'
+                or version() ~ '64-bit|x86_64|ppc64|ia64|amd64'
+                then 8
+            else 4
+        end as maxalign
+),
+
+idx_data as (
+    select
+        ci.relname as idxname,
+        ci.reltuples,
+        ci.relpages,
+        i.indrelid as tbloid,
+        i.indexrelid as idxoid,
+        coalesce(substring(
+            array_to_string(ci.reloptions, ' ')
+            from 'fillfactor=([0-9]+)'
+        )::smallint, c.default_fillfactor) as fillfactor,
+        i.indnatts,
+        pg_catalog.string_to_array(pg_catalog.textin(
+            pg_catalog.int2vectorout(i.indkey)
+        ), ' ')::int [] as indkey
+    from pg_catalog.pg_index i
+    join pg_catalog.pg_class ci on ci.oid = i.indexrelid
+    cross join constants c
+    where
+        ci.relam = (
+            select oid from pg_am
+            where amname = 'btree'
+        )
+        -- and ci.relpages > 0
+        and ci.relpages * c.bs > c.min_index_size
+),
+
+ic as (
+    select
+        idxname,
+        reltuples,
+        relpages,
+        tbloid,
+        idxoid,
+        fillfactor,
+        indkey,
+        pg_catalog.generate_series(1, indnatts) as attpos
+    from idx_data
+),
+
+index_columns as (
+    select
+        ct.relname as tblname,
+        ct.relnamespace,
+        ic.idxname,
+        ic.attpos,
+        ic.indkey,
+        ic.indkey[ic.attpos],
+        ic.reltuples,
+        ic.relpages,
+        ic.tbloid,
+        ic.idxoid,
+        ic.fillfactor,
+        coalesce(a1.attnum, a2.attnum) as attnum,
+        coalesce(a1.attname, a2.attname) as attname,
+        coalesce(a1.atttypid, a2.atttypid) as atttypid,
+        case
+            when a1.attnum is null
+                then ic.idxname
+            else ct.relname
+        end as attrelname
+    from ic
+    join pg_catalog.pg_class ct on ct.oid = ic.tbloid
+    left join pg_catalog.pg_attribute a1
+        on
+            ic.indkey[ic.attpos] <> 0
+            and a1.attrelid = ic.tbloid
+            and a1.attnum = ic.indkey[ic.attpos]
+    left join pg_catalog.pg_attribute a2 on
+        ic.indkey[ic.attpos] = 0
+        and a2.attrelid = ic.idxoid
+        and a2.attnum = ic.attpos
+),
+
+rows_data_stats as (
+    select
+        n.nspname,
+        i.tblname,
+        i.idxname,
+        i.reltuples,
+        i.relpages,
+        i.idxoid,
+        i.fillfactor,
+        c.bs,
+        c.maxalign,
+        /* per page header, fixed size: 20 for 7.x, 24 for others */
+        c.pagehdr,
+        /* per page btree opaque data */
+        c.pageopqdata,
+        /* per tuple header: add indexattributebitmapdata if some cols are null-able */
+        case
+            when max(coalesce(s.null_frac, 0)) = 0
+                then 8 -- indextupledata size
+            else 8 + ((32 + 8 - 1) / 8) -- indextupledata size + indexattributebitmapdata size ( max num filed per index + 8 - 1 /8)
+        end as index_tuple_hdr_bm,
+        /* data len: we remove null values save space using it fractionnal part from stats */
+        sum(
+            (1 - coalesce(s.null_frac, 0))
+            * coalesce(s.avg_width, c.default_avg_width)
+        ) as nulldatawidth,
+        max(
+            case
+                when
+                    i.atttypid = 'pg_catalog.name'::regtype
+                    then 1
+                else 0
+            end
+        )
+        > 0 as is_na
+    from index_columns i
+    cross join constants c
+    join pg_catalog.pg_namespace n
+        on
+            n.oid = i.relnamespace
+            and n.nspname <> 'pg_catalog'
+    join pg_catalog.pg_stats s
+        on
+            s.schemaname = n.nspname
+            and s.tablename = i.attrelname
+            and s.attname = i.attname
+    group by 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+),
+
+rows_hdr_pdg_stats as (
+    select
+        maxalign,
+        bs,
+        nspname,
+        tblname,
+        idxname,
+        reltuples,
+        relpages,
+        idxoid,
+        fillfactor,
+        (
+            index_tuple_hdr_bm
+            -- add padding to the index tuple header to align on maxalign
+            + maxalign - case
+                when index_tuple_hdr_bm % maxalign = 0 then maxalign
+                else index_tuple_hdr_bm % maxalign
+            end
+            -- add padding to the data to align on maxalign
+            + nulldatawidth + maxalign - case
+                when nulldatawidth = 0 then 0
+                when nulldatawidth::integer % maxalign = 0 then maxalign
+                else nulldatawidth::integer % maxalign
+            end
+        )::numeric as nulldatahdrwidth,
+        pagehdr,
+        pageopqdata,
+        is_na
+    from rows_data_stats
+),
+
+relation_stats as (
+    select
+        coalesce(
+            1
+            -- itemiddata size + computed avg size of a tuple (nulldatahdrwidth)
+            + ceil(
+                reltuples
+                / floor(
+                    (bs - pageopqdata - pagehdr) / (4 + nulldatahdrwidth)::float
+                )
+            ),
+            0
+        ) as est_pages,
+        coalesce(
+            1
+            + ceil(
+                reltuples
+                / floor(
+                    (bs - pageopqdata - pagehdr)
+                    * fillfactor
+                    / (100 * (4 + nulldatahdrwidth)::float)
+                )
+            ),
+            0
+        ) as est_pages_ff,
+        bs,
+        nspname,
+        tblname,
+        idxname,
+        relpages,
+        fillfactor,
+        is_na
+    from rows_hdr_pdg_stats
+),
+
+bloated_indexes as (
+    select
+        tblname as tbl,
+        idxname as idx,
+        bs * (relpages) as real_size,
+        bs * (relpages - est_pages) as extra_size,
+        round(100 * (relpages - est_pages)::float / relpages) as extra_pct,
+        fillfactor,
+        case
+            when relpages > est_pages_ff
+                then (bs * (relpages - est_pages_ff))
+            else 0
+        end as bloat_size,
+        round(100 * (relpages - est_pages_ff)::float / relpages) as bloat_pct
+    -- , 100-(pst).avg_leaf_density as pst_avg_bloat, est_pages, index_tuple_hdr_bm, maxalign, pagehdr, nulldatawidth, nulldatahdrwidth, reltuples, relpages -- (debug info)
+    from relation_stats
+)
+
+select
+    tbl,
+    idx,
+    pg_size_pretty(real_size::numeric) as real_size,
+    pg_size_pretty(extra_size::numeric) as extra_size,
+    extra_pct,
+    fillfactor,
+    pg_size_pretty(bloat_size::numeric) as bloat_size_pretty,
+    bloat_pct
+from bloated_indexes
+cross join constants c
+where
+    bloat_size::numeric > c.min_bloat_size -- More than 10 GiB bloat
+    or (
+        bloat_pct > c.min_bloat_pct -- More than 50% bloat
+        and bloat_size::numeric > c.min_pct_bloat_size -- More than 2 GiB bloat
+    )
+order by bloat_size::numeric desc, bloat_pct desc;"""
+buffer_cache_usage = """-- ideal is buffer at 100% utilization and having a sufficient subset of
+-- tables/indexes in the buffer
+with
+state as (
+    select
+        count(*) filter (where relfilenode is not null) as used,
+        count(*) filter (where relfilenode is null) as empty,
+        count(*) as total
+    from pg_buffercache
+)
+
+select
+    *,
+    round(used * 1.0 / total * 100, 1) as percent
+from state
+;"""
+cache_hit_ratio_indices = """select
+    relname as table,
+    sum(idx_blks_read) as idx_read,
+    sum(idx_blks_hit) as idx_hit,
+    round(
+        (
+            sum(idx_blks_hit)
+            / nullif((sum(idx_blks_hit) + sum(idx_blks_read)), 0)::numeric
+        )
+        * 100,
+        2
+    ) as ratio
+from pg_statio_user_indexes
+where idx_blks_read > 0
+group by relname
+order by ratio desc
+;"""
+cache_hit_ratio_tables = """select
+    relname as table,
+    sum(heap_blks_read) as heap_read,
+    sum(heap_blks_hit) as heap_hit,
+    round(
+        (
+            sum(heap_blks_hit)
+            / nullif((sum(heap_blks_hit) + sum(heap_blks_read)), 0)::numeric
+        )
+        * 100,
+        2
+    ) as ratio
+from pg_statio_user_tables
+where heap_blks_read > 0
+group by relname
+order by ratio desc
+;"""
+connection_counts_by_application = """select
+    application_name,
+    state,
+    count(*)
+from pg_stat_activity
+group by application_name, state
+;"""
+connection_counts_by_state = """select
+    state,
+    count(*)
+from pg_stat_activity
+group by state
+;"""
+connection_memory_breakdown = """select
+    pid,
+    pg_size_pretty(rss * 1000) as memory_overhead,
+    fullcomm as command
+from pg_proctab()
+order by rss desc
+;"""
+connection_memory_breakdown_by_state = """with
+process_data as (
+    select
+        pid,
+        pg_size_pretty(rss * 1000) as memory_overhead,
+        fullcomm as command,
+        rss,
+        case
+            when fullcomm ilike '%idle in transaction%'
+                then 'idle in transaction'
+            when fullcomm ilike '%idle%'
+                then 'idle'
+            when fullcomm ilike '%BIND%'
+                then 'BIND'
+            when fullcomm ilike '%PARSE%'
+                then 'PARSE'
+            when fullcomm ilike '%INSERT waiting%'
+                then 'INSERT waiting'
+            when fullcomm ilike '%INSERT%'
+                then 'INSERT'
+            when fullcomm ilike '%UPDATE waiting%'
+                then 'UPDATE waiting'
+            when fullcomm ilike '%UPDATE%'
+                then 'UPDATE'
+            when fullcomm ilike '%SELECT waiting%'
+                then 'SELECT waiting'
+            when fullcomm ilike '%SELECT%'
+                then 'SELECT'
+            when fullcomm ilike '%DELETE waiting%'
+                then 'DELETE waiting'
+            when fullcomm ilike '%DELETE%'
+                then 'DELETE'
+            when fullcomm ilike '%COMMIT waiting%'
+                then 'COMMIT waiting'
+            when fullcomm ilike '%COMMIT%'
+                then 'COMMIT'
+            when fullcomm ilike '%CREATE INDEX%'
+                then 'CREATE INDEX'
+            when fullcomm ilike '%REINDEX%'
+                then 'REINDEX'
+            when fullcomm ilike '%START_REPLICATION%'
+                then 'START_REPLICATION'
+            when fullcomm ilike '%REFRESH MATERIALIZED VIEW%'
+                then 'REFRESH MATERIALIZED VIEW'
+            else fullcomm
+        end as connection_state_or_command
+    from pg_proctab()
+)
+
+select
+    connection_state_or_command,
+    count(*) as process_count,
+    pg_size_pretty(sum(rss * 1000)) as total_mem,
+    pg_size_pretty(
+        (percentile_cont(0.5) within group (order by rss * 1000))::bigint
+    ) as p50_mem,
+    pg_size_pretty(
+        (percentile_cont(0.95) within group (order by rss * 1000))::bigint
+    ) as p95_mem,
+    pg_size_pretty(
+        (percentile_cont(0.99) within group (order by rss * 1000))::bigint
+    ) as p99_mem
+from process_data
+group by connection_state_or_command
+order by sum(rss) desc
+;"""
+connection_total_memory_overhead = """select pg_size_pretty(sum(rss) * 1000) as total_memory_overhead
+from pg_proctab()
+;"""
+databases = """-- Databases: size, stats
+with
+data as (
+    select
+        d.oid,
+
+        (
+            select spcname from pg_tablespace
+            where oid = dattablespace
+        ) as tblspace,
+        d.datname as database_name,
+        pg_catalog.pg_get_userbyid(d.datdba) as owner,
+        has_database_privilege(d.datname, 'connect') as has_access,
+        pg_database_size(d.datname) as size,
+        stats_reset,
+        blks_hit,
+        blks_read,
+        xact_commit,
+        xact_rollback,
+        conflicts,
+        deadlocks,
+        temp_files,
+        temp_bytes
+    from pg_catalog.pg_database d
+    join pg_stat_database s on s.datid = d.oid
+),
+
+data2 as (
+    select
+        null::oid as oid,
+        null as tblspace,
+        '*** TOTAL ***' as database_name,
+        null as owner,
+        true as has_access,
+        sum(size) as size,
+        null::timestamptz as stats_reset,
+        sum(blks_hit) as blks_hit,
+        sum(blks_read) as blks_read,
+        sum(xact_commit) as xact_commit,
+        sum(xact_rollback) as xact_rollback,
+        sum(conflicts) as conflicts,
+        sum(deadlocks) as deadlocks,
+        sum(temp_files) as temp_files,
+        sum(temp_bytes) as temp_bytes
+    from data
+    union all
+    select
+        null::oid,
+        null,
+        null,
+        null,
+        true,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    union all
+    select
+        oid,
+        tblspace,
+        database_name,
+        owner,
+        has_access,
+        size,
+        stats_reset,
+        blks_hit,
+        blks_read,
+        xact_commit,
+        xact_rollback,
+        conflicts,
+        deadlocks,
+        temp_files,
+        temp_bytes
+    from data
+)
+
+select
+    database_name
+    || coalesce(
+        ' [' || nullif(tblspace, 'pg_default') || ']', ''
+    ) as "Database",
+    case
+        when has_access
+            then
+                pg_size_pretty(size)
+                || ' ('
+                || round(
+                    100
+                    * size::numeric
+                    / nullif(sum(size) over (partition by (oid is null)), 0),
+                    2
+                )::text
+                || '%)'
+        else 'no access'
+    end as "Size",
+    (now() - stats_reset)::interval (0)::text as "Stats Age",
+    case
+        when blks_hit + blks_read > 0
+            then
+                (
+                    round(blks_hit * 100::numeric / (blks_hit + blks_read), 2)
+                )::text
+                || '%'
+        else null
+    end as "Cache eff.",
+    case
+        when xact_commit + xact_rollback > 0
+            then
+                (
+                    round(
+                        xact_commit
+                        * 100::numeric
+                        / (xact_commit + xact_rollback),
+                        2
+                    )
+                )::text
+                || '%'
+        else null
+    end as "Committed",
+    conflicts as "Conflicts",
+    deadlocks as "Deadlocks",
+    temp_files::text
+    || coalesce(' (' || pg_size_pretty(temp_bytes) || ')', '') as "Temp. Files"
+from data2
+order by oid is null desc, size desc nulls last
+;"""
+hot_update_ratio = """select
+    relname as table_name,
+    seq_scan as seq_scans,
+    idx_scan as index_scans,
+    n_tup_ins as inserts,
+    n_tup_upd as updates,
+    n_tup_hot_upd as hot_updates,
+    round((n_tup_hot_upd / n_tup_upd::numeric) * 100, 2) as hot_update_pct
+from pg_stat_user_tables
+where n_tup_upd > 0
+order by hot_updates desc
+;"""
+index_monitoring = """select
+    now(),
+    query_start as started_at,
+    now() - query_start as query_duration,
+    format('[%s] %s', a.pid, a.query) as pid_and_query,
+    index_relid::regclass as index_name,
+    relid::regclass as table_name,
+    (pg_size_pretty(pg_relation_size(relid))) as table_size,
+    nullif(wait_event_type, '') || ': ' || wait_event as wait_type_and_event,
+    phase,
+    format(
+        '%s (%s of %s)',
+        coalesce(
+            (
+                round(100 * blocks_done::numeric / nullif(blocks_total, 0), 2)
+            )::text
+            || '%',
+            'N/A'
+        ),
+        coalesce(blocks_done::text, '?'),
+        coalesce(blocks_total::text, '?')
+    ) as blocks_progress,
+    format(
+        '%s (%s of %s)',
+        coalesce(
+            (
+                round(100 * tuples_done::numeric / nullif(tuples_total, 0), 2)
+            )::text
+            || '%',
+            'N/A'
+        ),
+        coalesce(tuples_done::text, '?'),
+        coalesce(tuples_total::text, '?')
+    ) as tuples_progress,
+    current_locker_pid,
+    (
+        select nullif(left(query, 150), '') || '...'
+        from pg_stat_activity a
+        where a.pid = current_locker_pid
+    ) as current_locker_query,
+    format(
+        '%s (%s of %s)',
+        coalesce(
+            (
+                round(100 * lockers_done::numeric / nullif(lockers_total, 0), 2)
+            )::text
+            || '%',
+            'N/A'
+        ),
+        coalesce(lockers_done::text, '?'),
+        coalesce(lockers_total::text, '?')
+    ) as lockers_progress,
+    format(
+        '%s (%s of %s)',
+        coalesce(
+            (
+                round(
+                    100
+                    * partitions_done::numeric
+                    / nullif(partitions_total, 0),
+                    2
+                )
+            )::text
+            || '%',
+            'N/A'
+        ),
+        coalesce(partitions_done::text, '?'),
+        coalesce(partitions_total::text, '?')
+    ) as partitions_progress,
+    (
+        select
+            format(
+                '%s (%s of %s)',
+                coalesce(
+                    (
+                        round(
+                            100
+                            * n_dead_tup::numeric
+                            / nullif(reltuples::numeric, 0),
+                            2
+                        )
+                    )::text
+                    || '%',
+                    'N/A'
+                ),
+                coalesce(n_dead_tup::text, '?'),
+                coalesce(reltuples::int8::text, '?')
+            )
+        from pg_stat_all_tables t, pg_class tc
+        where t.relid = p.relid and tc.oid = p.relid
+    ) as table_dead_tuples
+from pg_stat_progress_create_index p
+left join pg_stat_activity a on a.pid = p.pid
+order by p.index_relid
+;"""
+invalid_indexes = """select
+    coalesce(nullif(pn.nspname, 'public') || '.', '')
+    || pct.relname as "relation_name",
+    pci.relname as index_name,
+    pn.nspname as schema_name,
+    pct.relname as table_name,
+    pg_size_pretty(pg_relation_size(pidx.indexrelid)) index_size,
+    format(
+        'DROP INDEX CONCURRENTLY %s; -- %s, table %s',
+        pidx.indexrelid::regclass::text,
+        'Invalid index',
+        pct.relname
+    ) as drop_code,
+    replace(
+        format(
+            '%s; -- table %s', pg_get_indexdef(pidx.indexrelid), pct.relname
+        ),
+        'CREATE INDEX',
+        'CREATE INDEX CONCURRENTLY'
+    ) as revert_code
+from pg_index pidx
+join pg_class as pci on pci.oid = pidx.indexrelid
+join pg_class as pct on pct.oid = pidx.indrelid
+left join pg_namespace pn on pn.oid = pct.relnamespace
+where pidx.indisvalid = false
+;"""
+io_cache_hit_ratio = """-- read and write ratio close to 1 may indicate Postgres is constantly cycling the
+-- same pages in and out of shared_buffers
+select
+    (hits / (reads + hits)::float) as hit_ratio,
+    reads,
+    writes
+from pg_stat_io
+where
+    backend_type = 'client backend'
+    and object = 'relation'
+    and context = 'normal'
+;"""
+io_client_fsync_impact = """with
+cte_fsync_client_backend_io as (
+    select sum(fsyncs) fsync_client_backend_io
+    from pg_stat_io
+    where backend_type = 'client backend'
+),
+
+cte_fsync_total_io as (select sum(fsyncs) fsync_total_io from pg_stat_io)
+
+select
+    round(
+        (
+            (select fsync_client_backend_io from cte_fsync_client_backend_io
+            ) * 100
+        )
+        / (select fsync_total_io from cte_fsync_total_io),
+        2
+    ) as io_backend_fsync_activity_pct
+;"""
+io_vacuum_impact = """with
+cte_vacuum_io as (
+    select sum(reads) + sum(writes) + sum(extends) vacuum_io
+    from pg_stat_io
+    where
+        backend_type = 'autovacuum worker'
+        or (context = 'vacuum' and (reads <> 0 or writes <> 0 or extends <> 0))
+),
+
+cte_total_io as (
+    select sum(reads) + sum(writes) + sum(extends) total_io from pg_stat_io
+)
+
+select
+    round(
+        ((select vacuum_io from cte_vacuum_io) * 100)
+        / (select total_io from cte_total_io),
+        2
+    ) as io_vacuum_activity_pct
+;"""
+kill_autovacuums = """select
+    pg_terminate_backend(pid),
+    query,
+    now() - pg_stat_activity.query_start as duration
+from pg_stat_activity
+where query ilike 'autovacuum:%'
+;"""
+lock_trees = """with recursive
+l as (
+    select
+        pid,
+        locktype,
+        granted,
+        array_position(
+            array[
+                'accessshare',
+                'rowshare',
+                'rowexclusive',
+                'shareupdateexclusive',
+                'share',
+                'sharerowexclusive',
+                'exclusive',
+                'accessexclusive'
+            ],
+            left(mode, -4)
+        ) m,
+        row(
+            locktype,
+            database,
+            relation,
+            page,
+            tuple,
+            virtualxid,
+            transactionid,
+            classid,
+            objid,
+            objsubid
+        ) obj
+    from pg_locks
+),
+
+pairs as (
+    select
+        w.pid waiter,
+        l.pid locker,
+        l.obj,
+        l.m
+    from l w
+    join
+        l
+        on
+            l.obj is not distinct from w.obj
+            and l.locktype = w.locktype
+            and not l.pid = w.pid
+            and l.granted
+    where
+        not w.granted
+        and not exists (
+            select
+            from l i
+            where
+                i.pid = l.pid
+                and i.locktype = l.locktype
+                and i.obj is not distinct from l.obj
+                and i.m > l.m
+        )
+),
+
+leads as (
+    select
+        o.locker,
+        1::int lvl,
+        count(*) q,
+        array[locker] track,
+        false as cycle
+    from pairs o
+    group by o.locker
+    union all
+    select
+        i.locker,
+        leads.lvl + 1,
+        (
+            select count(*) from pairs q
+            where q.locker = i.locker
+        ),
+        leads.track || i.locker,
+        i.locker = any(leads.track)
+    from pairs i, leads
+    where i.waiter = leads.locker and not cycle
+),
+
+tree as (
+    select
+        locker pid,
+        locker dad,
+        locker root,
+        case when cycle then track end dl,
+        null::record obj,
+        0 lvl,
+        locker::text path,
+        array_agg(locker) over () all_pids
+    from leads o
+    where
+        (
+            cycle
+            and not exists (
+                select
+                from leads i
+                where i.locker = any(o.track) and (i.lvl > o.lvl or i.q < o.q)
+            )
+        )
+        or (
+            not cycle
+            and not exists (
+                select from pairs
+                where waiter = o.locker
+            )
+            and not exists (
+                select from leads i
+                where i.locker = o.locker and i.lvl < o.lvl
+            )
+        )
+    union all
+    select
+        w.waiter pid,
+        tree.pid,
+        tree.root,
+        case when w.waiter = any(tree.dl) then tree.dl end,
+        w.obj,
+        tree.lvl + 1,
+        tree.path || '.' || w.waiter,
+        all_pids || array_agg(w.waiter) over ()
+    from tree
+    join pairs w on tree.pid = w.locker and not w.waiter = any(all_pids)
+)
+
+select
+    (clock_timestamp() - a.xact_start)::interval (0) as ts_age,
+    (clock_timestamp() - a.state_change)::interval (0) as change_age,
+    a.datname,
+    a.usename,
+    a.client_addr,
+    tree.pid,
+    replace(a.state, 'idle in transaction', 'idletx') state,
+    lvl,
+    (
+        select count(*)
+        from tree p
+        where p.path ~ ('^' || tree.path) and not p.path = tree.path
+    ) blocked,
+    case when tree.pid = any(tree.dl) then '!>' else repeat(' .', lvl) end
+    || ' '
+    || trim(left(regexp_replace(a.query, '\s+', ' ', 'g'), 100)) query
+from tree
+left join pairs w on w.waiter = tree.pid and w.locker = tree.dad
+join pg_stat_activity a using (pid)
+join pg_stat_activity r on r.pid = tree.root
+order by (now() - r.xact_start), path
+;"""
+lock_trees_detailed = """begin
+;
+
+set local statement_timeout to '100ms'
+;
+
+with recursive
+activity as (
+    select
+        pg_blocking_pids(pid) blocked_by,
+        *,
+        age(clock_timestamp(), xact_start)::interval (0) as tx_age,
+        age(clock_timestamp(), state_change)::interval (0) as state_age
+    from pg_stat_activity
+    where state is distinct from 'idle'
+),
+
+blockers as (
+    select array_agg(distinct c order by c) as pids
+    from (select unnest(blocked_by) from activity) as dt (c)
+),
+
+tree as (
+    select
+        activity.*,
+        1 as level,
+        activity.pid as top_blocker_pid,
+        array[activity.pid] as path,
+        array[activity.pid]::int [] as all_blockers_above
+    from activity, blockers
+    where array[pid] <@ blockers.pids and blocked_by = '{}'::int []
+    union all
+    select
+        activity.*,
+        tree.level + 1 as level,
+        tree.top_blocker_pid,
+        path || array[activity.pid] as path,
+        tree.all_blockers_above
+        || array_agg(activity.pid) over () as all_blockers_above
+    from activity, tree
+    where
+        not array[activity.pid] <@ tree.all_blockers_above
+        and activity.blocked_by <> '{}'::int []
+        and activity.blocked_by <@ tree.all_blockers_above
+)
+
+select
+    pid,
+    blocked_by,
+    tx_age,
+    state_age,
+    backend_xid as xid,
+    backend_xmin as xmin,
+    replace(state, 'idle in transaction', 'idletx') as state,
+    datname,
+    usename,
+    wait_event_type || ':' || wait_event as wait,
+    (
+        select count(distinct t1.pid)
+        from tree t1
+        where array[tree.pid] <@ t1.path and t1.pid <> tree.pid
+    ) as blkd,
+    format(
+        '%s %s%s',
+        lpad('[' || pid::text || ']', 7, ' '),
+        repeat('.', level - 1) || case when level > 1 then ' ' end,
+        left(query, 1000)
+    ) as query
+from tree
+order by top_blocker_pid, level, pid
+;
+
+commit
+;"""
+multixact_size = """with env as ( /* pgwatch_generated */
+    select
+    -- Check if native pg_get_multixact_stats() is available (PG19+)
+        exists(
+            select
+            from pg_proc p
+            join pg_namespace n on n.oid = p.pronamespace
+            where
+                p.proname = 'pg_get_multixact_stats'
+                and n.nspname = 'pg_catalog'
+        ) as has_native_fn,
+        -- Fallback checks for cloud providers that may not have native function yet
+        exists(
+            select
+            from pg_proc p
+            join pg_namespace n on n.oid = p.pronamespace
+            where p.proname = 'pg_ls_multixactdir' and n.nspname = 'rds_tools'
+        ) as has_rds_fn,
+        exists(
+            select
+            from pg_proc p
+            join pg_namespace n on n.oid = p.pronamespace
+            where p.proname = 'aurora_stat_file' and n.nspname = 'pg_catalog'
+        ) as has_aurora_fn,
+        exists(
+            select from pg_proc
+            where proname = 'pg_ls_dir')
+            as has_pg_ls_dir_func,
+        exists(
+            select from pg_proc
+            where proname = 'pg_stat_file')
+            as has_pg_stat_file_func
+),
+
+can_local as (
+    select (has_pg_ls_dir_func and has_pg_stat_file_func) as ok from env
+),
+
+-- Use native pg_get_multixact_stats() when available (preferred for PG19+).
+-- Returns members_size directly; offsets_bytes is calculated from num_mxids.
+-- Each offset SLRU segment is 256KB (262144 bytes) and holds 32768 8-byte entries.
+native_probe_xml as (
+    select query_to_xml($q$
+    select
+      members_size::bigint as members_bytes,
+      (ceiling(num_mxids::numeric / 32768) * 262144)::bigint as offsets_bytes,
+      0 as status_code
+    from pg_catalog.pg_get_multixact_stats()
+  $q$, true, true, '') as x
+    where (select has_native_fn from env)
+),
+
+-- Aurora fallback: uses aurora_stat_file() function.
+aurora_probe_xml as (
+    select query_to_xml($q$
+    with files as (
+      select filename, allocated_bytes, used_bytes
+      from aurora_stat_file()
+      where filename like 'pg_multixact/%'
+    ),
+    members as (
+      select sum(used_bytes)::bigint as sz from files where filename like 'pg_multixact/members%'
+    ),
+    offsets as (
+      select sum(used_bytes)::bigint as sz from files where filename like 'pg_multixact/offsets%'
+    ),
+    has_rows as (
+      select exists(select 1 from files) as any_rows
+    )
+    select
+      case when (select any_rows from has_rows) then coalesce((select sz from members), 0) end as members_bytes,
+      case when (select any_rows from has_rows) then coalesce((select sz from offsets), 0) end as offsets_bytes,
+      case when (select any_rows from has_rows) then 0 else 1 end as status_code
+  $q$, true, true, '') as x
+    where
+        (select has_aurora_fn from env) and not (select has_native_fn from env)
+),
+
+-- RDS fallback: uses rds_tools.pg_ls_multixactdir() function.
+rds_probe_xml as (
+    select query_to_xml($q$
+    with files as (
+      select name, size
+      from rds_tools.pg_ls_multixactdir()
+    ),
+    members as (
+      select sum(size)::bigint as sz from files where name like 'pg_multixact/members%'
+    ),
+    offsets as (
+      select sum(size)::bigint as sz from files where name like 'pg_multixact/offsets%'
+    ),
+    has_rows as (
+      select exists(select 1 from files where name like 'pg_multixact/%') as any_rows
+    )
+    select
+      case when (select any_rows from has_rows) then coalesce((select sz from members), 0) end as members_bytes,
+      case when (select any_rows from has_rows) then coalesce((select sz from offsets), 0) end as offsets_bytes,
+      case when (select any_rows from has_rows) then 0 else 1 end as status_code
+  $q$, true, true, '') as x
+    where
+        (select has_rds_fn from env)
+        and not (select has_aurora_fn from env)
+        and not (select has_native_fn from env)
+),
+
+-- Self-managed fallback: uses pg_stat_file() + pg_ls_dir().
+local_probe_xml as (
+    select query_to_xml($q$
+    with dirs as (
+      select
+        (pg_stat_file('pg_multixact/members', true)).isdir as has_members,
+        (pg_stat_file('pg_multixact/offsets', true)).isdir as has_offsets
+    ),
+    flags as (
+      select ((select has_members from dirs) or (select has_offsets from dirs)) as has_any
+    ),
+    members as (
+      select sum((pg_stat_file(format('pg_multixact/members/%s', d), true)).size)::bigint as sz
+      from pg_ls_dir('pg_multixact/members') as d(d)
+      where (select has_members from dirs)
+    ),
+    offsets as (
+      select sum((pg_stat_file(format('pg_multixact/offsets/%s', d), true)).size)::bigint as sz
+      from pg_ls_dir('pg_multixact/offsets') as d(d)
+      where (select has_offsets from dirs)
+    )
+    select
+      case when (select has_any from flags) then coalesce((select sz from members), 0) end as members_bytes,
+      case when (select has_any from flags) then coalesce((select sz from offsets), 0) end as offsets_bytes,
+      case when (select has_any from flags) then 0 else 1 end as status_code
+  $q$, true, true, '') as x
+    where
+        not (select has_rds_fn from env) and not (select has_aurora_fn from env)
+        and not (select has_native_fn from env) and (select ok from can_local)
+),
+
+picked as (
+    select * from native_probe_xml
+    union all
+    select * from aurora_probe_xml
+    union all
+    select * from rds_probe_xml
+    union all
+    select * from local_probe_xml
+    limit 1
+),
+
+parsed as (
+    select
+        (xpath('//members_bytes/text()', x))[1]::text::bigint as members_bytes,
+        (xpath('//offsets_bytes/text()', x))[1]::text::bigint as offsets_bytes,
+        (xpath('//status_code/text()', x))[1]::text::int as status_code
+    from picked
+)
+
+select * from parsed
+union all
+select
+    null::bigint as members_bytes,
+    null::bigint as offsets_bytes,
+    2::int as status_code
+where not exists (select 1 from parsed);"""
+multixact_size_11 = """with env as ( /* pgwatch_generated */
+    select
+        exists(
+            select
+            from pg_proc p
+            join pg_namespace n on n.oid = p.pronamespace
+            where p.proname = 'pg_ls_multixactdir' and n.nspname = 'rds_tools'
+        ) as has_rds_fn,
+        exists(
+            select
+            from pg_proc p
+            join pg_namespace n on n.oid = p.pronamespace
+            where p.proname = 'aurora_stat_file' and n.nspname = 'pg_catalog'
+        ) as has_aurora_fn,
+        exists(
+            select from pg_proc
+            where proname = 'pg_ls_dir')
+            as has_pg_ls_dir_func,
+        exists(
+            select from pg_proc
+            where proname = 'pg_stat_file')
+            as has_pg_stat_file_func
+),
+
+can_local as (
+    select (has_pg_ls_dir_func and has_pg_stat_file_func) as ok from env
+),
+
+-- Use query_to_xml to safely execute Aurora-specific multixact query.
+-- Aurora uses aurora_stat_file() function instead of rds_tools.pg_ls_multixactdir().
+aurora_probe_xml as (
+    select query_to_xml($q$
+    with files as (
+      select filename, allocated_bytes, used_bytes
+      from aurora_stat_file()
+      where filename like 'pg_multixact/%'
+    ),
+    members as (
+      select sum(used_bytes)::bigint as sz from files where filename like 'pg_multixact/members%'
+    ),
+    offsets as (
+      select sum(used_bytes)::bigint as sz from files where filename like 'pg_multixact/offsets%'
+    ),
+    has_rows as (
+      select exists(select 1 from files) as any_rows
+    )
+    select
+      case when (select any_rows from has_rows) then coalesce((select sz from members), 0) end as members_bytes,
+      case when (select any_rows from has_rows) then coalesce((select sz from offsets), 0) end as offsets_bytes,
+      case when (select any_rows from has_rows) then 0 else 1 end as status_code
+  $q$, true, true, '') as x
+    where (select has_aurora_fn from env)
+),
+
+-- Use query_to_xml to safely execute RDS-specific multixact directory listing query.
+-- The XML wrapper allows the query to fail gracefully if rds_tools.pg_ls_multixactdir()
+-- is unavailable or returns errors, preventing the entire metric from failing.
+rds_probe_xml as (
+    select query_to_xml($q$
+    with files as (
+      select name, size
+      from rds_tools.pg_ls_multixactdir()
+    ),
+    members as (
+      select sum(size)::bigint as sz from files where name like 'pg_multixact/members%'
+    ),
+    offsets as (
+      select sum(size)::bigint as sz from files where name like 'pg_multixact/offsets%'
+    ),
+    has_rows as (
+      select exists(select 1 from files where name like 'pg_multixact/%') as any_rows
+    )
+    select
+      case when (select any_rows from has_rows) then coalesce((select sz from members), 0) end as members_bytes,
+      case when (select any_rows from has_rows) then coalesce((select sz from offsets), 0) end as offsets_bytes,
+      case when (select any_rows from has_rows) then 0 else 1 end as status_code
+  $q$, true, true, '') as x
+    where (select has_rds_fn from env) and not (select has_aurora_fn from env)
+),
+
+-- Use query_to_xml to safely execute standard Postgres multixact directory listing query.
+-- The XML wrapper allows the query to fail gracefully if pg_stat_file() or pg_ls_dir()
+-- are unavailable or return permission errors, preventing the entire metric from failing.
+local_probe_xml as (
+    select query_to_xml($q$
+    with dirs as (
+      select
+        (pg_stat_file('pg_multixact/members', true)).isdir as has_members,
+        (pg_stat_file('pg_multixact/offsets', true)).isdir as has_offsets
+    ),
+    flags as (
+      select ((select has_members from dirs) or (select has_offsets from dirs)) as has_any
+    ),
+    members as (
+      select sum((pg_stat_file(format('pg_multixact/members/%s', d), true)).size)::bigint as sz
+      from pg_ls_dir('pg_multixact/members') as d(d)
+      where (select has_members from dirs)
+    ),
+    offsets as (
+      select sum((pg_stat_file(format('pg_multixact/offsets/%s', d), true)).size)::bigint as sz
+      from pg_ls_dir('pg_multixact/offsets') as d(d)
+      where (select has_offsets from dirs)
+    )
+    select
+      case when (select has_any from flags) then coalesce((select sz from members), 0) end as members_bytes,
+      case when (select has_any from flags) then coalesce((select sz from offsets), 0) end as offsets_bytes,
+      case when (select has_any from flags) then 0 else 1 end as status_code
+  $q$, true, true, '') as x
+    where
+        not (select has_rds_fn from env)
+        and not (select has_aurora_fn from env)
+        and (select ok from can_local)
+),
+
+picked as (
+    select * from aurora_probe_xml
+    union all
+    select * from rds_probe_xml
+    union all
+    select * from local_probe_xml
+    limit 1
+),
+
+parsed as (
+    select
+        (xpath('//members_bytes/text()', x))[1]::text::bigint as members_bytes,
+        (xpath('//offsets_bytes/text()', x))[1]::text::bigint as offsets_bytes,
+        (xpath('//status_code/text()', x))[1]::text::int as status_code
+    from picked
+)
+
+select * from parsed
+union all
+select
+    null::bigint as members_bytes,
+    null::bigint as offsets_bytes,
+    2::int as status_code
+where not exists (select 1 from parsed);"""
+non_indexed_fks = """with fk_actions (code, action) as (
+    values
+    ('a', 'error'),
+    ('r', 'restrict'),
+    ('c', 'cascade'),
+    ('n', 'set null'),
+    ('d', 'set default')
+),
+
+fk_list as (
+    select
+        pg_constraint.oid as fkoid,
+        conrelid,
+        confrelid as parentid,
+        conname,
+        relname,
+        nspname,
+        fk_actions_update.action as update_action,
+        fk_actions_delete.action as delete_action,
+        conkey as key_cols
+    from pg_constraint
+    join pg_class on conrelid = pg_class.oid
+    join pg_namespace on pg_class.relnamespace = pg_namespace.oid
+    join fk_actions as fk_actions_update on confupdtype = fk_actions_update.code
+    join fk_actions as fk_actions_delete on confdeltype = fk_actions_delete.code
+    where contype = 'f'
+),
+
+fk_attributes as (
+    select
+        fkoid,
+        conrelid,
+        attname,
+        attnum
+    from fk_list
+    join pg_attribute on conrelid = attrelid and attnum = any(key_cols)
+    order by fkoid, attnum
+),
+
+fk_cols_list as (
+    select
+        fkoid,
+        array_agg(attname) as cols_list
+    from fk_attributes
+    group by fkoid
+),
+
+index_list as (
+    select
+        indexrelid as indexid,
+        pg_class.relname as indexname,
+        indrelid,
+        indkey,
+        indpred is not null as has_predicate,
+        pg_get_indexdef(indexrelid) as indexdef
+    from pg_index
+    join pg_class on indexrelid = pg_class.oid
+    where indisvalid
+),
+
+fk_index_match as (
+    select
+        fk_list.*,
+        indexid,
+        indexname,
+        indkey::int [] as indexatts,
+        has_predicate,
+        indexdef,
+        array_length(key_cols, 1) as fk_colcount,
+        array_length(indkey, 1) as index_colcount,
+        round(pg_relation_size(conrelid) / (1024 ^ 2)::numeric) as table_mb,
+        cols_list
+    from fk_list
+    join fk_cols_list using (fkoid)
+    left join
+        index_list
+        on
+            conrelid = indrelid
+            and (indkey::int2 [])[
+                0:(array_length(key_cols, 1) - 1)
+            ] operator (pg_catalog.@>) key_cols
+),
+
+fk_perfect_match as (
+    select fkoid
+    from fk_index_match
+    where
+        (index_colcount - 1) <= fk_colcount
+        and not has_predicate
+        and indexdef like '%USING btree%'
+),
+
+fk_index_check as (
+    select
+        'no index' as issue,
+        *,
+        1 as issue_sort
+    from fk_index_match
+    where indexid is null
+    union all
+    select
+        'questionable index' as issue,
+        *,
+        2
+    from fk_index_match
+    where
+        indexid is not null
+        and fkoid not in (select fkoid from fk_perfect_match)
+),
+
+parent_table_stats as (
+    select
+        fkoid,
+        tabstats.relname as parent_name,
+        (n_tup_ins + n_tup_upd + n_tup_del + n_tup_hot_upd) as parent_writes,
+        round(pg_relation_size(parentid) / (1024 ^ 2)::numeric) as parent_mb
+    from pg_stat_user_tables as tabstats
+    join fk_list on relid = parentid
+),
+
+fk_table_stats as (
+    select
+        fkoid,
+        (n_tup_ins + n_tup_upd + n_tup_del + n_tup_hot_upd) as writes,
+        seq_scan as table_scans
+    from pg_stat_user_tables as tabstats
+    join fk_list on relid = conrelid
+)
+
+select
+    nspname as schema_name,
+    relname as table_name,
+    conname as fk_name,
+    issue,
+    table_mb,
+    writes,
+    table_scans,
+    parent_name,
+    parent_mb,
+    parent_writes,
+    cols_list,
+    indexdef
+from fk_index_check
+join parent_table_stats using (fkoid)
+join fk_table_stats using (fkoid)
+where table_mb > 9 and (writes > 1000 or parent_writes > 1000 or parent_mb > 10)
+order by issue_sort, table_mb desc, table_name, fk_name
+;"""
+pg_stat_statements_report = """with
+pg_stat_statements_slice as (
+    select *
+    from pg_stat_statements
+    where
+        current_database() = 'postgres'
+        or dbid
+        = (
+            select oid from pg_database
+            where datname = current_database()
+        )
+),
+
+pg_stat_statements_normalized as (
+    select
+        *,
+        translate(
+            regexp_replace(
+                regexp_replace(
+                    regexp_replace(
+                        regexp_replace(
+                            query,
+                            e'\\?(::[a-zA-Z_]+)?( *, *\\?(::[a-zA-Z_]+)?)+',
+                            '?',
+                            'g'
+                        ),
+                        e'\\$[0-9]+(::[a-zA-Z_]+)?( *, *\\$[0-9]+(::[a-zA-Z_]+)?)*',
+                        '$N',
+                        'g'
+                    ),
+                    e'--.*$',
+                    '',
+                    'ng'
+                ),
+                e'/\\*.*?\\*/',
+                '',
+                'g'
+            ),
+            e'\r',
+            ''
+        ) as query_normalized
+    from pg_stat_statements_slice
+),
+
+totals as (
+    select
+        sum(total_exec_time) as total_exec_time,
+        sum(blk_read_time + blk_write_time) as io_time,
+        sum(total_exec_time - blk_read_time - blk_write_time) as non_io_time,
+        sum(calls) as ncalls,
+        sum(rows) as total_rows
+    from pg_stat_statements_slice
+),
+
+_pg_stat_statements as (
+    select
+        (
+            select datname from pg_database
+            where oid = p.dbid
+        ) as database,
+        (
+            select rolname from pg_roles
+            where oid = p.userid
+        ) as username,
+        substring(
+            translate(
+                replace(
+                    (array_agg(query order by length(query)))[1],
+                    e'-- \n',
+                    e'--\n'
+                ),
+                e'\r',
+                ''
+            ),
+            1,
+            8192
+        ) as query,
+        sum(total_exec_time) as total_exec_time,
+        sum(blk_read_time) as blk_read_time,
+        sum(blk_write_time) as blk_write_time,
+        sum(calls) as calls,
+        sum(rows) as rows
+    from pg_stat_statements_normalized p
+    group by dbid, userid, md5(query_normalized)
+),
+
+totals_readable as (
+    select
+        to_char(
+            interval '1 millisecond' * total_exec_time, 'HH24:MI:SS'
+        ) as total_exec_time,
+        (100 * io_time / total_exec_time)::numeric(20, 2) as io_time_percent,
+        to_char(ncalls, 'FM999,999,999,990') as total_queries,
+        (
+            select to_char(count(distinct md5(query)), 'FM999,999,990')
+            from _pg_stat_statements
+        ) as unique_queries
+    from totals
+),
+
+statements as (
+    select
+        (
+            100 * total_exec_time / (select total_exec_time from totals)
+        ) as time_percent,
+        (
+            100
+            * (blk_read_time + blk_write_time)
+            / (select greatest(io_time, 1) from totals)
+        ) as io_time_percent,
+        (
+            100
+            * (total_exec_time - blk_read_time - blk_write_time)
+            / (select non_io_time from totals)
+        ) as non_io_time_percent,
+        to_char(
+            interval '1 millisecond' * total_exec_time, 'HH24:MI:SS'
+        ) as total_exec_time,
+        (total_exec_time::numeric / calls)::numeric(20, 2) as avg_time,
+        (
+            (total_exec_time - blk_read_time - blk_write_time)::numeric / calls
+        )::numeric(20, 2) as avg_non_io_time,
+        ((blk_read_time + blk_write_time)::numeric / calls)::numeric(
+            20, 2
+        ) as avg_io_time,
+        to_char(calls, 'FM999,999,999,990') as calls,
+        (100 * calls / (select ncalls from totals))::numeric(
+            20, 2
+        ) as calls_percent,
+        to_char(rows, 'FM999,999,999,990') as rows,
+        (100 * rows / (select total_rows from totals))::numeric(
+            20, 2
+        ) as row_percent,
+        database,
+        username,
+        query
+    from _pg_stat_statements
+    where
+        (total_exec_time - blk_read_time - blk_write_time)
+        / (select non_io_time from totals)
+        >= 0.01
+        or (blk_read_time + blk_write_time)
+        / (select greatest(io_time, 1) from totals)
+        >= 0.01
+        or calls / (select ncalls from totals) >= 0.02
+        or rows / (select total_rows from totals) >= 0.02
+    union all
+    select
+        (
+            100
+            * sum(total_exec_time)::numeric
+            / (select total_exec_time from totals)
+        ) as time_percent,
+        (
+            100
+            * sum(blk_read_time + blk_write_time)::numeric
+            / (select greatest(io_time, 1) from totals)
+        ) as io_time_percent,
+        (
+            100
+            * sum(total_exec_time - blk_read_time - blk_write_time)::numeric
+            / (select non_io_time from totals)
+        ) as non_io_time_percent,
+        to_char(
+            interval '1 millisecond' * sum(total_exec_time), 'HH24:MI:SS'
+        ) as total_exec_time,
+        (sum(total_exec_time)::numeric / sum(calls))::numeric(
+            20, 2
+        ) as avg_time,
+        (
+            sum(total_exec_time - blk_read_time - blk_write_time)::numeric
+            / sum(calls)
+        )::numeric(20, 2) as avg_non_io_time,
+        (sum(blk_read_time + blk_write_time)::numeric / sum(calls))::numeric(
+            20, 2
+        ) as avg_io_time,
+        to_char(sum(calls), 'FM999,999,999,990') as calls,
+        (100 * sum(calls) / (select ncalls from totals))::numeric(
+            20, 2
+        ) as calls_percent,
+        to_char(sum(rows), 'FM999,999,999,990') as rows,
+        (100 * sum(rows) / (select total_rows from totals))::numeric(
+            20, 2
+        ) as row_percent,
+        'all' as database,
+        'all' as username,
+        'other' as query
+    from _pg_stat_statements
+    where
+        not (
+            (total_exec_time - blk_read_time - blk_write_time)
+            / (select non_io_time from totals)
+            >= 0.01
+            or (blk_read_time + blk_write_time)
+            / (select greatest(io_time, 1) from totals)
+            >= 0.01
+            or calls / (select ncalls from totals) >= 0.02
+            or rows / (select total_rows from totals) >= 0.02
+        )
+),
+
+statements_readable as (
+    select
+        row_number() over (order by s.time_percent desc) as pos,
+        to_char(time_percent, 'FM990.0') || '%' as time_percent,
+        to_char(io_time_percent, 'FM990.0') || '%' as io_time_percent,
+        to_char(non_io_time_percent, 'FM990.0') || '%' as non_io_time_percent,
+        to_char(
+            avg_io_time * 100 / (coalesce(nullif(avg_time, 0), 1)), 'FM990.0'
+        )
+        || '%' as avg_io_time_percent,
+        total_exec_time,
+        avg_time,
+        avg_non_io_time,
+        avg_io_time,
+        calls,
+        calls_percent,
+        rows,
+        row_percent,
+        database,
+        username,
+        left(query, 100) as query
+    from statements s
+    where calls is not null
+)
+
+select
+    e'total time:\t'
+    || total_exec_time
+    || ' (IO: '
+    || io_time_percent
+    || e'%)\n'
+    || e'total queries:\t'
+    || total_queries
+    || ' (unique: '
+    || unique_queries
+    || e')\n'
+    || 'report for '
+    || (
+        select
+            case
+                when current_database() = 'postgres'
+                    then 'all databases'
+                else current_database() || ' database'
+            end
+    )
+    || e', version b0.9.6'
+    || ' @ PostgreSQL '
+    || (
+        select setting from pg_settings
+        where name = 'server_version'
+    )
+    || e'\ntracking '
+    || (
+        select setting from pg_settings
+        where name = 'pg_stat_statements.track'
+    )
+    || ' '
+    || (
+        select setting from pg_settings
+        where name = 'pg_stat_statements.max'
+    )
+    || ' queries, utilities '
+    || (
+        select setting from pg_settings
+        where name = 'pg_stat_statements.track_utility'
+    )
+    || ', logging '
+    || (
+        select
+            (
+                case
+                    when setting = '0'
+                        then 'all'
+                    when setting = '-1'
+                        then 'none'
+                    when setting::int > 1000
+                        then (setting::numeric / 1000)::numeric(20, 1) || 's+'
+                    else setting || 'ms+'
+                end
+            )
+        from pg_settings
+        where name = 'log_min_duration_statement'
+    )
+    || e' queries\n'
+    || (
+        select
+            coalesce(
+                string_agg(
+                    'WARNING: database '
+                    || datname
+                    || ' must be vacuumed within '
+                    || to_char(
+                        2147483647 - age(datfrozenxid), 'FM999,999,999,990'
+                    )
+                    || ' transactions',
+                    e'\n'
+                    order by age(datfrozenxid) desc
+                )
+                || e'\n',
+                ''
+            )
+        from pg_database
+        where (2147483647 - age(datfrozenxid)) < 200000000
+    )
+    || e'\n'
+from totals_readable
+union all
+(
+    select
+        e'=============================================================================================================\n'
+        || 'pos:'
+        || pos
+        || e'\t total time: '
+        || total_exec_time
+        || ' ('
+        || time_percent
+        || ', IO: '
+        || io_time_percent
+        || ', Non-IO: '
+        || non_io_time_percent
+        || e')\t calls: '
+        || calls
+        || ' ('
+        || calls_percent
+        || e'%)\t avg_time: '
+        || avg_time
+        || 'ms (IO: '
+        || avg_io_time_percent
+        || e')\n'
+        || 'user: '
+        || username
+        || e'\t db: '
+        || database
+        || e'\t rows: '
+        || rows
+        || ' ('
+        || row_percent
+        || '%)'
+        || e'\t query:\n'
+        || query
+        || e'\n'
+    from statements_readable
+    order by pos
+)
+;"""
+pg_stat_statements_top_total = """select
+    sum(calls) as calls,
+    round(sum(total_exec_time)::numeric, 2) as total_exec_t,
+    round(
+        (sum(mean_exec_time * calls) / sum(calls))::numeric, 2
+    ) as mean_exec_t,
+    format(
+        '%s–%s',
+        round(min(min_exec_time)::numeric, 2),
+        round(max(max_exec_time)::numeric, 2)
+    ) as min_max_exec_t,
+    round(sum(total_plan_time)::numeric, 2) as total_plan_t,
+    round(
+        (sum(mean_plan_time * calls) / sum(calls))::numeric, 2
+    ) as mean_plan_t,
+    format(
+        '%s–%s',
+        round(min(min_plan_time)::numeric, 2),
+        round(max(max_plan_time)::numeric, 2)
+    ) as min_max_plan_t,
+    sum(rows) as rows,
+    (
+        select usename from pg_user
+        where usesysid = userid
+    ) as usr,
+    (
+        select datname from pg_database
+        where oid = dbid
+    ) as db,
+    left(query, 100) as query,
+    sum(shared_blks_hit) as shared_blks_hit,
+    sum(shared_blks_read) as shared_blks_read,
+    sum(shared_blks_dirtied) as shared_blks_dirtied,
+    sum(shared_blks_written) as shared_blks_written,
+    sum(local_blks_hit) as local_blks_hit,
+    sum(local_blks_read) as local_blks_read,
+    sum(local_blks_dirtied) as local_blks_dirtied,
+    sum(local_blks_written) as local_blks_written,
+    sum(temp_blks_read) as temp_blks_read,
+    sum(temp_blks_written) as temp_blks_written,
+    sum(blk_read_time) as blk_read_time,
+    sum(blk_write_time) as blk_write_time,
+    array_agg(queryid) as queryids
+from pg_stat_statements
+group by userid, dbid, query
+order by sum(total_exec_time) desc
+limit 50
+;"""
+rare_indexes = """with
+table_scans as (
+    select
+        relid,
+        tables.idx_scan + tables.seq_scan as all_scans,
+        (tables.n_tup_ins + tables.n_tup_upd + tables.n_tup_del) as writes,
+        pg_relation_size(relid) as table_size
+    from pg_stat_user_tables as tables
+),
+
+all_writes as (select sum(writes) as total_writes from table_scans),
+
+indexes as (
+    select
+        idx_stat.relid,
+        idx_stat.indexrelid,
+        idx_stat.schemaname,
+        idx_stat.relname as tablename,
+        idx_stat.indexrelname as indexname,
+        idx_stat.idx_scan,
+        pg_relation_size(idx_stat.indexrelid) as index_bytes,
+        indexdef ~* 'USING btree' as idx_is_btree
+    from pg_stat_user_indexes as idx_stat
+    join pg_index using (indexrelid)
+    join
+        pg_indexes as indexes
+        on
+            idx_stat.schemaname = indexes.schemaname
+            and idx_stat.relname = indexes.tablename
+            and idx_stat.indexrelname = indexes.indexname
+    where pg_index.indisunique = false
+),
+
+index_ratios as (
+    select
+        schemaname,
+        tablename,
+        indexname,
+        idx_scan,
+        all_scans,
+        round(
+            (
+                case
+                    when all_scans = 0
+                        then 0.0::numeric
+                    else idx_scan::numeric / all_scans * 100
+                end
+            ),
+            2
+        ) as index_scan_pct,
+        writes,
+        round(
+            (
+                case
+                    when writes = 0
+                        then idx_scan::numeric
+                    else idx_scan::numeric / writes
+                end
+            ),
+            2
+        ) as scans_per_write,
+        pg_size_pretty(index_bytes) as index_size,
+        pg_size_pretty(table_size) as table_size,
+        idx_is_btree,
+        index_bytes
+    from indexes
+    join table_scans using (relid)
+),
+
+index_groups as (
+    select
+        'Never Used Indexes' as reason,
+        *,
+        1 as grp
+    from index_ratios
+    where idx_scan = 0 and idx_is_btree
+    union all
+    select
+        'Low Scans, High Writes' as reason,
+        *,
+        2 as grp
+    from index_ratios
+    where
+        scans_per_write <= 1
+        and index_scan_pct < 10
+        and idx_scan > 0
+        and writes > 100
+        and idx_is_btree
+    union all
+    select
+        'Seldom Used Large Indexes' as reason,
+        *,
+        3 as grp
+    from index_ratios
+    where
+        index_scan_pct < 5
+        and scans_per_write > 1
+        and idx_scan > 0
+        and idx_is_btree
+        and index_bytes > 100000000
+    union all
+    select
+        'High-Write Large Non-Btree' as reason,
+        index_ratios.*,
+        4 as grp
+    from index_ratios, all_writes
+    where
+        (writes::numeric / (total_writes + 1)) > 0.02
+        and not idx_is_btree
+        and index_bytes > 100000000
+    order by grp, index_bytes desc
+)
+
+select
+    reason,
+    schemaname as schema_name,
+    tablename as table_name,
+    indexname as index_name,
+    index_scan_pct,
+    scans_per_write,
+    index_size,
+    table_size,
+    idx_scan,
+    all_scans
+from index_groups
+;"""
+redundant_indexes = """with
+fk_indexes as (
+    select
+        n.nspname as schema_name,
+        ci.relname as index_name,
+        cr.relname as table_name,
+        (confrelid::regclass)::text as fk_table_ref,
+        array_to_string(indclass, ', ') as opclasses
+    from pg_index i
+    join pg_class ci on ci.oid = i.indexrelid and ci.relkind = 'i'
+    join pg_class cr on cr.oid = i.indrelid and cr.relkind = 'r'
+    join pg_namespace n on n.oid = ci.relnamespace
+    join pg_constraint cn on cn.conrelid = cr.oid
+    left join pg_stat_user_indexes si on si.indexrelid = i.indexrelid
+    where
+        contype = 'f'
+        and i.indisunique is false
+        and conkey is not null
+        and ci.relpages > 0
+        and si.idx_scan < 10
+),
+
+index_data as (
+    select
+        *,
+
+        (
+            select string_agg(lpad(i, 3, '0'), ' ')
+            from unnest(string_to_array(indkey::text, ' ')) i
+        ) as columns,
+        array_to_string(indclass, ', ') as opclasses
+    from pg_index i
+    join pg_class ci on ci.oid = i.indexrelid and ci.relkind = 'i'
+    where indisvalid = true and ci.relpages > 0
+),
+
+redundant_indexes as (
+    select
+        i2.indexrelid as index_id,
+        tnsp.nspname as schema_name,
+        trel.relname as table_name,
+        pg_relation_size(trel.oid) as table_size_bytes,
+        irel.relname as index_name,
+        am1.amname as access_method,
+        (i1.indexrelid::regclass)::text as reason,
+        i1.indexrelid as reason_index_id,
+        pg_get_indexdef(i1.indexrelid) main_index_def,
+        pg_size_pretty(pg_relation_size(i1.indexrelid)) main_index_size,
+        pg_get_indexdef(i2.indexrelid) index_def,
+        pg_relation_size(i2.indexrelid) index_size_bytes,
+        s.idx_scan as index_usage,
+        quote_ident(tnsp.nspname) as formated_schema_name,
+        coalesce(nullif(quote_ident(tnsp.nspname), 'public') || '.', '')
+        || quote_ident(irel.relname) as formated_index_name,
+        quote_ident(trel.relname) as formated_table_name,
+        coalesce(nullif(quote_ident(tnsp.nspname), 'public') || '.', '')
+        || quote_ident(trel.relname) as formated_relation_name,
+        i2.opclasses
+    from index_data as i1
+    join
+        index_data as i2
+        on (i1.indrelid = i2.indrelid and i1.indexrelid <> i2.indexrelid)
+    inner join pg_opclass op1 on i1.indclass[0] = op1.oid
+    inner join pg_opclass op2 on i2.indclass[0] = op2.oid
+    inner join pg_am am1 on op1.opcmethod = am1.oid
+    inner join pg_am am2 on op2.opcmethod = am2.oid
+    join pg_stat_user_indexes as s on s.indexrelid = i2.indexrelid
+    join pg_class as trel on trel.oid = i2.indrelid
+    join pg_namespace as tnsp on trel.relnamespace = tnsp.oid
+    join pg_class as irel on irel.oid = i2.indexrelid
+    where
+        not i2.indisprimary
+        and not (i2.indisunique and not i1.indisprimary)
+        and am1.amname = am2.amname
+        and i1.columns like (i2.columns || '%')
+        and i1.opclasses like (i2.opclasses || '%')
+        and pg_get_expr(i1.indexprs, i1.indrelid)
+        is not distinct from pg_get_expr(i2.indexprs, i2.indrelid)
+        and pg_get_expr(i1.indpred, i1.indrelid)
+        is not distinct from pg_get_expr(i2.indpred, i2.indrelid)
+),
+
+redundant_indexes_fk as (
+    select
+        ri.*,
+
+        (
+            select count(1)
+            from fk_indexes fi
+            where
+                fi.fk_table_ref = ri.table_name
+                and fi.opclasses like (ri.opclasses || '%')
+        )
+        > 0 as supports_fk
+    from redundant_indexes ri
+),
+
+redundant_indexes_tmp_num as (
+    select
+        row_number() over () num,
+        rig.*
+    from redundant_indexes_fk rig
+    order by index_id
+),
+
+redundant_indexes_tmp_cut as (
+    select
+        ri1.*,
+        ri2.num as r_num
+    from redundant_indexes_tmp_num ri1
+    left join
+        redundant_indexes_tmp_num ri2
+        on
+            ri2.reason_index_id = ri1.index_id
+            and ri1.reason_index_id = ri2.index_id
+    where ri1.num < ri2.num or ri2.num is null
+),
+
+redundant_indexes_cut_grouped as (
+    select distinct
+        num,
+        *
+    from redundant_indexes_tmp_cut
+    order by index_size_bytes desc
+),
+
+redundant_indexes_grouped as (
+    select distinct
+        num,
+        *
+    from redundant_indexes_tmp_cut
+    order by index_size_bytes desc
+)
+
+select
+    schema_name,
+    table_name,
+    table_size_bytes,
+    index_name,
+    access_method,
+    string_agg(distinct reason, ', ') as redundant_to,
+    string_agg(main_index_def, ', ') as main_index_def,
+    string_agg(main_index_size, ', ') as main_index_size,
+    index_def,
+    index_size_bytes,
+    index_usage,
+    supports_fk
+from redundant_indexes_cut_grouped
+group by
+    index_id,
+    schema_name,
+    table_name,
+    table_size_bytes,
+    index_name,
+    access_method,
+    index_def,
+    index_size_bytes,
+    index_usage,
+    supports_fk
+order by index_size_bytes desc
+;"""
+running_2_minutes = """select
+    pid,
+    now() - pg_stat_activity.xact_start as duration,
+    query,
+    state,
+    wait_event,
+    wait_event_type,
+    pg_blocking_pids(pid),
+    usename,
+    application_name,
+    client_addr
+from pg_stat_activity
+where (now() - pg_stat_activity.xact_start) > interval '5 minutes'
+order by 2 desc
+;"""
+running_30_seconds = """select
+    pid,
+    now() - pg_stat_activity.xact_start as duration,
+    query,
+    state,
+    wait_event,
+    wait_event_type,
+    pg_blocking_pids(pid),
+    usename,
+    application_name,
+    client_addr
+from pg_stat_activity
+where (now() - pg_stat_activity.xact_start) > interval '30 seconds'
+order by 2 desc
+;"""
+table_ages = """select
+    c.oid::regclass,
+    age(c.relfrozenxid),
+    pg_size_pretty(pg_total_relation_size(c.oid))
+from pg_class c
+join pg_namespace n on c.relnamespace = n.oid
+where relkind in ('r', 't', 'm') and n.nspname not in ('pg_toast')
+order by 2 desc
+limit 20
+;"""
+table_bloat_estimation = """with
+step1 as (
+    select
+        tbl.oid tblid,
+        ns.nspname as schema_name,
+        tbl.relname as table_name,
+        tbl.reltuples,
+        tbl.relpages as heappages,
+        coalesce(toast.relpages, 0) as toastpages,
+        coalesce(toast.reltuples, 0) as toasttuples,
+        coalesce(
+            substring(
+                array_to_string(tbl.reloptions, ' ')
+                from '%fillfactor=#"__#"%' for '#'
+            )::int2,
+            100
+        ) as fillfactor,
+        current_setting('block_size')::numeric as bs,
+        case
+            when
+                version() ~ 'mingw32|64-bit|x86_64|ppc64|ia64|amd64'
+                then 8
+            else 4
+        end as ma,
+        24 as page_hdr,
+        23 + case
+            when max(coalesce(null_frac, 0)) > 0 then (7 + count(*)) / 8 else
+                0::int
+        end
+        + case
+            when bool_or(att.attname = 'oid' and att.attnum < 0) then 4 else 0
+        end as tpl_hdr_size,
+        sum(
+            (1 - coalesce(s.null_frac, 0)) * coalesce(s.avg_width, 1024)
+        ) as tpl_data_size,
+        bool_or(att.atttypid = 'pg_catalog.name'::regtype)
+        or sum(case when att.attnum > 0 then 1 else 0 end)
+        <> count(s.attname) as is_na
+    from pg_attribute as att
+    join pg_class as tbl on att.attrelid = tbl.oid and tbl.relkind = 'r'
+    join pg_namespace as ns on ns.oid = tbl.relnamespace
+    join
+        pg_stats as s
+        on
+            s.schemaname = ns.nspname
+            and s.tablename = tbl.relname
+            and not s.inherited
+            and s.attname = att.attname
+    left join pg_class as toast on tbl.reltoastrelid = toast.oid
+    where
+        not att.attisdropped
+        and s.schemaname not in ('pg_catalog', 'information_schema')
+    group by 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+    order by 2, 3
+),
+
+step2 as (
+    select
+        *,
+        (
+            4
+            + tpl_hdr_size
+            + tpl_data_size
+            + (2 * ma)
+            - case when tpl_hdr_size % ma = 0 then ma else tpl_hdr_size % ma end
+            - case
+                when ceil(tpl_data_size)::int % ma = 0
+                    then ma
+                else ceil(tpl_data_size)::int % ma
+            end
+        ) as tpl_size,
+        bs - page_hdr as size_per_block,
+        (heappages + toastpages) as tblpages
+    from step1
+),
+
+step3 as (
+    select
+        *,
+        ceil(reltuples / ((bs - page_hdr) / tpl_size))
+        + ceil(toasttuples / 4) as est_tblpages,
+        ceil(reltuples / ((bs - page_hdr) * fillfactor / (tpl_size * 100)))
+        + ceil(toasttuples / 4) as est_tblpages_ff
+    from step2
+),
+
+step4 as (
+    select
+        *,
+        tblpages * bs as real_size,
+        (tblpages - est_tblpages) * bs as extra_size,
+        case
+            when tblpages - est_tblpages > 0
+                then 100 * (tblpages - est_tblpages) / tblpages::float
+            else 0
+        end as extra_pct,
+        (tblpages - est_tblpages_ff) * bs as bloat_size,
+        case
+            when tblpages - est_tblpages_ff > 0
+                then 100 * (tblpages - est_tblpages_ff) / tblpages::float
+            else 0
+        end as bloat_pct
+    from step3
+    left join pg_stat_user_tables su on su.relid = tblid
+)
+
+select
+    case is_na when true then 'TRUE' else '' end as "Is N/A",
+    coalesce(nullif(schema_name, 'public') || '.', '') || table_name as "Table",
+    pg_size_pretty(real_size::numeric) as "Size",
+    case
+        when extra_size::numeric >= 0
+            then
+                '~'
+                || pg_size_pretty(extra_size::numeric)::text
+                || ' ('
+                || round(extra_pct::numeric, 2)::text
+                || '%)'
+        else null
+    end as "Extra",
+    case
+        when bloat_size::numeric >= 0
+            then
+                '~'
+                || pg_size_pretty(bloat_size::numeric)::text
+                || ' ('
+                || round(bloat_pct::numeric, 2)::text
+                || '%)'
+        else null
+    end as "Bloat estimate",
+    case
+        when (real_size - bloat_size)::numeric >= 0
+            then '~' || pg_size_pretty((real_size - bloat_size)::numeric)
+        else null
+    end as "Live",
+    greatest(last_autovacuum, last_vacuum)::timestamp(0)::text || case
+    greatest(last_autovacuum, last_vacuum)
+        when last_autovacuum
+            then ' (auto)'
+        else ''
+    end as "Last Vaccuum",
+
+    (
+        select
+            coalesce(
+                substring(
+                    array_to_string(reloptions, ' ') from 'fillfactor=([0-9]+)'
+                )::smallint,
+                100
+            )
+        from pg_class
+        where oid = tblid
+    ) as "Fillfactor"
+from step4
+order by bloat_size desc nulls last
+;"""
+table_read_write_ratios = """WITH
+ratio_target AS (SELECT 5 AS ratio),
+
+table_list AS (
+    SELECT
+        s.schemaname,
+        s.relname AS table_name,
+        -- Sum of heap and index blocks read from disk (from pg_statio_user_tables)
+        si.heap_blks_read + si.idx_blks_read AS blocks_read,
+        -- Sum of all write operations (tuples) (from pg_stat_user_tables)
+        s.n_tup_ins + s.n_tup_upd + s.n_tup_del AS write_tuples,
+        relpages
+        * (s.n_tup_ins + s.n_tup_upd + s.n_tup_del)
+        / (CASE WHEN reltuples = 0 THEN 1 ELSE reltuples END) AS blocks_write
+    FROM
+        -- Join the user tables statistics view with the I/O statistics view
+        pg_stat_user_tables AS s
+    JOIN pg_statio_user_tables AS si ON s.relid = si.relid
+    JOIN pg_class c ON c.oid = s.relid
+    WHERE
+        -- Filter to only show tables that have had some form of read or write activity
+        (s.n_tup_ins + s.n_tup_upd + s.n_tup_del) > 0
+        AND
+        (si.heap_blks_read + si.idx_blks_read) > 0
+)
+
+SELECT
+    *,
+    CASE
+        -- Handle case with no activity
+        WHEN blocks_read = 0 AND blocks_write = 0
+            THEN
+                'No Activity'
+        -- Handle write-heavy tables
+        WHEN blocks_write * ratio > blocks_read
+            THEN
+                CASE
+                    WHEN blocks_read = 0 THEN 'Write-Only'
+                    ELSE
+                        ROUND(
+                            blocks_write::numeric / blocks_read::numeric, 1
+                        )::text
+                        || ':1 (Write-Heavy)'
+                END
+        -- Handle read-heavy tables
+        WHEN blocks_read > blocks_write * ratio
+            THEN
+                CASE
+                    WHEN blocks_write = 0 THEN 'Read-Only'
+                    ELSE
+                        '1:'
+                        || ROUND(
+                            blocks_read::numeric / blocks_write::numeric, 1
+                        )::text
+                        || ' (Read-Heavy)'
+                END
+        -- Handle balanced tables
+        ELSE
+            '1:1 (Balanced)'
+    END AS activity_ratio
+FROM table_list, ratio_target
+ORDER BY
+    -- Order by the most active tables first (sum of all operations)
+    (blocks_read + blocks_write) DESC;"""
+tables = """with
+data as (
+    select
+        c.oid,
+
+        (
+            select spcname from pg_tablespace
+            where oid = reltablespace
+        ) as tblspace,
+        nspname as schema_name,
+        relname as table_name,
+        c.reltuples as row_estimate,
+        pg_total_relation_size(c.oid) as total_bytes,
+        pg_indexes_size(c.oid) as index_bytes,
+        pg_total_relation_size(reltoastrelid) as toast_bytes,
+        pg_total_relation_size(c.oid)
+        - pg_indexes_size(c.oid)
+        - coalesce(pg_total_relation_size(reltoastrelid), 0) as table_bytes
+    from pg_class c
+    left join pg_namespace n on n.oid = c.relnamespace
+    where relkind = 'r' and nspname <> 'pg_catalog'
+),
+
+data2 as (
+    select
+        null::oid as oid,
+        null as tblspace,
+        null as schema_name,
+        '*** TOTAL ***' as table_name,
+        sum(row_estimate) as row_estimate,
+        sum(total_bytes) as total_bytes,
+        sum(index_bytes) as index_bytes,
+        sum(toast_bytes) as toast_bytes,
+        sum(table_bytes) as table_bytes
+    from data
+    union all
+    select
+        null::oid as oid,
+        null,
+        null as schema_name,
+        ' tablespace: ['
+        || coalesce(tblspace, 'pg_default')
+        || ']' as table_name,
+        sum(row_estimate) as row_estimate,
+        sum(total_bytes) as total_bytes,
+        sum(index_bytes) as index_bytes,
+        sum(toast_bytes) as toast_bytes,
+        sum(table_bytes) as table_bytes
+    from data
+    where
+        (select count(distinct coalesce(tblspace, 'pg_default')) from data) > 1
+    group by tblspace
+    union all
+    select
+        null::oid,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    union all
+    select *
+    from data
+)
+
+select
+    coalesce(nullif(schema_name, 'public') || '.', '')
+    || table_name
+    || coalesce(' [' || tblspace || ']', '') as "Table",
+    '~' || case
+        when row_estimate > 10 ^ 12
+            then round(row_estimate::numeric / 10 ^ 12::numeric, 0)::text || 'T'
+        when row_estimate > 10 ^ 9
+            then round(row_estimate::numeric / 10 ^ 9::numeric, 0)::text || 'B'
+        when row_estimate > 10 ^ 6
+            then round(row_estimate::numeric / 10 ^ 6::numeric, 0)::text || 'M'
+        when row_estimate > 10 ^ 3
+            then round(row_estimate::numeric / 10 ^ 3::numeric, 0)::text || 'k'
+        else row_estimate::text
+    end as "Rows",
+    pg_size_pretty(total_bytes)
+    || ' ('
+    || round(
+        100
+        * total_bytes::numeric
+        / nullif(
+            sum(total_bytes) over (
+                partition by (schema_name is null), left(table_name, 3) = '***'
+            ),
+            0
+        ),
+        2
+    )::text
+    || '%)' as "Total Size",
+    pg_size_pretty(table_bytes)
+    || ' ('
+    || round(
+        100
+        * table_bytes::numeric
+        / nullif(
+            sum(table_bytes) over (
+                partition by (schema_name is null), left(table_name, 3) = '***'
+            ),
+            0
+        ),
+        2
+    )::text
+    || '%)' as "Table Size",
+    pg_size_pretty(index_bytes)
+    || ' ('
+    || round(
+        100
+        * index_bytes::numeric
+        / nullif(
+            sum(index_bytes) over (
+                partition by (schema_name is null), left(table_name, 3) = '***'
+            ),
+            0
+        ),
+        2
+    )::text
+    || '%)' as "Index(es) Size",
+    pg_size_pretty(toast_bytes)
+    || ' ('
+    || round(
+        100
+        * toast_bytes::numeric
+        / nullif(
+            sum(toast_bytes) over (
+                partition by (schema_name is null), left(table_name, 3) = '***'
+            ),
+            0
+        ),
+        2
+    )::text
+    || '%)' as "TOAST Size"
+from data2
+where schema_name is distinct from 'information_schema'
+order by oid is null desc, total_bytes desc nulls last
+;"""
+tables_missing_pk = """select
+    tab.table_schema,
+    tab.table_name
+from information_schema.tables tab
+left join
+    information_schema.table_constraints tco
+    on
+        tab.table_schema = tco.table_schema
+        and tab.table_name = tco.table_name
+        and tco.constraint_type = 'PRIMARY KEY'
+where
+    tab.table_type = 'BASE TABLE'
+    and tab.table_schema not in ('pg_catalog', 'information_schema')
+    and tco.constraint_name is null
+order by table_schema, table_name
+;"""
+vacuum_activity = """with
+data as (
+    select
+        p.pid as pid,
+        (
+            select spcname from pg_tablespace
+            where oid = reltablespace
+        ) as tblspace,
+        p.datname as database,
+        nspname as schema_name,
+        relname as table_name,
+        (now() - a.xact_start) as duration,
+        coalesce(wait_event_type || '. ' || wait_event, null) as waiting,
+        case
+            when a.query ~* '^autovacuum.*to prevent wraparound '
+                then 'wraparound '
+            when a.query ~* '^vacuum '
+                then 'user '
+            else 'auto '
+        end as mode,
+        p.phase,
+        pg_size_pretty(pg_total_relation_size(relid)) as total_size,
+        pg_size_pretty(
+            pg_total_relation_size(relid) - pg_indexes_size(relid)
+        ) as table_size,
+        pg_size_pretty(pg_indexes_size(relid)) as index_size,
+        pg_size_pretty(
+            p.heap_blks_scanned * current_setting('block_size')::int
+        ) as scanned,
+        pg_size_pretty(
+            p.heap_blks_vacuumed * current_setting('block_size')::int
+        ) as vacuumed,
+        round(
+            100.0 * p.heap_blks_scanned / p.heap_blks_total, 2
+        ) as scanned_pct,
+        round(
+            100.0 * p.heap_blks_vacuumed / p.heap_blks_total, 2
+        ) as vacuumed_pct,
+        p.index_vacuum_count,
+        round(
+            100.0 * p.dead_tuple_bytes / p.max_dead_tuple_bytes, 2
+        ) as dead_pct,
+        p.dead_tuple_bytes,
+        p.max_dead_tuple_bytes
+    from pg_stat_progress_vacuum p
+    left join pg_stat_activity a using (pid)
+    left join pg_class c on c.oid = p.relid
+    left join pg_namespace n on n.oid = c.relnamespace
+)
+
+select
+    pid as "PID",
+    duration::interval (0)::text as "Duration",
+    mode as "Mode",
+    database || coalesce(
+        e'\n '
+        || coalesce(nullif(schema_name, 'public ') || '. ', ' ')
+        || table_name
+        || coalesce(' [ ' || tblspace || '] ', ' '),
+        ' '
+    ) as "DB & Table",
+    table_size as "Table",
+    index_size as "Indexes",
+    waiting as "Wait",
+    phase as "Phase",
+    scanned
+    || ' ( '
+    || scanned_pct
+    || '%) '
+    || e' scanned\n '
+    || vacuumed
+    || ' ( '
+    || vacuumed_pct
+    || '%) vacuumed ' as "Heap Vacuuming",
+    index_vacuum_count
+    || ' completed cycles, '
+    || e'\n '
+    || case
+        when dead_tuple_bytes > 10 ^ 12
+            then
+                round(dead_tuple_bytes::numeric / 10 ^ 12::numeric, 0)::text
+                || 'T '
+        when dead_tuple_bytes > 10 ^ 9
+            then
+                round(dead_tuple_bytes::numeric / 10 ^ 9::numeric, 0)::text
+                || 'B '
+        when dead_tuple_bytes > 10 ^ 6
+            then
+                round(dead_tuple_bytes::numeric / 10 ^ 6::numeric, 0)::text
+                || 'M '
+        when dead_tuple_bytes > 10 ^ 3
+            then
+                round(dead_tuple_bytes::numeric / 10 ^ 3::numeric, 0)::text
+                || 'k '
+        else dead_tuple_bytes::text
+    end
+    || ' ( '
+    || dead_pct
+    || e'%) dead tuples\nof max ~ '
+    || case
+        when max_dead_tuple_bytes > 10 ^ 12
+            then
+                round(max_dead_tuple_bytes::numeric / 10 ^ 12::numeric, 0)::text
+                || 'T '
+        when max_dead_tuple_bytes > 10 ^ 9
+            then
+                round(max_dead_tuple_bytes::numeric / 10 ^ 9::numeric, 0)::text
+                || 'B '
+        when max_dead_tuple_bytes > 10 ^ 6
+            then
+                round(max_dead_tuple_bytes::numeric / 10 ^ 6::numeric, 0)::text
+                || 'M '
+        when max_dead_tuple_bytes > 10 ^ 3
+            then
+                round(max_dead_tuple_bytes::numeric / 10 ^ 3::numeric, 0)::text
+                || 'k '
+        else max_dead_tuple_bytes::text
+    end
+    || ' collected now ' as "Index Vacuuming"
+from data
+order by duration desc
+;"""
+long_running = """select
+    pid,
+    now() - pg_stat_activity.xact_start as duration,
+    query,
+    state,
+    wait_event,
+    wait_event_type,
+    pg_blocking_pids(pid),
+    usename,
+    application_name,
+    client_addr
+from pg_stat_activity
+where (now() - pg_stat_activity.xact_start) > interval '5 minutes'
+order by 2 desc
+;"""
+
+[alias_dsn]
+
+[init-commands]
+
+[alias_dsn.init-commands]
+
+[data_formats]
+decimal = ""
+float = ""
+
+[column_date_formats]
+
+[ssh tunnels]
+
+[dsn ssh tunnels]
