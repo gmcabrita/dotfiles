@@ -42,6 +42,95 @@ output.header = "bold"
 [named queries]
 version = "select version();"
 extensions = "select * from pg_available_extensions;"
+autovacuum = """select
+    relname,
+    last_vacuum,
+    last_autovacuum
+from pg_stat_user_tables
+where last_autovacuum is not null
+order by last_autovacuum desc
+;"""
+autovacuum_order = """select
+    relname,
+    last_vacuum,
+    last_autovacuum
+from pg_stat_user_tables
+where last_autovacuum is not null
+order by
+    case when lower('$1') = 'asc' then last_autovacuum end asc,
+    case when lower('$1') = 'desc' then last_autovacuum end desc
+;"""
+cache_hit_ratio = """with stats as (
+    select
+        'tables' as kind,
+        relname as table,
+        sum(heap_blks_read) as blocks_read,
+        sum(heap_blks_hit) as blocks_hit
+    from pg_statio_user_tables
+    where heap_blks_read > 0
+    group by relname
+    union all
+    select
+        'indices' as kind,
+        relname as table,
+        sum(idx_blks_read) as blocks_read,
+        sum(idx_blks_hit) as blocks_hit
+    from pg_statio_user_indexes
+    where idx_blks_read > 0
+    group by relname
+)
+select
+    table,
+    blocks_read,
+    blocks_hit,
+    round((blocks_hit / nullif((blocks_hit + blocks_read), 0)::numeric) * 100, 2) as ratio
+from stats
+where kind = lower('$1')
+order by ratio desc
+;"""
+connection_counts = """with mode as (
+    select lower('$1') as value
+)
+select
+    case when mode.value = 'application' then application_name end as application_name,
+    state,
+    count(*)
+from pg_stat_activity
+cross join mode
+where mode.value in ('application', 'state')
+group by 1, state
+order by count(*) desc
+;"""
+running = """select
+    pid,
+    now() - pg_stat_activity.xact_start as duration,
+    query,
+    state,
+    wait_event,
+    wait_event_type,
+    pg_blocking_pids(pid),
+    usename,
+    application_name,
+    client_addr
+from pg_stat_activity
+where (now() - pg_stat_activity.xact_start) > interval '2 minutes'
+order by 2 desc
+;"""
+running_for = """select
+    pid,
+    now() - pg_stat_activity.xact_start as duration,
+    query,
+    state,
+    wait_event,
+    wait_event_type,
+    pg_blocking_pids(pid),
+    usename,
+    application_name,
+    client_addr
+from pg_stat_activity
+where (now() - pg_stat_activity.xact_start) > interval '$1'
+order by 2 desc
+;"""
 activity = """select
     coalesce(usename, '** ALL users **') as "User",
     coalesce(datname, '** ALL databases **') as "DB",
@@ -161,22 +250,6 @@ select
     last_autoanalyze
 from data
 order by a_percent desc
-;"""
-autovacuum_newest = """select
-    relname,
-    last_vacuum,
-    last_autovacuum
-from pg_stat_user_tables
-where last_autovacuum is not null
-order by last_autovacuum asc
-;"""
-autovacuum_oldest = """select
-    relname,
-    last_vacuum,
-    last_autovacuum
-from pg_stat_user_tables
-where last_autovacuum is not null
-order by last_autovacuum desc
 ;"""
 autovacuum_progress_and_queue = """with
 table_opts as (
@@ -819,53 +892,6 @@ select
     *,
     round(used * 1.0 / total * 100, 1) as percent
 from state
-;"""
-cache_hit_ratio_indices = """select
-    relname as table,
-    sum(idx_blks_read) as idx_read,
-    sum(idx_blks_hit) as idx_hit,
-    round(
-        (
-            sum(idx_blks_hit)
-            / nullif((sum(idx_blks_hit) + sum(idx_blks_read)), 0)::numeric
-        )
-        * 100,
-        2
-    ) as ratio
-from pg_statio_user_indexes
-where idx_blks_read > 0
-group by relname
-order by ratio desc
-;"""
-cache_hit_ratio_tables = """select
-    relname as table,
-    sum(heap_blks_read) as heap_read,
-    sum(heap_blks_hit) as heap_hit,
-    round(
-        (
-            sum(heap_blks_hit)
-            / nullif((sum(heap_blks_hit) + sum(heap_blks_read)), 0)::numeric
-        )
-        * 100,
-        2
-    ) as ratio
-from pg_statio_user_tables
-where heap_blks_read > 0
-group by relname
-order by ratio desc
-;"""
-connection_counts_by_application = """select
-    application_name,
-    state,
-    count(*)
-from pg_stat_activity
-group by application_name, state
-;"""
-connection_counts_by_state = """select
-    state,
-    count(*)
-from pg_stat_activity
-group by state
 ;"""
 connection_memory_breakdown = """select
     pid,
@@ -2621,36 +2647,6 @@ group by
     supports_fk
 order by index_size_bytes desc
 ;"""
-running_2_minutes = """select
-    pid,
-    now() - pg_stat_activity.xact_start as duration,
-    query,
-    state,
-    wait_event,
-    wait_event_type,
-    pg_blocking_pids(pid),
-    usename,
-    application_name,
-    client_addr
-from pg_stat_activity
-where (now() - pg_stat_activity.xact_start) > interval '5 minutes'
-order by 2 desc
-;"""
-running_30_seconds = """select
-    pid,
-    now() - pg_stat_activity.xact_start as duration,
-    query,
-    state,
-    wait_event,
-    wait_event_type,
-    pg_blocking_pids(pid),
-    usename,
-    application_name,
-    client_addr
-from pg_stat_activity
-where (now() - pg_stat_activity.xact_start) > interval '30 seconds'
-order by 2 desc
-;"""
 table_ages = """select
     c.oid::regclass,
     age(c.relfrozenxid),
@@ -3161,21 +3157,6 @@ select
     || ' collected now ' as "Index Vacuuming"
 from data
 order by duration desc
-;"""
-long_running = """select
-    pid,
-    now() - pg_stat_activity.xact_start as duration,
-    query,
-    state,
-    wait_event,
-    wait_event_type,
-    pg_blocking_pids(pid),
-    usename,
-    application_name,
-    client_addr
-from pg_stat_activity
-where (now() - pg_stat_activity.xact_start) > interval '5 minutes'
-order by 2 desc
 ;"""
 
 [alias_dsn]
