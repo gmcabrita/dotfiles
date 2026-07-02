@@ -131,6 +131,37 @@ from pg_stat_activity
 where (now() - pg_stat_activity.xact_start) > interval '$1'
 order by 2 desc
 ;"""
+retry_ddl = """do $pgcli_retry_ddl_do$
+declare
+    ddl constant text := $pgcli_retry_ddl_arg$$1$pgcli_retry_ddl_arg$;
+    lock_timeout constant text := '50ms';
+    max_attempts constant int := 30;
+    ddl_completed boolean := false;
+    cap_ms constant bigint := 60000;
+    base_ms constant bigint := 10;
+    delay_ms bigint;
+begin
+    perform set_config('lock_timeout', lock_timeout, true);
+
+    for i in 1..max_attempts loop
+        begin
+            execute ddl;
+            ddl_completed := true;
+            exit;
+        exception when lock_not_available then
+            raise warning 'attempt %/% to run ddl failed: %', i, max_attempts, ddl;
+            delay_ms := round(random()::numeric * least(cap_ms::numeric, base_ms::numeric * power(2::numeric, i)))::bigint;
+            raise debug 'delay %/%: % ms', i, max_attempts, delay_ms;
+            perform pg_sleep(delay_ms::numeric / 1000);
+        end;
+    end loop;
+
+    if ddl_completed then
+        raise info 'ddl successfully completed: %', ddl;
+    else
+        raise exception 'failed to run ddl: %', ddl;
+    end if;
+end $pgcli_retry_ddl_do$;"""
 activity = """select
     coalesce(usename, '** ALL users **') as "User",
     coalesce(datname, '** ALL databases **') as "DB",
