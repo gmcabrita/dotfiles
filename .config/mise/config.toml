@@ -1,4 +1,5 @@
 [tools]
+# "aqua:smol-machines/smolvm" = "latest"
 "cargo:hurlfmt" = "latest"
 "cargo:oha" = "latest"
 "cargo:rustdoc-text" = "latest"
