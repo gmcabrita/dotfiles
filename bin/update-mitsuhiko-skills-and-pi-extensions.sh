@@ -30,11 +30,11 @@ SYNC_EXTENSIONS=(
   "context.ts"
   "control.ts"
   "goal.ts"
-  "multi-edit.ts"
   "review.ts"
   "session-breakdown.ts"
   "split-fork.ts"
   "todos.ts"
+  "unified-edit.ts"
   "whimsical.ts"
 )
 
