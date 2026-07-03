@@ -15,7 +15,7 @@ cd "$TEMP_DIR"
 git sparse-checkout set "$SKILLS_PATH"
 
 SYNC_SKILLS=(
-  "thermo-nuclear-code-quality-review",
+  "thermo-nuclear-code-quality-review"
   "what-did-i-get-done"
 )
 

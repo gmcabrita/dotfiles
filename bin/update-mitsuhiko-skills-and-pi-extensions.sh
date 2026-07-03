@@ -16,10 +16,23 @@ git clone --depth 1 --filter=blob:none --sparse "$REPO_URL" "$TEMP_DIR"
 cd "$TEMP_DIR"
 git sparse-checkout set "$SKILLS_PATH"
 
+SYNC_SKILLS=(
+  "commit"
+  "ghidra"
+  "github"
+  "librarian"
+  "native-web-search"
+  "web-browser"
+)
+
 # Sync each skill folder individually
 mkdir -p "$TARGET_DIR"
 for skill_dir in "$TEMP_DIR/$SKILLS_PATH"/*/; do
   skill_name=$(basename "$skill_dir")
+  if [[ ! " ${SYNC_SKILLS[*]} " =~ ${skill_name} ]]; then
+    continue
+  fi
+
   echo "Syncing $skill_name..."
   cp -r "$skill_dir" "$TARGET_DIR/$skill_name/"
 done
