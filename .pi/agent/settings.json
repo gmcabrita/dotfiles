@@ -33,30 +33,6 @@
   },
   "npmCommand": ["sfw", "npm"],
   "theme": "light",
-  "toolPolicy": {
-    "all": {
-      "*": "allow",
-      ".*.vars": "deny",
-      "*.env": "deny",
-      "*.env.*": "deny",
-      "*.envrc": "deny",
-      "*.pem": "deny",
-      ".npmrc": "deny",
-      ".pypirc": "deny",
-      "secrets/*": "deny",
-      "**/secrets/*": "deny",
-      ".aws/*": "deny",
-      "**/.aws/*": "deny",
-      ".ssh/*": "deny",
-      "**/.ssh/*": "deny",
-      ".gnupg/*": "deny",
-      "**/.gnupg/*": "deny",
-      "id_rsa": "deny",
-      "id_rsa.*": "deny",
-      "id_ed25519": "deny",
-      "id_ed25519.*": "deny"
-    }
-  },
   "tokenSpeed": {
     "display": "ttft"
   }
