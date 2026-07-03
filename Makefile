@@ -20,7 +20,6 @@ update:
 		./bin/update-chrome-cdp-skills.sh \
 		./bin/update-cloudflare-skills.sh \
 		./bin/update-database-skills.sh \
-		./bin/update-emilkowalski-design-skills.sh \
 		./bin/update-hegel-skills.sh \
 		./bin/update-cursor-skills.sh \
 		./bin/update-mitsuhiko-skills-and-pi-extensions.sh \

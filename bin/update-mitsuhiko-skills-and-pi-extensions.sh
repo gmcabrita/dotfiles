@@ -25,14 +25,9 @@ for skill_dir in "$TEMP_DIR/$SKILLS_PATH"/*/; do
 done
 
 SYNC_EXTENSIONS=(
-  "answer.ts"
-  "btw.ts"
-  "context.ts"
-  "control.ts"
   "goal.ts"
   "review.ts"
   "session-breakdown.ts"
-  "split-fork.ts"
   "todos.ts"
   "unified-edit.ts"
   "whimsical.ts"
