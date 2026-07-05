@@ -32,6 +32,7 @@ zls = "latest"
 [settings]
 idiomatic_version_file_enable_tools = ["rust"]
 minimum_release_age = "24h"
+experimental = true
 
 [settings.status]
 show_tools = true
