@@ -1,17 +1,16 @@
 /**
  * Prevent macOS from sleeping while pi's agent is running.
  *
- * Uses caffeinate(8). Shows ☕ inline in pi's native footer while active.
+ * Uses caffeinate(8). Shows ☕ in pi's status bar while active.
  */
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { spawn } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
-import { registerFooterEmoji, setFooterEmojiActive } from "./lib/footer-inline-emojis";
 
 const MACOS = process.platform === "darwin";
 const COFFEE = "☕";
-const FOOTER_KEY = "no-sleep";
+const STATUS_KEY = "no-sleep";
 
 type Scope = "agent" | "session";
 type Level = "info" | "warning" | "error";
@@ -56,13 +55,15 @@ function notify(ctx: ExtensionContext | undefined, message: string, level: Level
   }
 }
 
-function updateFooterIndicator(ctx: ExtensionContext | undefined): void {
-  setFooterEmojiActive(FOOTER_KEY, caffeinateReady, ctx);
+function updateStatus(ctx: ExtensionContext | undefined): void {
+  if (ctx?.hasUI) {
+    ctx.ui.setStatus(STATUS_KEY, caffeinateReady ? COFFEE : undefined);
+  }
 }
 
 function start(ctx?: ExtensionContext): void {
   if (!enabled || !MACOS || caffeinate) {
-    updateFooterIndicator(ctx);
+    updateStatus(ctx);
     return;
   }
 
@@ -75,7 +76,7 @@ function start(ctx?: ExtensionContext): void {
   child.once("spawn", () => {
     if (caffeinate === child) {
       caffeinateReady = true;
-      updateFooterIndicator(ctx);
+      updateStatus(ctx);
     }
   });
 
@@ -86,7 +87,7 @@ function start(ctx?: ExtensionContext): void {
     caffeinate = undefined;
     caffeinateReady = false;
     lastError = error.message;
-    updateFooterIndicator(ctx);
+    updateStatus(ctx);
     notify(ctx, `No Sleep: failed to caffeinate: ${error.message}`, "error");
   });
 
@@ -96,7 +97,7 @@ function start(ctx?: ExtensionContext): void {
     }
     caffeinate = undefined;
     caffeinateReady = false;
-    updateFooterIndicator(ctx);
+    updateStatus(ctx);
 
     if (code && code !== 0) {
       lastError = `caffeinate exited with code ${code}`;
@@ -112,7 +113,7 @@ function stop(ctx?: ExtensionContext): void {
   const child = caffeinate;
   caffeinate = undefined;
   caffeinateReady = false;
-  updateFooterIndicator(ctx);
+  updateStatus(ctx);
 
   if (!child) {
     return;
@@ -161,11 +162,8 @@ function describeState(): string {
 }
 
 export default function noSleepExtension(pi: ExtensionAPI) {
-  const unregisterFooterEmoji = registerFooterEmoji(FOOTER_KEY, COFFEE, 20);
-
   const cleanupOnProcessExit = () => {
     stop(undefined);
-    unregisterFooterEmoji();
   };
   process.once("exit", cleanupOnProcessExit);
 
@@ -187,7 +185,6 @@ export default function noSleepExtension(pi: ExtensionAPI) {
   pi.on("session_shutdown", (_event, ctx) => {
     agentActive = false;
     stop(ctx);
-    unregisterFooterEmoji();
     process.off("exit", cleanupOnProcessExit);
   });
 
@@ -216,7 +213,7 @@ export default function noSleepExtension(pi: ExtensionAPI) {
         return;
       }
 
-      updateFooterIndicator(ctx);
+      updateStatus(ctx);
       notify(ctx, describeState(), lastError ? "warning" : "info");
     },
   });

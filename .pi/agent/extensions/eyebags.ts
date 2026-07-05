@@ -1,11 +1,6 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import {
-  registerFooterEmoji,
-  setFooterEmoji,
-  setFooterEmojiActive,
-} from "./lib/footer-inline-emojis";
 
-const FOOTER_KEY = "eyebags";
+const STATUS_KEY = "eyebags";
 const EYEBAGS = "🫩";
 const START_MINUTE = 23 * 60 + 30;
 const END_MINUTE = 7 * 60;
@@ -96,18 +91,18 @@ function scheduleNextUpdate(ctx: ExtensionContext | undefined): void {
 
 function update(ctx: ExtensionContext | undefined): void {
   const count = eyebagsCount(new Date());
-  setFooterEmoji(FOOTER_KEY, EYEBAGS.repeat(count), ctx);
-  setFooterEmojiActive(FOOTER_KEY, count > 0, ctx);
+  if (ctx?.hasUI) {
+    ctx.ui.setStatus(STATUS_KEY, count > 0 ? EYEBAGS.repeat(count) : undefined);
+  }
   scheduleNextUpdate(ctx);
 }
 
 export default function eyebagsExtension(pi: ExtensionAPI) {
-  const unregisterFooterEmoji = registerFooterEmoji(FOOTER_KEY, EYEBAGS, 10);
-
   const cleanup = () => {
     clearTimer();
-    setFooterEmojiActive(FOOTER_KEY, false, lastCtx);
-    unregisterFooterEmoji();
+    if (lastCtx?.hasUI) {
+      lastCtx.ui.setStatus(STATUS_KEY, undefined);
+    }
     lastCtx = undefined;
   };
   process.once("exit", cleanup);
