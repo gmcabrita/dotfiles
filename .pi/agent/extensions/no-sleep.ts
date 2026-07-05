@@ -1,7 +1,7 @@
 /**
  * Prevent macOS from sleeping while pi's agent is running.
  *
- * Uses caffeinate(8). Shows ☕ in pi's status bar while active.
+ * Uses caffeinate(8).
  */
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
@@ -9,8 +9,6 @@ import { spawn } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
 
 const MACOS = process.platform === "darwin";
-const COFFEE = "☕";
-const STATUS_KEY = "no-sleep";
 
 type Scope = "agent" | "session";
 type Level = "info" | "warning" | "error";
@@ -55,15 +53,8 @@ function notify(ctx: ExtensionContext | undefined, message: string, level: Level
   }
 }
 
-function updateStatus(ctx: ExtensionContext | undefined): void {
-  if (ctx?.hasUI) {
-    ctx.ui.setStatus(STATUS_KEY, caffeinateReady ? COFFEE : undefined);
-  }
-}
-
 function start(ctx?: ExtensionContext): void {
   if (!enabled || !MACOS || caffeinate) {
-    updateStatus(ctx);
     return;
   }
 
@@ -76,7 +67,6 @@ function start(ctx?: ExtensionContext): void {
   child.once("spawn", () => {
     if (caffeinate === child) {
       caffeinateReady = true;
-      updateStatus(ctx);
     }
   });
 
@@ -87,7 +77,6 @@ function start(ctx?: ExtensionContext): void {
     caffeinate = undefined;
     caffeinateReady = false;
     lastError = error.message;
-    updateStatus(ctx);
     notify(ctx, `No Sleep: failed to caffeinate: ${error.message}`, "error");
   });
 
@@ -97,7 +86,6 @@ function start(ctx?: ExtensionContext): void {
     }
     caffeinate = undefined;
     caffeinateReady = false;
-    updateStatus(ctx);
 
     if (code && code !== 0) {
       lastError = `caffeinate exited with code ${code}`;
@@ -109,11 +97,10 @@ function start(ctx?: ExtensionContext): void {
   });
 }
 
-function stop(ctx?: ExtensionContext): void {
+function stop(): void {
   const child = caffeinate;
   caffeinate = undefined;
   caffeinateReady = false;
-  updateStatus(ctx);
 
   if (!child) {
     return;
@@ -132,14 +119,14 @@ function stop(ctx?: ExtensionContext): void {
 
 function reconcile(ctx?: ExtensionContext): void {
   if (!enabled) {
-    stop(ctx);
+    stop();
     return;
   }
 
   if (scope === "session" || agentActive) {
     start(ctx);
   } else {
-    stop(ctx);
+    stop();
   }
 }
 
@@ -163,7 +150,7 @@ function describeState(): string {
 
 export default function noSleepExtension(pi: ExtensionAPI) {
   const cleanupOnProcessExit = () => {
-    stop(undefined);
+    stop();
   };
   process.once("exit", cleanupOnProcessExit);
 
@@ -182,9 +169,9 @@ export default function noSleepExtension(pi: ExtensionAPI) {
     reconcile(ctx);
   });
 
-  pi.on("session_shutdown", (_event, ctx) => {
+  pi.on("session_shutdown", () => {
     agentActive = false;
-    stop(ctx);
+    stop();
     process.off("exit", cleanupOnProcessExit);
   });
 
@@ -213,7 +200,6 @@ export default function noSleepExtension(pi: ExtensionAPI) {
         return;
       }
 
-      updateStatus(ctx);
       notify(ctx, describeState(), lastError ? "warning" : "info");
     },
   });
