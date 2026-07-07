@@ -737,5 +737,15 @@ function gwrd() {
   rm -f "$state/$key"
 }
 
+function archive() {
+  local root="$HOME/iCloud Drive/Web Archive"
+
+  fzf \
+    --disabled \
+    --bind "start:reload:rg -li -g '*.html' {q} \"$root\" || true" \
+    --bind "change:reload:rg -li -g '*.html' {q} \"$root\" || true" \
+    --bind 'enter:become(open -a "Google Chrome" "$(realpath "{}")")'
+}
+
 
 [[ $ZPROF == 1 ]] && zprof
