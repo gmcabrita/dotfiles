@@ -1,7 +1,7 @@
 {
   "/": "https://repoprompt.com/docs#s=workflows&ss=model-recommendations",
   "//": "https://cursor.com/evals",
-  "packages": ["npm:@ff-labs/pi-fff", "npm:pi-token-speed", "git:github.com/dmmulroy/pi-mcp"],
+  "packages": ["git:github.com/dmmulroy/pi-mcp"],
   "startup": {
     "model": "gpt-5.5",
     "provider": "openai",
