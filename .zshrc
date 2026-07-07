@@ -744,7 +744,11 @@ function af() {
     --disabled \
     --bind "start:reload:rg -li -g '*.html' {q} \"$root\" || true" \
     --bind "change:reload:rg -li -g '*.html' {q} \"$root\" || true" \
-    --bind 'enter:become("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" {})'
+    --bind 'enter:become(sh -c '"'"'
+      /usr/bin/xattr -dr com.apple.quarantine "$1"
+      open -a "Google Chrome" "$1"
+      osascript -e "tell application \"Google Chrome\" to activate"
+    '"'"' sh {})'
 }
 
 
