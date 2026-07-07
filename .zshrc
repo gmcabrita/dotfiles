@@ -744,7 +744,7 @@ function archive() {
     --disabled \
     --bind "start:reload:rg -li -g '*.html' {q} \"$root\" || true" \
     --bind "change:reload:rg -li -g '*.html' {q} \"$root\" || true" \
-    --bind 'enter:become(open -a "Google Chrome" "$(realpath "{}")")'
+    --bind 'enter:become("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" {})'
 }
 
 
