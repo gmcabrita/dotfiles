@@ -737,7 +737,7 @@ function gwrd() {
   rm -f "$state/$key"
 }
 
-function archive() {
+function af() {
   local root="$HOME/iCloud Drive/Web Archive"
 
   fzf \
