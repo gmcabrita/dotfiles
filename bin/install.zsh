@@ -198,6 +198,11 @@ defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
 # Sort users in Contacts by first name
 defaults write -app Contacts ABNameSortingFormat -string "sortingFirstName sortingLastName"
 
+# Disable Spotlight indexing
+sudo mdutil -a -i off
+sudo mdutil -a -E
+sudo mdutil -a -i off
+
 brew bundle install --cleanup --file=~/.config/Brewfile
 
 "$(brew --prefix)/opt/fzf/install"
