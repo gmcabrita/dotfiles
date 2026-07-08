@@ -10,3 +10,6 @@ base_url = "http://codexlb00.usce1.mgmt.internal.amplemarket.com:2455/backend-ap
 wire_api = "responses"
 supports_websockets = true
 requires_openai_auth = true
+
+[analytics]
+enabled = false
