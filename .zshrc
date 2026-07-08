@@ -761,4 +761,8 @@ function claude() {
     "$@"
 }
 
+function ca() {
+  codex app "$@"
+}
+
 [[ $ZPROF == 1 ]] && zprof
