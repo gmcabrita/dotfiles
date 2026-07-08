@@ -11,5 +11,52 @@ wire_api = "responses"
 supports_websockets = true
 requires_openai_auth = true
 
+[mcp_servers.grafana]
+url = "https://grafana-mcp.gke00.usce1.mgmt.internal.amplemarket.com/mcp"
+
+[mcp_servers.pganalyze]
+url = "https://pganalyze-mcp.gke00.usce1.mgmt.internal.amplemarket.com/mcp"
+
+
 [analytics]
 enabled = false
+
+[memories]
+generate_memories = false
+use_memories = false
+
+[features]
+js_repl = false
+memories = false
+chronicle = false
+
+[desktop]
+followUpQueueMode = "queue"
+mac-menu-bar-enabled = false
+preventSleepWhileRunning = true
+notifications-turn-mode = "always"
+usePointerCursors = false
+codeFontSize = 17
+sansFontSize = 14
+appearanceDiffMarkerStyle = "color"
+useFontSmoothing = true
+dock-icon-preference = "app-default"
+appearanceLightCodeThemeId = "codex"
+appshotSoundEnabled = true
+git-pull-request-merge-method = "squash"
+git-create-pull-request-as-draft = true
+
+[desktop.appearanceLightChromeTheme]
+accent = "#0169cc"
+contrast = 45
+ink = "#0d0d0d"
+opaqueWindows = false
+surface = "#ffffff"
+
+[desktop.appearanceLightChromeTheme.fonts]
+code = "JetBrains Mono NL"
+
+[desktop.appearanceLightChromeTheme.semanticColors]
+diffAdded = "#00a240"
+diffRemoved = "#e02e2a"
+skill = "#751ed9"
