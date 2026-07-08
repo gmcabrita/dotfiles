@@ -28,7 +28,6 @@ url = "https://grafana-mcp.gke00.usce1.mgmt.internal.amplemarket.com/mcp"
 [mcp_servers.pganalyze]
 url = "https://pganalyze-mcp.gke00.usce1.mgmt.internal.amplemarket.com/mcp"
 
-
 [analytics]
 enabled = false
 
