@@ -39,6 +39,7 @@ use_memories = false
 js_repl = false
 memories = false
 chronicle = false
+fast_mode = true
 
 [desktop]
 followUpQueueMode = "queue"
