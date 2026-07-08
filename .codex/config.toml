@@ -12,8 +12,6 @@ commit_attribution = ""
 sandbox_mode = "workspace-write"
 approval_policy = "untrusted"
 
-notify = ["/usr/bin/afplay", "/System/Library/Sounds/Submarine.aiff"]
-
 [sandbox_workspace_write]
 network_access = true
 
