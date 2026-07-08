@@ -22,6 +22,7 @@ SYNC_SKILLS=(
   "github"
   "librarian"
   "native-web-search"
+  "sentry"
   "web-browser"
 )
 
