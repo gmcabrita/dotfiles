@@ -1,4 +1,6 @@
 {
+  "//": "https://www.aihero.dev/how-to-kill-the-bloat-in-claude-codes-system-prompt",
+  "//": "https://gist.github.com/isthatyousaf/a7432423c28eb0d0433b971ef340a284",
   "availableModels": [
     "claude-fable-5",
     "claude-opus-4-8",

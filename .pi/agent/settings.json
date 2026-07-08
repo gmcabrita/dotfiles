@@ -1,5 +1,5 @@
 {
-  "/": "https://repoprompt.com/docs#s=workflows&ss=model-recommendations",
+  "//": "https://repoprompt.com/docs#s=workflows&ss=model-recommendations",
   "//": "https://cursor.com/evals",
   "packages": ["git:github.com/dmmulroy/pi-mcp"],
   "startup": {
