@@ -1,18 +1,12 @@
 {
   "//": "https://www.aihero.dev/how-to-kill-the-bloat-in-claude-codes-system-prompt",
   "//": "https://gist.github.com/isthatyousaf/a7432423c28eb0d0433b971ef340a284",
-  "availableModels": [
-    "claude-fable-5",
-    "claude-opus-4-8",
-    "claude-opus-4-7",
-    "claude-opus-4-6",
-    "claude-sonnet-4-6"
-  ],
+  "availableModels": ["claude-fable-5", "claude-opus-4-8", "claude-sonnet-5"],
   "env": {
     "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-4-8",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-4-6",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-5",
     "CLAUDE_CODE_EFFORT_LEVEL": "max",
-    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-4-6",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5",
     "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
     "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1",
     "CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS": "1",
@@ -81,7 +75,8 @@
   },
   "skipDangerousModePermissionPrompt": true,
   "effortLevel": "xhigh",
-  "model": "claude-fable-5",
+  "advisorModel": "claude-fable-5",
+  "model": "claude-sonnet-5",
   "voice": {
     "enabled": false
   },
