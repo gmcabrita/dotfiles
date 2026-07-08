@@ -18,7 +18,6 @@ export PGCLIENT=pgcli
 export GIT_MERGE_AUTOEDIT=no
 export HOMEBREW_CLEANUP_MAX_AGE_DAYS=30
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
-export CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK=1
 export PI_SKIP_VERSION_CHECK=1
 export HK_MISE=1
 export DISABLE_SPRING=1
@@ -751,5 +750,15 @@ function af() {
     '"'"' sh {})'
 }
 
+function claude() {
+  "$HOMEBREW_PREFIX/bin/claude" \
+    --dangerously-skip-permissions \
+    --system-prompt-file "${CLAUDE_BASIC_PROMPT_FILE:-$HOME/.claude/prompts/minimal-system-prompt.md}" \
+    --tools "${CLAUDE_BASIC_TOOLS:-Bash,Read,Edit,Write,Skill}" \
+    --strict-mcp-config \
+    --mcp-config '{"mcpServers":{}}' \
+    --settings '{"disableAllHooks":true}' \
+    "$@"
+}
 
 [[ $ZPROF == 1 ]] && zprof

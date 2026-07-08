@@ -1,8 +1,57 @@
 {
+  "availableModels": [
+    "claude-fable-5",
+    "claude-opus-4-8",
+    "claude-opus-4-7",
+    "claude-opus-4-6",
+    "claude-sonnet-4-6"
+  ],
+  "env": {
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-4-8",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-4-6",
+    "CLAUDE_CODE_EFFORT_LEVEL": "max",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-4-6",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
+    "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1",
+    "CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS": "1",
+    "CLAUDE_CODE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL": "1",
+    "CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK": "1",
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
+    "CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT": "1",
+    "DISABLE_COST_WARNINGS": "1",
+    "API_TIMEOUT_MS": "1200000",
+    "BASH_DEFAULT_TIMEOUT_MS": "300000",
+    "BASH_MAX_TIMEOUT_MS": "1200000"
+  },
+  "includeGitInstructions": false,
+  "feedbackSurveyRate": 0,
   "permissions": {
-    "deny": ["Read(.dev.vars)", "Read(.envrc)", "Read(.env.local)", "Read(.env)"],
+    "deny": [
+      "Read(.dev.vars)",
+      "Read(.envrc)",
+      "Read(.env.local)",
+      "Read(.env)",
+      "EnterPlanMode",
+      "ExitPlanMode",
+      "DesignSync",
+      "NotebookEdit",
+      "SendMessage",
+      "PushNotification",
+      "RemoteTrigger",
+      "ReportFindings",
+      "ScheduleWakeup",
+      "AskUserQuestion",
+      "CronCreate",
+      "CronDelete",
+      "CronList"
+    ],
     "defaultMode": "bypassPermissions"
   },
+  "disableBundledSkills": true,
+  "disableWorkflows": true,
+  "disableRemoteControl": true,
+  "disableClaudeAiConnectors": true,
+  "disableArtifact": true,
   "hooks": {
     "Stop": [
       {
@@ -29,5 +78,10 @@
     "enabled": false
   },
   "skipDangerousModePermissionPrompt": true,
-  "model": "claude-fable-5"
+  "effortLevel": "xhigh",
+  "model": "claude-fable-5",
+  "voice": {
+    "enabled": false
+  },
+  "voiceEnabled": false
 }
