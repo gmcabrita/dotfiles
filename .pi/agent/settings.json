@@ -10,7 +10,7 @@
   "review": {
     "model": "gpt-5.6-sol",
     "provider": "openai",
-    "thinkingLevel": "xhigh"
+    "thinkingLevel": "max"
   },
   "enabledModels": [
     "openai-codex/gpt-5.6-sol",
