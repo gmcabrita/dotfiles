@@ -13,7 +13,7 @@ if [[ -z "$MACOS_SDK_PATH" ]]; then
   fi
 fi
 
-PATH="$HOME/.local/bin:$HOME/go/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/mariadb/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$HOMEBREW_PREFIX/opt/gnu-tar/libexec/gnubin:$PATH"
+PATH="$HOME/.local/bin:$HOME/go/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/mariadb/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$PATH"
 export PGCLIENT=pgcli
 export CARGO_TERM_COLOR=always
 export GIT_MERGE_AUTOEDIT=no

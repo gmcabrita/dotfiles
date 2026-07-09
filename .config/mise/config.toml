@@ -1,7 +1,5 @@
 [tools]
-# https://github.com/composefs/tar-rs/pull/457
-# https://github.com/jdx/mise/discussions/10674
-# "aqua:smol-machines/smolvm" = "latest"
+"aqua:smol-machines/smolvm" = "latest"
 "cargo:hurlfmt" = "latest"
 "cargo:oha" = "latest"
 "cargo:rustdoc-text" = "latest"
