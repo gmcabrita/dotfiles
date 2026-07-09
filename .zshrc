@@ -15,6 +15,7 @@ fi
 
 PATH="$HOME/.local/bin:$HOME/go/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/mariadb/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$HOMEBREW_PREFIX/opt/gnu-tar/libexec/gnubin:$PATH"
 export PGCLIENT=pgcli
+export CARGO_TERM_COLOR=always
 export GIT_MERGE_AUTOEDIT=no
 export HOMEBREW_CLEANUP_MAX_AGE_DAYS=30
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
