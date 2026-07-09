@@ -1,11 +1,11 @@
 {
   "//": "https://repoprompt.com/docs#s=workflows&ss=model-recommendations",
   "//": "https://cursor.com/evals",
-  "packages": ["git:github.com/dmmulroy/pi-mcp"],
+  "packages": ["git:github.com/dmmulroy/pi-mcp", "npm:pi-subagents"],
   "startup": {
     "model": "gpt-5.6-sol",
     "provider": "openai",
-    "thinkingLevel": "xhigh"
+    "thinkingLevel": "high"
   },
   "review": {
     "model": "gpt-5.6-sol",
