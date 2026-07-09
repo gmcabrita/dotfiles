@@ -43,7 +43,6 @@ SYNC_EXTENSIONS=(
   "review.ts"
   "session-breakdown.ts"
   "todos.ts"
-  "unified-edit.ts"
   "whimsical.ts"
 )
 
