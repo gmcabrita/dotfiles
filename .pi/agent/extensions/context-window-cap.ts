@@ -1,7 +1,7 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { Api, Model } from "@earendil-works/pi-ai";
 
-const DEFAULT_CAP = 180_000;
+const DEFAULT_CAP = 200_000;
 
 type OriginalLimits = {
   contextWindow: number;
