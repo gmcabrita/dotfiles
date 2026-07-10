@@ -7,11 +7,6 @@
     "provider": "openai-codex-lb",
     "thinkingLevel": "high"
   },
-  "review": {
-    "model": "gpt-5.6-sol",
-    "provider": "openai-codex-lb",
-    "thinkingLevel": "max"
-  },
   "enabledModels": [
     "openai-codex-lb/gpt-5.6-sol",
     "openai-codex-lb/gpt-5.6-terra",
