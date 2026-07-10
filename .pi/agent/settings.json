@@ -4,21 +4,21 @@
   "packages": ["git:github.com/dmmulroy/pi-mcp", "npm:pi-token-speed"],
   "startup": {
     "model": "gpt-5.6-sol",
-    "provider": "openai",
+    "provider": "openai-codex-lb",
     "thinkingLevel": "high"
   },
   "review": {
     "model": "gpt-5.6-sol",
-    "provider": "openai",
+    "provider": "openai-codex-lb",
     "thinkingLevel": "max"
   },
   "enabledModels": [
+    "openai-codex-lb/gpt-5.6-sol",
+    "openai-codex-lb/gpt-5.6-terra",
+    "openai-codex-lb/gpt-5.6-luna",
     "openai-codex/gpt-5.6-sol",
     "openai-codex/gpt-5.6-terra",
     "openai-codex/gpt-5.6-luna",
-    "openai/gpt-5.6-sol",
-    "openai/gpt-5.6-terra",
-    "openai/gpt-5.6-luna",
     "deepseek/deepseek-v4-pro",
     "deepseek/deepseek-v4-flash",
     "openrouter/deepseek/deepseek-v4-pro",
