@@ -34,5 +34,6 @@
     "display": "ttft"
   },
   "npmCommand": ["sfw", "npm"],
+  "showCacheMissNotices": true,
   "theme": "light"
 }
