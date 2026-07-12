@@ -374,6 +374,7 @@ function update-programming-languages() {
   mise reshim
   mix local.hex --force
   rm -rf "$HOME/Library/Application Support/Zed/extensions/work/elixir"/expert-*(N)
+  cargo clean-all --yes --keep-days 7 "$HOME/Developer"
 
   EDITOR_APP_ID="dev.zed.Zed"
   for ext in \

@@ -1,5 +1,6 @@
 [tools]
 "aqua:smol-machines/smolvm" = "latest"
+"cargo:cargo-clean-all" = "latest"
 "cargo:hurlfmt" = "latest"
 "cargo:oha" = "latest"
 "cargo:rustdoc-text" = "latest"
