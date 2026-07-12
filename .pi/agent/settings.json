@@ -18,11 +18,9 @@
     "deepseek/deepseek-v4-pro",
     "deepseek/deepseek-v4-flash",
     "openrouter/anthropic/claude-fable-5",
+    "openrouter/openai/gpt-5.6-sol-pro",
     "openrouter/deepseek/deepseek-v4-pro",
-    "openrouter/deepseek/deepseek-v4-flash",
-    "openrouter/sakana/fugu-ultra",
-    "openrouter/x-ai/grok-build-0.1",
-    "openrouter/z-ai/glm-5.2"
+    "openrouter/deepseek/deepseek-v4-flash"
   ],
   "enableInstallTelemetry": false,
   "hideThinkingBlock": true,
