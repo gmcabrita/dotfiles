@@ -1,12 +1,16 @@
 import type { Component } from "@earendil-works/pi-tui";
 import type { ContextUsage, ExtensionAPI, ExtensionContext, SessionEntry, Theme, ThemeColor, ToolInfo } from "@earendil-works/pi-coding-agent";
 import { buildSessionContext, convertToLlm, keyText } from "@earendil-works/pi-coding-agent";
-import { truncateToWidth, visibleWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
+import { matchesKey, truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-type ViewMode = "summary" | "compact" | "expanded";
+type ViewMode = "summary" | "compact";
+const VIEW_MODES: readonly ViewMode[] = ["summary", "compact"];
+type SelectableKind = "skill" | "tool";
+type CompactSelection = { kind: SelectableKind; name: string };
+
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonObject | JsonValue[];
 type JsonObject = { [key: string]: JsonValue };
@@ -32,42 +36,19 @@ type ScanRow = {
   tokens?: number;
   desc?: string;
   inactive?: boolean;
+  kind?: SelectableKind;
 };
-
-type ToolField = {
-  name: string;
-  type: string;
-  required: boolean;
-  description: string;
-  depth: number;
-};
-
-type ToolExpanded = {
-  name: string;
-  tokens: number;
-  source: string;
-  description: string;
-  fields: ToolField[];
-};
-
-type ExpandedContent =
-  | { kind: "text"; note?: string; attribution?: string; preview?: string[] }
-  | { kind: "skills"; note?: string; rows: ScanRow[] }
-  | { kind: "tools"; notes: string[]; tools: ToolExpanded[] };
 
 type PrefixSection = {
   id: string;
   title: string;
   content: string;
-  /** Dim suffix after the char count, e.g. "÷ 2.6" or "÷ 2.6 · Anthropic tool payload". */
-  detail: string;
   /** Tools only: formula-derived tokens replacing the ch ÷ denominator estimate. */
   effectiveTokens?: number;
   /** Tools only: minified-payload size, when content.length is not the counted chars. */
   rawChars?: number;
   denominator: number;
   compactRows?: ScanRow[];
-  expanded: ExpandedContent;
 };
 
 type ModelSummary = {
@@ -144,6 +125,8 @@ type PrefixSnapshot = {
   signature: string;
   sections: PrefixSection[];
   tools: ToolSummary[];
+  allTools: ToolSummary[];
+  skills: SkillSummary[];
   heuristic: ResolvedHeuristic;
   model?: ModelSummary;
   session?: SessionBreakdown;
@@ -225,7 +208,7 @@ function panelHeader(
   const pips = options.modes && options.active
     ? ` ${options.modes.map((mode) => mode === options.active ? ink(theme, "accent", bold(mode)) : ink(theme, "dim", mode)).join(ink(theme, "dim", " → "))}`
     : "";
-  const lines = ["", `${brand}${pips}`];
+  const lines = [`${brand}${pips}`];
   if (options.hint) lines.push(`  ${ink(theme, "dim", options.hint)}`);
   return lines;
 }
@@ -294,32 +277,11 @@ function countDetail(chars: number, detail?: string): string {
   return `(${compactCount(chars)} ch${detail ? ` ${detail}` : ""})`;
 }
 
-function inlineCount(chars: number, denominator: number): string {
-  return `~${compactCount(estimateCharsAsTokens(chars, denominator))} tokens ${countDetail(chars, ratioDetail(denominator))}`;
-}
-
 function compactPath(filePath: string): string {
   const home = homedir();
   if (filePath === `${home}/.pi/agent/AGENTS.md`) return "Global AGENTS.md";
   if (filePath.startsWith(`${home}/`)) return `~/${filePath.slice(home.length + 1)}`;
   return filePath;
-}
-
-function tildeAll(text: string): string {
-  return text.split(`${homedir()}/`).join("~/");
-}
-
-function middleTruncatePath(text: string, width: number): string {
-  if (text.length <= width) return text;
-  if (width <= 3) return "…";
-  const keep = width - 1;
-  let tail = Math.min(Math.floor(keep * 0.5), 28);
-  const slashIndex = text.lastIndexOf("/");
-  if (slashIndex >= 0 && text.length - slashIndex <= Math.floor(keep * 0.6)) {
-    tail = text.length - slashIndex;
-  }
-  const head = Math.max(1, keep - tail);
-  return `${text.slice(0, head)}…${text.slice(text.length - tail)}`;
 }
 
 function unescapeXml(value: string): string {
@@ -357,14 +319,6 @@ function singleLine(text: string, max = 140): string {
   return `${normalized.slice(0, Math.max(0, max - 1)).trimEnd()}…`;
 }
 
-function firstMeaningfulLines(text: string, maxLines: number): string[] {
-  return text
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .slice(0, maxLines);
-}
-
 function getPromptRemainder(systemPrompt: string): string {
   return normalizeBlankLines(
     systemPrompt.replace(PROJECT_CONTEXT_RE, "\n").replace(AVAILABLE_SKILLS_RE, "\n"),
@@ -390,63 +344,14 @@ function parseContextSections(systemPrompt: string, denominator: number): Prefix
     const [, rawPath, content] = match;
     const filePath = rawPath ?? "";
     const title = compactPath(filePath);
-    const body = content ?? "";
-    const preview = firstMeaningfulLines(body, 8).map((line) => singleLine(line, 150));
     sections.push({
       id: `context:${filePath}`,
       title,
-      content: body,
+      content: content ?? "",
       denominator,
-      detail: ratioDetail(denominator),
-      expanded: {
-        kind: "text",
-        note: `${tildeAll(filePath)} · preview only`,
-        preview: preview.length > 0 ? preview : ["(no non-empty lines)"],
-      },
     });
   }
   return sections;
-}
-
-type RuntimeAdditions = { chars: number; snippetCount: number; guidelineCount: number };
-
-// Issue #9: the runtime system prompt is assembled from pi's base prompt plus tool- and
-// extension-provided instructions (the "Available tools" snippet lines and deduplicated
-// promptGuidelines). Attribute the part we can verify: count only text that is actually
-// present in the prompt remainder, deduplicating guidelines the same way pi does, so the
-// number is evidence-based rather than a guess from tool metadata.
-function detectRuntimeAdditions(promptRemainder: string, tools: ToolSummary[]): RuntimeAdditions {
-  let chars = 0;
-  let snippetCount = 0;
-  let guidelineCount = 0;
-  const seenGuidelines = new Set<string>();
-  for (const tool of tools) {
-    const escapedName = tool.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const snippetMatch = promptRemainder.match(new RegExp(`^- ${escapedName}: .+$`, "m"));
-    if (snippetMatch) {
-      chars += snippetMatch[0].length + 1; // +1 for the newline the line occupies
-      snippetCount += 1;
-    }
-    for (const guideline of tool.promptGuidelines) {
-      const normalized = guideline.trim();
-      if (normalized.length === 0 || seenGuidelines.has(normalized)) continue;
-      seenGuidelines.add(normalized);
-      if (promptRemainder.includes(normalized)) {
-        chars += normalized.length + 1;
-        guidelineCount += 1;
-      }
-    }
-  }
-  return { chars, snippetCount, guidelineCount };
-}
-
-function runtimeAdditionsAttribution(additions: RuntimeAdditions, denominator: number): string | undefined {
-  if (additions.chars === 0) return undefined;
-  const tokens = estimateCharsAsTokens(additions.chars, denominator);
-  const parts: string[] = [];
-  if (additions.snippetCount > 0) parts.push(`${additions.snippetCount} tool snippet${additions.snippetCount === 1 ? "" : "s"}`);
-  if (additions.guidelineCount > 0) parts.push(`${additions.guidelineCount} guideline${additions.guidelineCount === 1 ? "" : "s"}`);
-  return `of which tool/extension instructions: ~${compactCount(tokens)} tokens (${parts.join(", ")}) · already counted in this row`;
 }
 
 function buildSkillsSection(systemPrompt: string, denominator: number): { section?: PrefixSection; skills: SkillSummary[] } {
@@ -455,11 +360,12 @@ function buildSkillsSection(systemPrompt: string, denominator: number): { sectio
   const content = match[0].trim();
   const skills = parseSkills(content, denominator);
   const sortedSkills = [...skills].sort((a, b) => b.tokens - a.tokens || a.name.localeCompare(b.name));
-  const scanRows = sortedSkills.map((skill) => ({ name: skill.name, tokens: skill.tokens, desc: skill.description }));
-  const wrapperChars = Math.max(0, content.length - skills.reduce((sum, skill) => sum + skill.chars, 0));
-  const wrapperNote = wrapperChars > 0
-    ? `list wrapper/markup  ${inlineCount(wrapperChars, denominator)}`
-    : undefined;
+  const scanRows = sortedSkills.map((skill) => ({
+    name: skill.name,
+    tokens: skill.tokens,
+    desc: skill.description,
+    kind: "skill" as const,
+  }));
   return {
     skills,
     section: {
@@ -467,9 +373,7 @@ function buildSkillsSection(systemPrompt: string, denominator: number): { sectio
       title: `Skill frontmatter (${skills.length})`,
       content,
       denominator,
-      detail: ratioDetail(denominator),
       compactRows: scanRows,
-      expanded: { kind: "skills", note: wrapperNote, rows: scanRows },
     },
   };
 }
@@ -938,49 +842,6 @@ function schemaArrayItemProperties(property: unknown): Record<string, unknown> {
   return getSchemaProperties(property.items);
 }
 
-function getSchemaRequired(schema: unknown): string[] {
-  if (!isJsonObject(schema) || !Array.isArray(schema.required)) return [];
-  return schema.required.filter((entry): entry is string => typeof entry === "string");
-}
-
-function arrayItemsSchema(property: unknown): unknown {
-  return isJsonObject(property) ? property.items : undefined;
-}
-
-function collectToolFields(name: string, property: unknown, depth: number, required: boolean, out: ToolField[], maxDepth = 3): void {
-  out.push({
-    name,
-    type: schemaPropertyType(property),
-    required,
-    description: schemaPropertyDescription(property),
-    depth,
-  });
-  if (depth >= maxDepth) return;
-  const nested = getSchemaProperties(property);
-  if (Object.keys(nested).length > 0) {
-    const requiredKeys = new Set(getSchemaRequired(property));
-    for (const [childName, childProperty] of Object.entries(nested)) {
-      collectToolFields(childName, childProperty, depth + 1, requiredKeys.has(childName), out, maxDepth);
-    }
-  }
-  const itemProperties = schemaArrayItemProperties(property);
-  if (Object.keys(itemProperties).length > 0) {
-    const requiredKeys = new Set(getSchemaRequired(arrayItemsSchema(property)));
-    for (const [childName, childProperty] of Object.entries(itemProperties)) {
-      collectToolFields(childName, childProperty, depth + 1, requiredKeys.has(childName), out, maxDepth);
-    }
-  }
-}
-
-function buildToolFields(schema: unknown): ToolField[] {
-  const fields: ToolField[] = [];
-  const requiredKeys = new Set(getSchemaRequired(schema));
-  for (const [name, property] of Object.entries(getSchemaProperties(schema))) {
-    collectToolFields(name, property, 0, requiredKeys.has(name), fields);
-  }
-  return fields;
-}
-
 function estimateOpenAIToolTextTokens(text: string): number {
   return estimateCharsAsTokens(text.length, OPENAI_TOOL_TEXT_FRAGMENT_DENOMINATOR);
 }
@@ -1047,56 +908,46 @@ function buildToolDisplayEstimate(tool: ToolSummary, heuristic: ResolvedHeuristi
   return { tokens: estimateCharsAsTokens(chars, heuristic.toolDenominator), chars };
 }
 
-function buildToolsSection(pi: ExtensionAPI, heuristic: ResolvedHeuristic): { section?: PrefixSection; tools: ToolSummary[] } {
+function buildToolsSection(pi: ExtensionAPI, heuristic: ResolvedHeuristic): { section?: PrefixSection; tools: ToolSummary[]; allTools: ToolSummary[] } {
   const activeNames = new Set(pi.getActiveTools());
-  const allTools = pi.getAllTools();
-  const activeToolInfos = allTools.filter((tool) => activeNames.has(tool.name));
+  const toolInfos = pi.getAllTools();
+  const allTools = toolInfos.map(summarizeTool);
+  const tools = toolInfos.filter((tool) => activeNames.has(tool.name)).map(summarizeTool);
   const inactiveTools = allTools
     .filter((tool) => !activeNames.has(tool.name))
-    .map(summarizeTool)
     .sort((a, b) => a.name.localeCompare(b.name));
-  const tools = activeToolInfos.map(summarizeTool);
-  if (tools.length === 0) return { tools };
+  if (tools.length === 0) return { tools, allTools };
 
   const numerator = buildToolNumerator(tools, heuristic);
   const denominator = heuristic.toolDenominator;
   const effectiveTokens = numerator.tokens ?? estimateCharsAsTokens(numerator.chars, denominator);
-  const sectionDetail = typeof numerator.tokens === "number"
-    ? `· OpenAI formula · schema text ${ratioDetail(OPENAI_TOOL_TEXT_FRAGMENT_DENOMINATOR)}`
-    : `${ratioDetail(denominator)} · ${numerator.label}`;
   const toolEstimates = tools.map((tool) => ({ tool, estimate: buildToolDisplayEstimate(tool, heuristic) }));
   const sortedEstimates = [...toolEstimates].sort((a, b) => b.estimate.tokens - a.estimate.tokens || a.tool.name.localeCompare(b.tool.name));
   const compactToolRows: ScanRow[] = [
-    ...sortedEstimates.map(({ tool, estimate }) => ({ name: tool.name, tokens: estimate.tokens, desc: tool.description })),
-    ...inactiveTools.map((tool) => ({ name: tool.name, desc: `(inactive) ${tool.description}`, inactive: true })),
+    ...sortedEstimates.map(({ tool, estimate }) => ({
+      name: tool.name,
+      tokens: estimate.tokens,
+      desc: tool.description,
+      kind: "tool" as const,
+    })),
+    ...inactiveTools.map((tool) => ({
+      name: tool.name,
+      desc: `(inactive) ${tool.description}`,
+      inactive: true,
+      kind: "tool" as const,
+    })),
   ];
-  const expandedTools: ToolExpanded[] = sortedEstimates.map(({ tool, estimate }) => ({
-    name: tool.name,
-    tokens: estimate.tokens,
-    source: tool.source,
-    description: tool.description,
-    fields: buildToolFields(tool.schema),
-  }));
-  const notes = typeof numerator.tokens === "number"
-    ? [
-        "formula  +7/fn +3/prop-section +3/prop -3/enum +3/enum-item +12 once · nested counted recursively",
-        `counted on the minified provider payload (${compactCount(numerator.chars)} ch); tree below is the readable view of it`,
-      ]
-    : [
-        `counts use ${numerator.label} at ch ${ratioDetail(denominator)} over the minified provider payload (${compactCount(numerator.chars)} ch); the tree below is the readable view`,
-      ];
   return {
     tools,
+    allTools,
     section: {
       id: "tools",
-      title: `Tools (${tools.length}/${allTools.length} active)`,
+      title: `Tools (${tools.length}/${toolInfos.length} active)`,
       content: numerator.content,
       effectiveTokens,
       rawChars: numerator.chars,
       denominator,
-      detail: sectionDetail,
       compactRows: compactToolRows,
-      expanded: { kind: "tools", notes, tools: expandedTools },
     },
   };
 }
@@ -1194,12 +1045,7 @@ function buildSnapshot(
   const heuristic = resolveHeuristic(model, config);
   const textDenominator = heuristic.textDenominator;
   const promptRemainder = getPromptRemainder(systemPrompt);
-  const systemPreview = firstMeaningfulLines(promptRemainder, 6).map((line) => singleLine(line));
-
-  // Tools are resolved before the system section so the runtime prompt row can attribute
-  // the tool/extension instructions embedded in it (issue #9).
-  const { section: toolsSection, tools } = buildToolsSection(pi, heuristic);
-  const runtimeAdditions = detectRuntimeAdditions(promptRemainder, tools);
+  const { section: toolsSection, tools, allTools } = buildToolsSection(pi, heuristic);
 
   const sections: PrefixSection[] = [
     {
@@ -1207,18 +1053,11 @@ function buildSnapshot(
       title: "Runtime system prompt",
       content: promptRemainder,
       denominator: textDenominator,
-      detail: ratioDetail(textDenominator),
-      expanded: {
-        kind: "text",
-        note: "assembled at runtime: pi base prompt + tool/extension instructions · preview only",
-        attribution: runtimeAdditionsAttribution(runtimeAdditions, textDenominator),
-        preview: systemPreview.length > 0 ? systemPreview : ["(no non-empty lines)"],
-      },
     },
     ...parseContextSections(systemPrompt, textDenominator),
   ];
 
-  const { section: skillsSection } = buildSkillsSection(systemPrompt, textDenominator);
+  const { section: skillsSection, skills } = buildSkillsSection(systemPrompt, textDenominator);
   if (skillsSection) sections.push(skillsSection);
   if (toolsSection) sections.push(toolsSection);
 
@@ -1236,7 +1075,7 @@ function buildSnapshot(
     contextUsage ? `${contextUsage.tokens}:${contextUsage.contextWindow}:${contextUsage.percent}` : "no-usage",
   ].join("|");
 
-  return { signature, sections, tools, heuristic, model, session, contextUsage };
+  return { signature, sections, tools, allTools, skills, heuristic, model, session, contextUsage };
 }
 
 function sectionTokens(section: PrefixSection): number {
@@ -1255,10 +1094,6 @@ function totalChars(snapshot: PrefixSnapshot): number {
   return snapshot.sections.reduce((sum, section) => sum + sectionChars(section), 0);
 }
 
-function nextMode(mode: ViewMode): ViewMode {
-  return mode === "summary" ? "compact" : mode === "compact" ? "expanded" : "summary";
-}
-
 function padLabel(label: string, width = 42): string {
   // Overlong labels truncate rather than overflow: the token column is a column, and a
   // single 40-char title must not shift it (the … keeps the loss visible).
@@ -1269,7 +1104,7 @@ function padLabel(label: string, width = 42): string {
 // Methodology is stated here, once, in the dim hint line (design language §5) — data
 // rows carry only raw sizes. When the session or tool method deviates from the text
 // ratio, say so here (tool tokens may come from the OpenAI formula or a different
-// denominator); the expanded view stays the per-section audit trail.
+// denominator).
 function methodologyHint(heuristic: ResolvedHeuristic): string {
   const sessionPart = heuristic.sessionDenominator !== heuristic.textDenominator
     ? `${SEP}session ${ratioDetail(heuristic.sessionDenominator)}`
@@ -1285,7 +1120,7 @@ function methodologyHint(heuristic: ResolvedHeuristic): string {
 function renderHeader(snapshot: PrefixSnapshot, mode: ViewMode, theme: Theme): string[] {
   const ctrlO = keyText("app.tools.expand") || "Ctrl+O";
   return panelHeader(theme, "Contextimate", {
-    modes: ["summary", "compact", "expanded"],
+    modes: VIEW_MODES,
     active: mode,
     hint: `${ctrlO}: cycle view${SEP}model ${modelLabel(snapshot.model)}${SEP}${methodologyHint(snapshot.heuristic)}`,
   });
@@ -1314,112 +1149,6 @@ function renderMetricRow(row: MetricRow, theme: Theme, layout?: TokenLabelLayout
   const lead = row.section ? `${accent(theme, GLYPH.section)} ` : "";
   const labelWidth = row.section ? 40 : 42; // glyph + space keep the token column aligned
   return `  ${lead}${theme.fg("muted", padLabel(row.label, labelWidth))}${theme.fg("dim", `${tokenText}${row.detail ? ` ${row.detail}` : ""}`)}`;
-}
-
-function joinLeftRight(left: string, right: string, width: number, gap = 2): string {
-  if (!right) return left;
-  const used = visibleWidth(left) + visibleWidth(right);
-  return `${left}${" ".repeat(Math.max(gap, width - used))}${right}`;
-}
-
-function wrapPlainText(text: string, width: number, maxLines: number): string[] {
-  const max = Math.max(16, width);
-  const normalized = text.replace(/\s+/g, " ").trim();
-  if (!normalized) return [];
-  const wrapped = wrapTextWithAnsi(normalized, max);
-  if (wrapped.length <= maxLines) return wrapped;
-  const capped = wrapped.slice(0, maxLines);
-  const last = capped[maxLines - 1] ?? "";
-  // Reserve a column for the ellipsis so the capped line still fits `width`.
-  capped[maxLines - 1] = last.length >= max ? `${last.slice(0, max - 1)}…` : `${last}…`;
-  return capped;
-}
-
-function renderExpandedSectionHeader(section: PrefixSection, theme: Theme, width: number): string {
-  const tokens = sectionTokens(section);
-  const chars = sectionChars(section);
-  const left = `  ${theme.bold(section.title)}  ${accent(theme, `${estimatedTokenLabel(tokens)} tokens`)}`;
-  const right = theme.fg("dim", `${compactCount(chars)} ch ${section.detail}`);
-  return joinLeftRight(left, right, Math.max(40, width));
-}
-
-function renderExpandedNote(note: string, theme: Theme): string {
-  return `    ${theme.fg("dim", note)}`;
-}
-
-function renderExpandedPreview(lines: string[], theme: Theme, width: number): string[] {
-  const max = Math.max(24, width - 4);
-  return lines.map((line) => `    ${theme.fg("dim", singleLine(line, max))}`);
-}
-
-type FieldColumns = { nameCol: number; typeCol: number; hasRequired: boolean };
-
-const fieldIndent = (depth: number) => 6 + depth * 2;
-
-// Column layout across *all* fields in the tools block (design language §8): each
-// tool used to size its own columns, so the section read as a stack of differently
-// ragged mini-tables instead of one aligned table.
-function toolFieldColumns(fields: ToolField[]): FieldColumns {
-  return {
-    nameCol: Math.min(30, Math.max(0, ...fields.map((field) => fieldIndent(field.depth) + field.name.length))),
-    typeCol: Math.min(10, Math.max(0, ...fields.map((field) => field.type.length))),
-    hasRequired: fields.some((field) => field.required),
-  };
-}
-
-function renderToolFieldRows(fields: ToolField[], theme: Theme, width: number, columns?: FieldColumns): string[] {
-  if (fields.length === 0) return [`      ${theme.fg("dim", "(no parameters)")}`];
-  const { nameCol, typeCol, hasRequired } = columns ?? toolFieldColumns(fields);
-  return fields.map((field) => {
-    const rawName = `${" ".repeat(fieldIndent(field.depth))}${field.name}`;
-    const namePart = rawName.length > nameCol ? `${rawName.slice(0, nameCol - 1)}…` : rawName.padEnd(nameCol, " ");
-    const typePart = field.type.length > typeCol ? `${field.type.slice(0, typeCol - 1)}…` : field.type.padEnd(typeCol, " ");
-    const reqPart = hasRequired ? (field.required ? "required" : "        ") : "";
-    const prefixWidth = namePart.length + 2 + typePart.length + (hasRequired ? 2 + reqPart.length : 0);
-    const descWidth = Math.max(16, width - prefixWidth - 3);
-    const desc = field.description ? singleLine(field.description, descWidth) : "";
-    return `${theme.fg("text", namePart)}  ${theme.fg("muted", typePart)}${hasRequired ? `  ${theme.fg("dim", reqPart)}` : ""}${desc ? `  ${theme.fg("dim", desc)}` : ""}`;
-  });
-}
-
-// Tool entry header (design language §8): the name is the L0 anchor — bold — with
-// the shortened provenance beside it at L3-dim, so a column of tools scans by name
-// while the audit trail stays present without competing. Tokens keep the accent,
-// right-aligned. When width runs out the provenance gives way before the name does.
-function renderExpandedToolHeader(tool: ToolExpanded, tokenLayout: TokenLabelLayout, theme: Theme, width: number): string {
-  const maxWidth = Math.max(40, width);
-  const indent = "    ";
-  const gap = 2;
-  const token = estimatedTokenField(tool.tokens, tokenLayout);
-  const labelWidth = Math.max(12, maxWidth - indent.length - gap - tokenLayout.fieldWidth);
-  const name = tool.name.length > labelWidth ? middleTruncatePath(tool.name, labelWidth) : tool.name;
-  const sourceRoom = labelWidth - name.length - SEP.length;
-  const source = tool.source && sourceRoom >= 8 ? middleTruncatePath(tildeAll(tool.source), sourceRoom) : "";
-  const plainLabel = source ? `${name}${SEP}${source}` : name;
-  const used = indent.length + plainLabel.length + tokenLayout.fieldWidth;
-  const styled = `${theme.fg("text", theme.bold(name))}${source ? theme.fg("dim", `${SEP}${source}`) : ""}`;
-  return `${indent}${styled}${" ".repeat(Math.max(gap, maxWidth - used))}${accent(theme, token)}`;
-}
-
-function renderExpandedToolsBlock(content: { notes: string[]; tools: ToolExpanded[] }, theme: Theme, width: number): string[] {
-  const out: string[] = [];
-  const tokenLayout = tokenLabelLayout(content.tools.map((tool) => tool.tokens));
-  const allFields = content.tools.flatMap((tool) => tool.fields);
-  const columns = allFields.length > 0 ? toolFieldColumns(allFields) : undefined;
-  for (const note of content.notes) {
-    for (const line of wrapPlainText(note, Math.max(24, width - 4), 4)) out.push(`    ${theme.fg("dim", line)}`);
-  }
-  for (const tool of content.tools) {
-    out.push("");
-    out.push(renderExpandedToolHeader(tool, tokenLayout, theme, width));
-    if (tool.description && tool.description !== "(no description)") {
-      for (const line of wrapPlainText(tool.description, Math.max(24, width - 6), 3)) {
-        out.push(`      ${theme.fg("dim", line)}`);
-      }
-    }
-    out.push(...renderToolFieldRows(tool.fields, theme, width, columns));
-  }
-  return out;
 }
 
 type SessionEstimate = {
@@ -1595,22 +1324,34 @@ function inactiveTokenField(layout: TokenLabelLayout): string {
   return "-".padStart(Math.max(1, layout.unitWidth + 1)).padEnd(Math.max(layout.fieldWidth, layout.unitWidth + 1, 1), " ");
 }
 
-function renderScanRows(rows: ScanRow[], theme: Theme, width: number, layout?: CompactLayout): string[] {
+function selectionKey(selection: CompactSelection): string {
+  return `${selection.kind}:${selection.name}`;
+}
+
+function renderScanRows(
+  rows: ScanRow[],
+  theme: Theme,
+  width: number,
+  layout?: CompactLayout,
+  selectedKey?: string,
+): string[] {
   const labelWidth = layout?.labelWidth ?? Math.min(26, Math.max(...rows.map((row) => row.name.length)));
   const tokenLayout = layout?.tokenLayout ?? tokenLabelLayout(numericRowTokens(rows));
   const tokenWidth = Math.max(tokenLayout.fieldWidth, tokenLayout.unitWidth + 1, 1);
   const effectiveTokenLayout = { ...tokenLayout, fieldWidth: tokenWidth };
   const descWidth = Math.max(24, width - (4 + labelWidth + 2 + tokenWidth + 2));
   return rows.map((row) => {
+    const selected = row.kind !== undefined && selectionKey({ kind: row.kind, name: row.name }) === selectedKey;
+    const prefix = selected ? `  ${accent(theme, "›")} ` : "    ";
     const name = compactLabel(row.name, labelWidth);
     const desc = row.desc ? singleLine(row.desc, descWidth) : "";
     const token = typeof row.tokens === "number"
       ? estimatedTokenField(row.tokens, effectiveTokenLayout)
       : inactiveTokenField(effectiveTokenLayout);
     if (row.inactive) {
-      return theme.fg("dim", `    ${name}  ${token}${desc ? `  ${desc}` : ""}`);
+      return theme.fg("dim", `${prefix}${name}  ${token}${desc ? `  ${desc}` : ""}`);
     }
-    return `    ${theme.fg("text", name)}  ${accent(theme, token)}${desc ? `  ${theme.fg("dim", desc)}` : ""}`;
+    return `${prefix}${theme.fg("text", selected ? theme.bold(name) : name)}  ${accent(theme, token)}${desc ? `  ${theme.fg("dim", desc)}` : ""}`;
   });
 }
 
@@ -1620,7 +1361,7 @@ function renderCompactTotalRow(snapshot: PrefixSnapshot, theme: Theme, layout: C
   return `  ${accent(theme, theme.bold(`${label}  ${token}`))} ${theme.fg("dim", harnessDetail(snapshot))}`;
 }
 
-function renderCompact(snapshot: PrefixSnapshot, theme: Theme, width: number): string[] {
+function renderCompact(snapshot: PrefixSnapshot, theme: Theme, width: number, selected?: CompactSelection): string[] {
   const lines = renderHeader(snapshot, "compact", theme);
   const layout = compactLayout(snapshot);
   for (const section of snapshot.sections) {
@@ -1628,39 +1369,11 @@ function renderCompact(snapshot: PrefixSnapshot, theme: Theme, width: number): s
     const counts = `${estimatedTokenLabel(sectionTokens(section), layout.tokenLayout)} tokens ${countDetail(sectionChars(section))}`;
     lines.push("", `  ${accent(theme, GLYPH.section)} ${theme.bold(title)}  ${theme.fg("dim", counts)}`);
     if (section.compactRows && section.compactRows.length > 0) {
-      lines.push(...renderScanRows(section.compactRows, theme, width, layout));
+      lines.push(...renderScanRows(section.compactRows, theme, width, layout, selected ? selectionKey(selected) : undefined));
     }
   }
   const sessionTokenLayout = summaryTokenLayout(snapshot);
   lines.push("", renderCompactTotalRow(snapshot, theme, layout), ...renderSessionRows(snapshot, theme, width, sessionTokenLayout));
-  lines.push(""); // panel tail spacer (design language §8)
-  return lines;
-}
-
-function renderExpanded(snapshot: PrefixSnapshot, theme: Theme, width: number): string[] {
-  const lines = renderHeader(snapshot, "expanded", theme);
-  const layout = summaryTokenLayout(snapshot);
-  lines.push(
-    renderMetricRow({ label: "Total harness", tokens: totalTokens(snapshot), emphasis: true, detail: harnessDetail(snapshot) }, theme, layout),
-    ...renderSessionRows(snapshot, theme, width, layout),
-  );
-
-  for (const section of snapshot.sections) {
-    lines.push("", renderExpandedSectionHeader(section, theme, width));
-    const expanded = section.expanded;
-    if (expanded.kind === "tools") {
-      lines.push(...renderExpandedToolsBlock(expanded, theme, width));
-      continue;
-    }
-    if (expanded.note) lines.push(renderExpandedNote(expanded.note, theme));
-    if (expanded.kind === "text" && expanded.attribution) lines.push(renderExpandedNote(expanded.attribution, theme));
-    if (expanded.kind === "skills") {
-      lines.push("", ...renderScanRows(expanded.rows, theme, width));
-    } else if (expanded.preview && expanded.preview.length > 0) {
-      lines.push("", ...renderExpandedPreview(expanded.preview, theme, width));
-    }
-  }
-
   lines.push(""); // panel tail spacer (design language §8)
   return lines;
 }
@@ -1684,7 +1397,9 @@ class ContextimateComponent implements Component {
   private cachedSignature?: string;
   private cachedMode?: ViewMode;
   private cachedWidth?: number;
+  private cachedSelection?: string;
   private cachedLines?: string[];
+  private selectedIndex = 0;
 
   // No TS parameter properties: keep the source compatible with Node's strip-only
   // type stripping so the zero-dependency test harness can import this file directly.
@@ -1698,20 +1413,44 @@ class ContextimateComponent implements Component {
     this.mode = mode;
   }
 
-  cycleMode(): ViewMode {
-    this.mode = nextMode(this.mode);
+  getMode(): ViewMode {
+    return this.mode;
+  }
+
+  cycleMode(direction: 1 | -1 = 1): ViewMode {
+    const currentIndex = VIEW_MODES.indexOf(this.mode);
+    this.mode = VIEW_MODES[(currentIndex + VIEW_MODES.length + direction) % VIEW_MODES.length] ?? DEFAULT_MODE;
     this.invalidate();
     return this.mode;
+  }
+
+  getSelection(): CompactSelection | undefined {
+    return this.snapshot().sections
+      .flatMap((section) => section.compactRows ?? [])
+      .filter((row): row is ScanRow & { kind: SelectableKind } => row.kind !== undefined)
+      .map((row) => ({ kind: row.kind, name: row.name }))[this.selectedIndex];
+  }
+
+  moveSelection(delta: number): void {
+    const count = this.snapshot().sections
+      .flatMap((section) => section.compactRows ?? [])
+      .filter((row) => row.kind !== undefined).length;
+    if (count === 0) return;
+    this.selectedIndex = (this.selectedIndex + count + delta % count) % count;
+    this.invalidate();
   }
 
   render(width: number): string[] {
     try {
       const snapshot = this.snapshot();
+      const selection = this.mode === "compact" ? this.getSelection() : undefined;
+      const selectedKey = selection ? selectionKey(selection) : undefined;
       if (
         this.cachedLines &&
         this.cachedSignature === snapshot.signature &&
         this.cachedMode === this.mode &&
-        this.cachedWidth === width
+        this.cachedWidth === width &&
+        this.cachedSelection === selectedKey
       ) {
         return this.cachedLines;
       }
@@ -1719,13 +1458,12 @@ class ContextimateComponent implements Component {
       const theme = this.getTheme();
       const body = this.mode === "summary"
         ? renderSummary(snapshot, theme, width)
-        : this.mode === "compact"
-          ? renderCompact(snapshot, theme, width)
-          : renderExpanded(snapshot, theme, width);
+        : renderCompact(snapshot, theme, width, selection);
 
       this.cachedSignature = snapshot.signature;
       this.cachedMode = this.mode;
       this.cachedWidth = width;
+      this.cachedSelection = selectedKey;
       this.cachedLines = wrapLines(body, Math.max(20, width));
       return this.cachedLines;
     } catch {
@@ -1744,8 +1482,47 @@ class ContextimateComponent implements Component {
     this.cachedSignature = undefined;
     this.cachedMode = undefined;
     this.cachedWidth = undefined;
+    this.cachedSelection = undefined;
     this.cachedLines = undefined;
   }
+}
+
+type DetailContent = { title: string; text: string };
+
+function buildDetail(snapshot: PrefixSnapshot, selection: CompactSelection): DetailContent | undefined {
+  if (selection.kind === "skill") {
+    const skill = snapshot.skills.find((candidate) => candidate.name === selection.name);
+    if (!skill) return undefined;
+    try {
+      return { title: `Skill: ${skill.name}`, text: readFileSync(skill.location, "utf8") };
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      return { title: `Skill: ${skill.name}`, text: `Unable to read ${skill.location}\n\n${reason}` };
+    }
+  }
+
+  const tool = snapshot.allTools.find((candidate) => candidate.name === selection.name);
+  if (!tool) return undefined;
+  const active = snapshot.tools.some((candidate) => candidate.name === tool.name);
+  const guidelines = tool.promptGuidelines.length > 0
+    ? tool.promptGuidelines.map((guideline) => `- ${guideline}`).join("\n")
+    : "(none)";
+  return {
+    title: `Tool: ${tool.name}`,
+    text: [
+      `Status: ${active ? "active" : "inactive"}`,
+      `Source: ${tool.source}`,
+      "",
+      "Description:",
+      tool.description,
+      "",
+      "Prompt guidelines:",
+      guidelines,
+      "",
+      "Input schema:",
+      safeJson(tool.schema),
+    ].join("\n"),
+  };
 }
 
 // Test-only surface. Pi loads extensions via `jiti.import(path, { default: true })`,
@@ -1784,15 +1561,11 @@ export const internals = {
   ctxShareLabel,
   contextWindowLabel,
   methodologyHint,
-  // runtime-addition attribution (issue #9)
-  detectRuntimeAdditions,
-  runtimeAdditionsAttribution,
   // snapshot + renderers
   buildSnapshot,
   totalTokens,
   renderSummary,
   renderCompact,
-  renderExpanded,
 };
 
 export type {
@@ -1806,20 +1579,18 @@ export type {
 };
 
 export default function piContextimate(pi: ExtensionAPI) {
-  const modes: ViewMode[] = ["summary", "compact", "expanded"];
-
   pi.registerCommand("contextimate", {
-    description: "Show context usage in a modal (summary, compact, or expanded)",
+    description: "Show an interactive context usage breakdown (summary or compact)",
     getArgumentCompletions: (prefix) => {
-      const matches = modes.filter((mode) => mode.startsWith(prefix.toLowerCase()));
+      const matches = VIEW_MODES.filter((mode) => mode.startsWith(prefix.toLowerCase()));
       return matches.length > 0 ? matches.map((mode) => ({ value: mode, label: mode })) : null;
     },
     handler: async (args, ctx) => {
       if (ctx.mode !== "tui") return;
 
       const requested = args.trim().toLowerCase();
-      if (requested !== "" && requested !== "summary" && requested !== "compact" && requested !== "expanded") {
-        ctx.ui.notify("Usage: /contextimate [summary|compact|expanded]", "warning");
+      if (requested !== "" && requested !== "summary" && requested !== "compact") {
+        ctx.ui.notify("Usage: /contextimate [summary|compact]", "warning");
         return;
       }
 
@@ -1836,25 +1607,100 @@ export default function piContextimate(pi: ExtensionAPI) {
       await ctx.ui.custom<void>((tui, theme, keybindings, done) => {
         const content = new ContextimateComponent(() => snapshot, () => theme, mode);
         let scrollOffset = 0;
+        let detail: DetailContent | undefined;
 
         const component: Component = {
           render: (width) => {
+            if (detail) {
+              const headerLines = [
+                theme.bold(detail.title),
+                theme.fg("dim", "Full definition"),
+              ];
+              const bodyLines = wrapLines(detail.text.split("\n"), width);
+              const bodyHeight = Math.max(1, tui.terminal.rows - headerLines.length - 2);
+              const maxOffset = Math.max(0, bodyLines.length - bodyHeight);
+              scrollOffset = Math.min(scrollOffset, maxOffset);
+              const visibleBody = bodyLines.slice(scrollOffset, scrollOffset + bodyHeight);
+              const position = maxOffset > 0
+                ? `${scrollOffset + 1}-${Math.min(scrollOffset + bodyHeight, bodyLines.length)}/${bodyLines.length}${SEP}`
+                : "";
+              const footer = theme.fg("dim", `${position}↑/↓/PgUp/PgDn scroll${SEP}esc back${SEP}q close`);
+              return [...headerLines, ...visibleBody, truncateToWidth(footer, width, "…")];
+            }
+
             const allLines = content.render(width);
-            const contentHeight = Math.max(4, Math.floor(tui.terminal.rows * 0.8) - 1);
-            const maxOffset = Math.max(0, allLines.length - contentHeight);
+            const headerLines = allLines.slice(0, 2);
+            const bodyLines = allLines.slice(2);
+            const bodyHeight = Math.max(1, tui.terminal.rows - headerLines.length - 2);
+            if (content.getMode() === "compact") {
+              const selectedLine = bodyLines.findIndex((line) => line.includes("›"));
+              if (selectedLine >= 0) {
+                if (selectedLine < scrollOffset) scrollOffset = selectedLine;
+                if (selectedLine >= scrollOffset + bodyHeight) scrollOffset = selectedLine - bodyHeight + 1;
+              }
+            }
+            const maxOffset = Math.max(0, bodyLines.length - bodyHeight);
             scrollOffset = Math.min(scrollOffset, maxOffset);
-            const visibleLines = allLines.slice(scrollOffset, scrollOffset + contentHeight);
-            const position = maxOffset > 0 ? `${scrollOffset + 1}-${Math.min(scrollOffset + contentHeight, allLines.length)}/${allLines.length}${SEP}` : "";
-            const footer = theme.fg("dim", `${position}↑↓/PgUp/PgDn scroll${SEP}${keyText("app.tools.expand") || "Ctrl+O"} cycle${SEP}Esc close`);
-            return [...visibleLines, truncateToWidth(footer, width, "…")];
+            const visibleBody = bodyLines.slice(scrollOffset, scrollOffset + bodyHeight);
+            const position = maxOffset > 0
+              ? `${scrollOffset + 1}-${Math.min(scrollOffset + bodyHeight, bodyLines.length)}/${bodyLines.length}${SEP}`
+              : "";
+            const interaction = content.getMode() === "compact"
+              ? `↑/↓ select${SEP}enter inspect`
+              : "↑/↓/PgUp/PgDn scroll";
+            const footer = theme.fg("dim", `${position}←/→ or tab view${SEP}${interaction}${SEP}q/esc close`);
+            return [...headerLines, ...visibleBody, truncateToWidth(footer, width, "…")];
           },
           handleInput: (data) => {
-            const pageSize = Math.max(1, Math.floor(tui.terminal.rows * 0.8) - 3);
-            if (keybindings.matches(data, "tui.select.cancel")) {
+            const pageSize = Math.max(1, tui.terminal.rows - 6);
+            if (detail) {
+              if (matchesKey(data, "escape")) {
+                detail = undefined;
+                scrollOffset = 0;
+              } else if (data.toLowerCase() === "q" || keybindings.matches(data, "tui.select.cancel")) {
+                done();
+                return;
+              } else if (keybindings.matches(data, "tui.select.up")) {
+                scrollOffset = Math.max(0, scrollOffset - 1);
+              } else if (keybindings.matches(data, "tui.select.down")) {
+                scrollOffset += 1;
+              } else if (keybindings.matches(data, "tui.select.pageUp")) {
+                scrollOffset = Math.max(0, scrollOffset - pageSize);
+              } else if (keybindings.matches(data, "tui.select.pageDown")) {
+                scrollOffset += pageSize;
+              } else {
+                return;
+              }
+              tui.requestRender();
+              return;
+            }
+
+            let changed = true;
+            if (keybindings.matches(data, "tui.select.cancel") || data.toLowerCase() === "q") {
               done();
-            } else if (keybindings.matches(data, "app.tools.expand")) {
-              content.cycleMode();
+              return;
+            } else if (
+              keybindings.matches(data, "app.tools.expand")
+              || keybindings.matches(data, "tui.input.tab")
+              || matchesKey(data, "right")
+            ) {
+              content.cycleMode(1);
               scrollOffset = 0;
+            } else if (matchesKey(data, "shift+tab") || matchesKey(data, "left")) {
+              content.cycleMode(-1);
+              scrollOffset = 0;
+            } else if (content.getMode() === "compact" && keybindings.matches(data, "tui.select.confirm")) {
+              const selection = content.getSelection();
+              detail = selection ? buildDetail(snapshot, selection) : undefined;
+              scrollOffset = 0;
+            } else if (content.getMode() === "compact" && keybindings.matches(data, "tui.select.up")) {
+              content.moveSelection(-1);
+            } else if (content.getMode() === "compact" && keybindings.matches(data, "tui.select.down")) {
+              content.moveSelection(1);
+            } else if (content.getMode() === "compact" && keybindings.matches(data, "tui.select.pageUp")) {
+              content.moveSelection(-pageSize);
+            } else if (content.getMode() === "compact" && keybindings.matches(data, "tui.select.pageDown")) {
+              content.moveSelection(pageSize);
             } else if (keybindings.matches(data, "tui.select.up")) {
               scrollOffset = Math.max(0, scrollOffset - 1);
             } else if (keybindings.matches(data, "tui.select.down")) {
@@ -1863,15 +1709,14 @@ export default function piContextimate(pi: ExtensionAPI) {
               scrollOffset = Math.max(0, scrollOffset - pageSize);
             } else if (keybindings.matches(data, "tui.select.pageDown")) {
               scrollOffset += pageSize;
+            } else {
+              changed = false;
             }
-            tui.requestRender();
+            if (changed) tui.requestRender();
           },
           invalidate: () => content.invalidate(),
         };
         return component;
-      }, {
-        overlay: true,
-        overlayOptions: { width: "90%", minWidth: 60, maxHeight: "80%", anchor: "center", margin: 1 },
       });
     },
   });
