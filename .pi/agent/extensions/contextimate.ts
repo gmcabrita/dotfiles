@@ -8,7 +8,7 @@ import { join } from "node:path";
 
 type ViewMode = "summary" | "compact";
 const VIEW_MODES: readonly ViewMode[] = ["summary", "compact"];
-type SelectableKind = "skill" | "tool";
+type SelectableKind = "section" | "skill" | "tool";
 type CompactSelection = { kind: SelectableKind; name: string };
 
 type JsonPrimitive = string | number | boolean | null;
@@ -49,6 +49,7 @@ type PrefixSection = {
   rawChars?: number;
   denominator: number;
   compactRows?: ScanRow[];
+  selectable?: boolean;
 };
 
 type ModelSummary = {
@@ -349,6 +350,7 @@ function parseContextSections(systemPrompt: string, denominator: number): Prefix
       title,
       content: content ?? "",
       denominator,
+      selectable: true,
     });
   }
   return sections;
@@ -1053,6 +1055,7 @@ function buildSnapshot(
       title: "Runtime system prompt",
       content: promptRemainder,
       denominator: textDenominator,
+      selectable: true,
     },
     ...parseContextSections(systemPrompt, textDenominator),
   ];
@@ -1328,6 +1331,15 @@ function selectionKey(selection: CompactSelection): string {
   return `${selection.kind}:${selection.name}`;
 }
 
+function compactSelections(snapshot: PrefixSnapshot): CompactSelection[] {
+  return snapshot.sections.flatMap((section) => [
+    ...(section.selectable ? [{ kind: "section" as const, name: section.id }] : []),
+    ...(section.compactRows ?? [])
+      .filter((row): row is ScanRow & { kind: SelectableKind } => row.kind !== undefined)
+      .map((row) => ({ kind: row.kind, name: row.name })),
+  ]);
+}
+
 function renderScanRows(
   rows: ScanRow[],
   theme: Theme,
@@ -1367,7 +1379,9 @@ function renderCompact(snapshot: PrefixSnapshot, theme: Theme, width: number, se
   for (const section of snapshot.sections) {
     const title = compactLabel(section.title, layout.labelWidth);
     const counts = `${estimatedTokenLabel(sectionTokens(section), layout.tokenLayout)} tokens ${countDetail(sectionChars(section))}`;
-    lines.push("", `  ${accent(theme, GLYPH.section)} ${theme.bold(title)}  ${theme.fg("dim", counts)}`);
+    const sectionSelected = selected?.kind === "section" && selected.name === section.id;
+    const sectionGlyph = sectionSelected ? "›" : GLYPH.section;
+    lines.push("", `  ${accent(theme, sectionGlyph)} ${theme.bold(title)}  ${theme.fg("dim", counts)}`);
     if (section.compactRows && section.compactRows.length > 0) {
       lines.push(...renderScanRows(section.compactRows, theme, width, layout, selected ? selectionKey(selected) : undefined));
     }
@@ -1425,16 +1439,11 @@ class ContextimateComponent implements Component {
   }
 
   getSelection(): CompactSelection | undefined {
-    return this.snapshot().sections
-      .flatMap((section) => section.compactRows ?? [])
-      .filter((row): row is ScanRow & { kind: SelectableKind } => row.kind !== undefined)
-      .map((row) => ({ kind: row.kind, name: row.name }))[this.selectedIndex];
+    return compactSelections(this.snapshot())[this.selectedIndex];
   }
 
   moveSelection(delta: number): void {
-    const count = this.snapshot().sections
-      .flatMap((section) => section.compactRows ?? [])
-      .filter((row) => row.kind !== undefined).length;
+    const count = compactSelections(this.snapshot()).length;
     if (count === 0) return;
     this.selectedIndex = (this.selectedIndex + count + delta % count) % count;
     this.invalidate();
@@ -1490,6 +1499,11 @@ class ContextimateComponent implements Component {
 type DetailContent = { title: string; text: string };
 
 function buildDetail(snapshot: PrefixSnapshot, selection: CompactSelection): DetailContent | undefined {
+  if (selection.kind === "section") {
+    const section = snapshot.sections.find((candidate) => candidate.id === selection.name);
+    return section ? { title: section.title, text: section.content } : undefined;
+  }
+
   if (selection.kind === "skill") {
     const skill = snapshot.skills.find((candidate) => candidate.name === selection.name);
     if (!skill) return undefined;
