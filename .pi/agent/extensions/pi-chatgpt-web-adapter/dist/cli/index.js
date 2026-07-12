@@ -16,7 +16,7 @@ function version() {
     }
 }
 function printHelp() {
-    process.stdout.write(`pi-chatgpt-web ${version()} — ChatGPT web (gpt-5.5-pro) adapter for Pi\n\n` +
+    process.stdout.write(`pi-chatgpt-web ${version()} — ChatGPT web (gpt-5.6-pro) adapter for Pi\n\n` +
         "Usage:\n" +
         "  pi-chatgpt-web auth login         Open a browser and capture a ChatGPT session\n" +
         "  pi-chatgpt-web auth status        Show account + token expiry\n" +

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Updated the ChatGPT web model to `gpt-5-6-pro`.
+- Removed the non-Pro models from the advertised model list and Pi provider.
+
 ## 0.1.1 (2026-06-18)
 
 Initial npm release. Same adapter as the GitHub `v0.1.0` release, with package metadata normalized for npm.

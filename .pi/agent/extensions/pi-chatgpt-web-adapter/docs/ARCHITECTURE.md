@@ -61,7 +61,7 @@ Full protocol dossier and design rationale live in the research repo:
 
 ## Key protocol fact
 
-`gpt-5-5-pro` does not return its answer inline on `/f/conversation`. It emits a
+`gpt-5-6-pro` does not return its answer inline on `/f/conversation`. It emits a
 `stream_handoff` and the answer streams on a websocket / resume-SSE topic. v0
 handles this by polling `GET /backend-api/conversation/<id>` to completion. Token
 streaming over the resume channel is a v0.2 enhancement that does not change the

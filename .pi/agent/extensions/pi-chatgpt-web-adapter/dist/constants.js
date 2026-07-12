@@ -7,13 +7,9 @@ import { join } from "node:path";
  * side. Keep it here so a single edit (plus a CI smoke run) recovers from a
  * rename.
  */
-export const WEB_MODEL_ID = "gpt-5-5-pro";
+export const WEB_MODEL_ID = "gpt-5-6-pro";
 /** Model ids the adapter advertises through /v1/models. */
-export const ADVERTISED_MODELS = [
-    "gpt-5-5-pro",
-    "gpt-5-5-thinking",
-    "gpt-5-5",
-];
+export const ADVERTISED_MODELS = ["gpt-5-6-pro"];
 export const DEFAULT_EFFORT = "standard";
 /** Default loopback port for the local OpenAI-compatible daemon. */
 export const DEFAULT_PORT = 1456;

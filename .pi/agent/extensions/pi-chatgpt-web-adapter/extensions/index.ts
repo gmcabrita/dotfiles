@@ -3,7 +3,7 @@
  *
  * Registers `chatgpt-web` as a provider whose models are served by a local
  * OpenAI-compatible daemon (`pi-chatgpt-web serve`). Pi's built-in
- * openai-completions streamer talks to the daemon, so `gpt-5-5-pro` becomes a
+ * openai-completions streamer talks to the daemon, so `gpt-5-6-pro` becomes a
  * first-class, switchable model with zero custom streaming code here.
  *
  * Runtime uses only Node builtins; the only pi import is a type (erased at
@@ -103,8 +103,8 @@ function registerModels(pi: ExtensionAPI): void {
     api: "openai-completions",
     models: [
       {
-        id: "gpt-5-5-pro",
-        name: "GPT-5.5 Pro (ChatGPT web)",
+        id: "gpt-5-6-pro",
+        name: "GPT-5.6 Pro (ChatGPT web)",
         api: "openai-completions",
         baseUrl: baseUrl(),
         reasoning: true,
@@ -122,30 +122,6 @@ function registerModels(pi: ExtensionAPI): void {
           supportsUsageInStreaming: false,
           supportsStrictMode: false,
         },
-      },
-      {
-        id: "gpt-5-5-thinking",
-        name: "GPT-5.5 Thinking (ChatGPT web)",
-        api: "openai-completions",
-        baseUrl: baseUrl(),
-        reasoning: true,
-        input: ["text"],
-        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-        contextWindow: 272000,
-        maxTokens: 128000,
-        compat: { supportsReasoningEffort: true, supportsStore: false, supportsUsageInStreaming: false },
-      },
-      {
-        id: "gpt-5-5",
-        name: "GPT-5.5 (ChatGPT web)",
-        api: "openai-completions",
-        baseUrl: baseUrl(),
-        reasoning: false,
-        input: ["text"],
-        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-        contextWindow: 272000,
-        maxTokens: 128000,
-        compat: { supportsStore: false, supportsUsageInStreaming: false },
       },
     ],
   });

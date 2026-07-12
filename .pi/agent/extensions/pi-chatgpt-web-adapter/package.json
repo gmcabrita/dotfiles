@@ -3,12 +3,12 @@
   "version": "0.1.1",
   "private": false,
   "type": "module",
-  "description": "Use ChatGPT web's gpt-5.5-pro inside Pi via a managed-browser OpenAI-compatible adapter.",
+  "description": "Use ChatGPT web's gpt-5.6-pro inside Pi via a managed-browser OpenAI-compatible adapter.",
   "keywords": [
     "pi-package",
     "pi-extension",
     "chatgpt",
-    "gpt-5-5-pro",
+    "gpt-5-6-pro",
     "openai",
     "adapter"
   ],

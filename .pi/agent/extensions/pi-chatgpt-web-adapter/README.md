@@ -1,10 +1,10 @@
 # @minzicat/pi-chatgpt-web-adapter
 
-Use ChatGPT web's **`gpt-5-5-pro`** (and `gpt-5-5-thinking`, `gpt-5-5`) inside
-[Pi](https://github.com/earendil-works/pi) as first-class, switchable models —
+Use ChatGPT web's **`gpt-5-6-pro`** inside
+[Pi](https://github.com/earendil-works/pi) as a first-class, switchable model —
 riding your own ChatGPT Plus/Pro subscription.
 
-`gpt-5-5-pro` is not exposed by the OpenAI Responses API or the Codex CLI at
+`gpt-5-6-pro` is not exposed by the OpenAI Responses API or the Codex CLI at
 plan pricing. The only way to drive it from your subscription is the
 `chatgpt.com` web app. This adapter does that through a managed browser, then
 re-exposes it as a local OpenAI-compatible endpoint that Pi consumes like any
@@ -16,7 +16,7 @@ other provider.
 ## How it works
 
 ```
-Pi session  ──/models chatgpt-web/gpt-5-5-pro──▶  pi openai-completions streamer
+Pi session  ──/models chatgpt-web/gpt-5-6-pro──▶  pi openai-completions streamer
                                                        │  http://127.0.0.1:1456/v1
                                                        ▼
                                         pi-chatgpt-web daemon (this package)
@@ -51,7 +51,7 @@ pi-chatgpt-web auth login
 pi-chatgpt-web doctor
 
 # 3. In any Pi session
-/models chatgpt-web/gpt-5-5-pro
+/models chatgpt-web/gpt-5-6-pro
 ```
 
 When installed as a Pi package, the extension registers the `chatgpt-web`
@@ -78,7 +78,7 @@ The daemon serves `POST /v1/chat/completions`, `POST /v1/responses`,
 ```bash
 OPENAI_BASE_URL=http://127.0.0.1:1456/v1 OPENAI_API_KEY=x \
   curl -s $OPENAI_BASE_URL/chat/completions \
-  -d '{"model":"gpt-5-5-pro","messages":[{"role":"user","content":"hi"}]}'
+  -d '{"model":"gpt-5-6-pro","messages":[{"role":"user","content":"hi"}]}'
 ```
 
 ## Limitations (v0.1)

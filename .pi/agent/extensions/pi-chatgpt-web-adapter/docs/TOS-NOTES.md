@@ -29,4 +29,4 @@ scripts the page you are already logged into.
 OpenAI's Terms of Use govern your account. Automating access to ChatGPT may be
 restricted by those terms. Use this at your own discretion and risk; the authors
 provide it for personal interoperability and make no warranty. If OpenAI offers
-`gpt-5-5-pro` through an official API you can use directly, prefer that.
+`gpt-5-6-pro` through an official API you can use directly, prefer that.
