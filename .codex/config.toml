@@ -2,6 +2,7 @@ review_model = "gpt-5.6-sol"
 model = "gpt-5.6-sol"
 model_reasoning_effort = "xhigh"
 plan_mode_reasoning_effort = "max"
+model_verbosity = "low"
 model_context_window = 200000
 model_auto_compact_token_limit = 180000
 model_provider = "codex-lb"
