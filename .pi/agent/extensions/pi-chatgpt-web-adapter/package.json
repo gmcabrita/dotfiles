@@ -1,0 +1,74 @@
+{
+  "name": "@minzicat/pi-chatgpt-web-adapter",
+  "version": "0.1.1",
+  "private": false,
+  "type": "module",
+  "description": "Use ChatGPT web's gpt-5.5-pro inside Pi via a managed-browser OpenAI-compatible adapter.",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "chatgpt",
+    "gpt-5-5-pro",
+    "openai",
+    "adapter"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/minzique/dotfiles-agents.git",
+    "directory": "packages/pi-chatgpt-web-adapter"
+  },
+  "homepage": "https://github.com/minzique/dotfiles-agents/tree/main/packages/pi-chatgpt-web-adapter",
+  "bugs": {
+    "url": "https://github.com/minzique/dotfiles-agents/issues"
+  },
+  "license": "MIT",
+  "bin": {
+    "pi-chatgpt-web": "bin/pi-chatgpt-web.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "extensions",
+    "README.md",
+    "CHANGELOG.md",
+    "docs"
+  ],
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test --import tsx test/*.test.ts",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "puppeteer-core": "^23.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "peerDependenciesMeta": {
+    "@earendil-works/pi-ai": {
+      "optional": true
+    },
+    "@earendil-works/pi-coding-agent": {
+      "optional": true
+    }
+  },
+  "pi": {
+    "extensions": [
+      "./extensions/index.ts"
+    ]
+  }
+}
