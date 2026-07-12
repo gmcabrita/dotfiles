@@ -372,9 +372,9 @@ function update-programming-languages() {
   go install golang.org/x/tools/gopls@latest
   rustup component add rust-analyzer rust-src clippy rustfmt rust-docs llvm-tools
   mise reshim
+  cargo clean-all --yes --keep-days 7 "$HOME/Developer"
   mix local.hex --force
   rm -rf "$HOME/Library/Application Support/Zed/extensions/work/elixir"/expert-*(N)
-  cargo clean-all --yes --keep-days 7 "$HOME/Developer"
 
   EDITOR_APP_ID="dev.zed.Zed"
   for ext in \
