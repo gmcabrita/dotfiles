@@ -9,6 +9,7 @@ description: >
   "hegel", "fuzz", "generative tests", "randomized testing", "test with random
   inputs", "shrinking", or when existing tests use proptest, quickcheck, rapid,
   gopter, rapidcheck, or fast-check.
+disable-model-invocation: true
 ---
 
 # Hegel: Property-Based Testing
