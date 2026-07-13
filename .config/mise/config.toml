@@ -1,13 +1,23 @@
 [bootstrap.packages]
+# "brew:mas" = "latest"
+# "mas:1586435171" = "latest" # Actions for Shortcuts
+# "mas:497799835" = "latest"  # Xcode
+# "mas:6465250302" = "latest" # AI Actions for Shortcuts
+# "mas:899247664" = "latest"  # TestFlight
+# "mas:1136220934" = "latest" # Infuse
 
 [tools]
 "aqua:smol-machines/smolvm" = "latest"
+"aqua:wader/fq" = "latest"
 "cargo:cargo-clean-all" = "latest"
 "cargo:hurlfmt" = "latest"
 "cargo:oha" = "latest"
 "cargo:rustdoc-text" = "latest"
 "github:lexiforest/curl-impersonate" = "latest"
-"github:rockorager/ziglint" = "latest"
+"github:nkzw-tech/codiff" = "latest"
+"github:blacktop/ipsw" = { version = "latest", asset_pattern = "ipsw_*_macOS_arm64_extras.tar.gz" }
+"go:github.com/orlangure/gocovsh" = "latest"
+"go:github.com/ramonvermeulen/whosthere" = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
 "npm:portless" = "latest"
 "npm:sfw" = "latest"
@@ -16,6 +26,7 @@ deno = "latest"
 elixir = "latest"
 erlang = "latest"
 fnox = "latest"
+gcloud = "latest"
 go = "latest"
 hk = "latest"
 node = "latest"
@@ -47,3 +58,6 @@ package_manager = "pnpm"
 
 [settings.ruby]
 compile = false
+
+[settings.github]
+use_git_credentials = true
