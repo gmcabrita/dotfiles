@@ -16,7 +16,7 @@ git sparse-checkout set "$SKILLS_PATH"
 
 SYNC_SKILLS=(
   "thermo-nuclear-code-quality-review"
-  "what-did-i-get-done"
+  # "what-did-i-get-done"
 )
 
 # Sync each skill folder individually

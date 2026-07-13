@@ -1,6 +1,7 @@
 ---
 name: ipsw
 description: Apple firmware and binary reverse engineering with the ipsw CLI tool. Use when analyzing iOS/macOS binaries, disassembling functions in dyld_shared_cache, dumping Objective-C headers from private frameworks, downloading IPSWs or kernelcaches, extracting entitlements, analyzing Mach-O files, or researching Apple security. Triggers on requests involving Apple RE, iOS internals, kernel analysis, KEXT extraction, or vulnerability research on Apple platforms.
+disable-model-invocation: true
 ---
 
 # IPSW - Apple Reverse Engineering Toolkit
@@ -11,15 +12,15 @@ The `ipsw` CLI tool provides comprehensive capabilities for Apple firmware and b
 
 ## Quick Reference
 
-| Task | Command |
-|------|---------|
-| Disassemble DSC function | `ipsw dyld disass <DSC> --symbol <SYM>` |
-| Dump ObjC headers | `ipsw class-dump <DSC> <DYLIB> --headers -o ./headers/` |
-| Download IPSW | `ipsw download ipsw --device <ID> --latest` |
-| Extract kernel | `ipsw extract --kernel <IPSW>` |
-| Get entitlements | `ipsw macho info --ent <BINARY>` |
-| List KEXTs | `ipsw kernel kexts <KERNELCACHE>` |
-| Symbol lookup | `ipsw dyld symaddr <DSC> <SYMBOL>` |
+| Task                     | Command                                                 |
+| ------------------------ | ------------------------------------------------------- |
+| Disassemble DSC function | `ipsw dyld disass <DSC> --symbol <SYM>`                 |
+| Dump ObjC headers        | `ipsw class-dump <DSC> <DYLIB> --headers -o ./headers/` |
+| Download IPSW            | `ipsw download ipsw --device <ID> --latest`             |
+| Extract kernel           | `ipsw extract --kernel <IPSW>`                          |
+| Get entitlements         | `ipsw macho info --ent <BINARY>`                        |
+| List KEXTs               | `ipsw kernel kexts <KERNELCACHE>`                       |
+| Symbol lookup            | `ipsw dyld symaddr <DSC> <SYMBOL>`                      |
 
 ## Core Workflows
 

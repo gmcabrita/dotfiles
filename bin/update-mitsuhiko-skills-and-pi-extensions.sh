@@ -17,12 +17,8 @@ cd "$TEMP_DIR"
 git sparse-checkout set "$SKILLS_PATH"
 
 SYNC_SKILLS=(
-  "commit"
-  "ghidra"
-  "github"
   "librarian"
   "native-web-search"
-  "sentry"
   "web-browser"
 )
 

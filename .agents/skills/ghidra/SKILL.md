@@ -1,6 +1,7 @@
 ---
 name: ghidra
 description: "Reverse engineer binaries using Ghidra's headless analyzer. Decompile executables, extract functions, strings, symbols, and analyze call graphs without GUI."
+disable-model-invocation: true
 ---
 
 # Ghidra Headless Analysis Skill
@@ -9,15 +10,15 @@ Perform automated reverse engineering using Ghidra's `analyzeHeadless` tool. Imp
 
 ## Quick Reference
 
-| Task | Command |
-|------|---------|
-| Full analysis with all exports | `ghidra-analyze.sh -s ExportAll.java -o ./output binary` |
-| Decompile to C code | `ghidra-analyze.sh -s ExportDecompiled.java -o ./output binary` |
-| List functions | `ghidra-analyze.sh -s ExportFunctions.java -o ./output binary` |
-| Extract strings | `ghidra-analyze.sh -s ExportStrings.java -o ./output binary` |
-| Get call graph | `ghidra-analyze.sh -s ExportCalls.java -o ./output binary` |
-| Export symbols | `ghidra-analyze.sh -s ExportSymbols.java -o ./output binary` |
-| Find Ghidra path | `find-ghidra.sh` |
+| Task                           | Command                                                         |
+| ------------------------------ | --------------------------------------------------------------- |
+| Full analysis with all exports | `ghidra-analyze.sh -s ExportAll.java -o ./output binary`        |
+| Decompile to C code            | `ghidra-analyze.sh -s ExportDecompiled.java -o ./output binary` |
+| List functions                 | `ghidra-analyze.sh -s ExportFunctions.java -o ./output binary`  |
+| Extract strings                | `ghidra-analyze.sh -s ExportStrings.java -o ./output binary`    |
+| Get call graph                 | `ghidra-analyze.sh -s ExportCalls.java -o ./output binary`      |
+| Export symbols                 | `ghidra-analyze.sh -s ExportSymbols.java -o ./output binary`    |
+| Find Ghidra path               | `find-ghidra.sh`                                                |
 
 ## Prerequisites
 
@@ -37,6 +38,7 @@ The skill automatically locates Ghidra in common installation paths. Set `GHIDRA
 Wrapper that handles project creation/cleanup and provides a simpler interface to `analyzeHeadless`.
 
 **Options:**
+
 - `-o, --output <dir>` - Output directory for results (default: current dir)
 - `-s, --script <name>` - Post-analysis script to run (can be repeated)
 - `-a, --script-args <args>` - Arguments for the last specified script
@@ -55,9 +57,11 @@ Wrapper that handles project creation/cleanup and provides a simpler interface t
 ## Built-in Export Scripts
 
 ### ExportAll.java
+
 Comprehensive export - runs all other exports and creates a summary. Best for initial analysis.
 
 **Output files:**
+
 - `{name}_summary.txt` - Overview: architecture, memory sections, function counts
 - `{name}_decompiled.c` - All functions decompiled to C
 - `{name}_functions.json` - Function list with signatures and calls
@@ -69,6 +73,7 @@ Comprehensive export - runs all other exports and creates a summary. Best for in
 ```
 
 ### ExportDecompiled.java
+
 Decompile all functions to C pseudocode.
 
 **Output:** `{name}_decompiled.c`
@@ -78,6 +83,7 @@ Decompile all functions to C pseudocode.
 ```
 
 ### ExportFunctions.java
+
 Export function list as JSON with addresses, signatures, parameters, and call relationships.
 
 **Output:** `{name}_functions.json`
@@ -104,6 +110,7 @@ Export function list as JSON with addresses, signatures, parameters, and call re
 ```
 
 ### ExportStrings.java
+
 Extract all strings (ASCII, Unicode) with addresses.
 
 **Output:** `{name}_strings.json`
@@ -113,16 +120,19 @@ Extract all strings (ASCII, Unicode) with addresses.
 ```
 
 ### ExportCalls.java
+
 Export function call graph showing caller/callee relationships.
 
 **Output:** `{name}_calls.json`
 
 Includes:
+
 - Full call graph
 - Potential entry points (functions with no callers)
 - Most frequently called functions
 
 ### ExportSymbols.java
+
 Export all symbols: imports, exports, and internal symbols.
 
 **Output:** `{name}_symbols.json`
@@ -194,16 +204,17 @@ done
 
 Common processor IDs for the `-p` option:
 
-| Architecture | Processor ID |
-|-------------|--------------|
-| x86 32-bit | `x86:LE:32:default` |
-| x86 64-bit | `x86:LE:64:default` |
-| ARM 32-bit | `ARM:LE:32:v7` |
-| ARM 64-bit | `AARCH64:LE:64:v8A` |
-| MIPS 32-bit | `MIPS:BE:32:default` or `MIPS:LE:32:default` |
-| PowerPC | `PowerPC:BE:32:default` |
+| Architecture | Processor ID                                 |
+| ------------ | -------------------------------------------- |
+| x86 32-bit   | `x86:LE:32:default`                          |
+| x86 64-bit   | `x86:LE:64:default`                          |
+| ARM 32-bit   | `ARM:LE:32:v7`                               |
+| ARM 64-bit   | `AARCH64:LE:64:v8A`                          |
+| MIPS 32-bit  | `MIPS:BE:32:default` or `MIPS:LE:32:default` |
+| PowerPC      | `PowerPC:BE:32:default`                      |
 
 Find all available processors:
+
 ```bash
 ls "$(dirname $(./scripts/find-ghidra.sh))/../Ghidra/Processors/"
 ```
@@ -213,6 +224,7 @@ ls "$(dirname $(./scripts/find-ghidra.sh))/../Ghidra/Processors/"
 ## Troubleshooting
 
 ### Ghidra Not Found
+
 ```bash
 # Check if Ghidra is installed
 ./scripts/find-ghidra.sh
@@ -223,6 +235,7 @@ export GHIDRA_HOME=/path/to/ghidra_11.x_PUBLIC
 ```
 
 ### Analysis Takes Too Long
+
 ```bash
 # Set a timeout (seconds)
 ./scripts/ghidra-analyze.sh --timeout 300 -s ExportAll.java binary
@@ -232,13 +245,17 @@ export GHIDRA_HOME=/path/to/ghidra_11.x_PUBLIC
 ```
 
 ### Out of Memory
+
 Edit the `analyzeHeadless` script or set:
+
 ```bash
 export MAXMEM=4G
 ```
 
 ### Wrong Architecture Detected
+
 Explicitly specify the processor:
+
 ```bash
 ./scripts/ghidra-analyze.sh -p "ARM:LE:32:v7" -s ExportAll.java firmware.bin
 ```

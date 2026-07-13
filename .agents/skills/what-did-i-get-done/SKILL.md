@@ -1,6 +1,7 @@
 ---
 name: what-did-i-get-done
 description: Summarize authored commits over a user-specified time period into a concise update
+disable-model-invocation: true
 ---
 
 # What did I get done
