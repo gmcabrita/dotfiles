@@ -365,9 +365,13 @@ function git-fetch-all-repos() {
 }
 
 function update-programming-languages() {
+  local GITHUB_TOKEN
+  GITHUB_TOKEN=$(gh auth token) || return
+  export GITHUB_TOKEN
+
   mise cache clear
-  GITHUB_TOKEN=$(gh auth token) mise plugins up
-  GITHUB_TOKEN=$(gh auth token) mise up --bump
+  mise plugins up
+  mise up --bump
   mise reshim
   rustup component add rust-analyzer rust-src clippy rustfmt rust-docs llvm-tools
   mise reshim
@@ -445,12 +449,17 @@ function pi-update-ext() {
 }
 
 function update-everything() {
+  local GITHUB_TOKEN
+  GITHUB_TOKEN=$(gh auth token) || return
+  export GITHUB_TOKEN
+
   brew update
   brew bundle install --force-cleanup --file=~/.config/Brewfile
   brew upgrade
-  # GITHUB_TOKEN=$(gh auth token) mise bootstrap packages apply --update
-  # GITHUB_TOKEN=$(gh auth token) mise bootstrap packages upgrade
-  # GITHUB_TOKEN=$(gh auth token) mise bootstrap packages prune
+  mise self-update
+  # mise bootstrap packages apply --update
+  # mise bootstrap packages upgrade
+  # mise bootstrap packages prune
   update-programming-languages
   pi-update-ext
   rm -f ~/.cache/macos_sdk_path
