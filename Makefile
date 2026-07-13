@@ -29,4 +29,5 @@ update:
 	for pid in $$pids; do \
 		wait $$pid || status=1; \
 	done; \
+	./bin/ensure-disabled-skill-model-invocation.sh || status=1; \
 	exit $$status

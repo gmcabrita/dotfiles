@@ -1,6 +1,7 @@
 ---
 name: chrome-cdp
 description: Interact with local Chrome browser session (only on explicit user approval after being asked to inspect, debug, or interact with a page open in Chrome)
+disable-model-invocation: true
 ---
 
 # Chrome CDP
