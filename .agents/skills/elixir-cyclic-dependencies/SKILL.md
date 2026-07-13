@@ -1,6 +1,7 @@
 ---
 name: elixir-cyclic-dependencies
 description: Detects and removes cyclic compile-time dependencies in Elixir codebases using mix xref, with minimal code changes. Use when the user explicitly asks to check for cycles, remove cyclic dependencies, or fix xref cycle failures. Requires Elixir 1.19 or higher for accurate results.
+disable-model-invocation: true
 ---
 
 # Elixir Cyclic Dependencies

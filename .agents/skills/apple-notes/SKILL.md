@@ -1,6 +1,7 @@
 ---
 name: apple-notes
 description: Search local Apple Notes efficiently. Use when asked to find notes, search note text, inspect note snippets, or extract links/URLs stored in Apple Notes.
+disable-model-invocation: true
 ---
 
 # Apple Notes

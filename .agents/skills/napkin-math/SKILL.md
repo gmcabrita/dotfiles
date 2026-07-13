@@ -1,6 +1,7 @@
 ---
 name: napkin-math
 description: Estimate software system latency, throughput, capacity, and cloud costs from first principles using Sirupsen's napkin-math numbers. Use for back-of-the-envelope performance, storage, network, logging, compression, and cost calculations.
+disable-model-invocation: true
 ---
 
 # Napkin Math
