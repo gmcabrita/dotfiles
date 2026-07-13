@@ -60,6 +60,3 @@ package_manager = "pnpm"
 
 [settings.ruby]
 compile = false
-
-[settings.github]
-use_git_credentials = true
