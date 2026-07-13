@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-curl -L mise.run | sh
-
 source bin/copy-dotfiles.sh
 
 mkdir ~/.zfunc
@@ -9,8 +7,12 @@ mkdir ~/.zfunc
 # iCloud Drive symlink
 ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/iCloud Drive"
 
+# Mise
+/bin/bash -c "$(curl -fsSL https://mise.run)"
+
+# TODO: remove entirely once we finish moving to
 # Brew
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+# /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Rosetta
 /usr/sbin/softwareupdate --install-rosetta --agree-to-license

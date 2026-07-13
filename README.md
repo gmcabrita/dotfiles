@@ -81,7 +81,7 @@
 - 1Password
 - `gh auth login`
   - Add ssh key as gpg key
-- Orbstack
+- OrbStack
 - Slack
 - Discord
 - WhatsApp
@@ -89,13 +89,14 @@
 - NetNewsWire
 - Raycast
   - Disable spotlight
-  - Import config from iCloud Drive (or login if we still have Pro)
+  - Import config from iCloud Drive
 - Zoom
 - [Tailscale](https://pkgs.tailscale.com/stable/#macos)
-- Setapp + apps
+- SetApp
+  - CleanShot X
 - https://twitter.com/thorstenball/status/1736679960784310775
   - Wake for network access: Only on Power Adapter
-- Copy zsh history from icloud
+- Copy zsh history from iCloud
   - `cp ~/iCloud\ Drive/Software/.zsh_history ~/.zsh_history`
 - Download and install [qBittorrent](https://www.qbittorrent.org/download)
 - Copy qBittorrent data from icloud
@@ -129,6 +130,6 @@
   - `git pull origin`
   - `zig build install -Doptimize=ReleaseFast --prefix $HOME/.local`
 - Balance Lock
-- App Store
+- App Store (TODO: remove once we're using brew:mas)
   - https://apps.apple.com/pt/app/actions/id1586435171
   - https://apps.apple.com/pt/app/ai-actions-for-shortcuts/id6465250302
