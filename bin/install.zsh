@@ -11,36 +11,6 @@ ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/iCloud Drive"
 # Mise
 /bin/bash -c "$(curl -fsSL https://mise.run)"
 
-# NetNewsWire (not installable via brew-cask:netnewswire)
-curl -fsSL "https://netnewswire.com/NetNewsWire.zip" | ditto -x -k - /Applications
-
-# Proxyman (not installable via brew-cask:proxyman)
-tmpproxyman="$(mktemp -d)"
-mkdir "$tmpproxyman/mount"
-
-curl -fsSL "https://proxyman.com/release/osx/Proxyman_latest.dmg" -o "$tmpproxyman/Proxyman.dmg"
-
-hdiutil attach "$tmpproxyman/Proxyman.dmg" -mountpoint "$tmpproxyman/mount" -nobrowse -readonly
-
-sudo ditto "$tmpproxyman/mount/Proxyman.app" "/Applications/Proxyman.app"
-ln -sfn /Applications/Proxyman.app/Contents/MacOS/proxyman-cli ~/.local/bin/proxyman-cli
-
-hdiutil detach "$tmpproxyman/mount"
-rm -rf "$tmpproxyman"
-
-# Codiff (not installable via brew-cask:nkzw-tech/tap/codiff)
-codiff_release_url="$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/nkzw-tech/codiff/releases/latest)"
-codiff_tag="${codiff_release_url##*/}"
-codiff_version="${codiff_tag#v}"
-curl -fsSL "https://github.com/nkzw-tech/codiff/releases/download/$codiff_tag/Codiff-darwin-arm64-$codiff_version.zip" |
-  ditto -x -k - /Applications
-ln -sfn /Applications/Codiff.app/Contents/Resources/app/bin/codiff-app ~/.local/bin/codiff
-
-
-# TODO: remove entirely once we finish moving to mise bootstrap
-# Brew
-# /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
 # Rosetta
 /usr/sbin/softwareupdate --install-rosetta --agree-to-license
 
@@ -234,12 +204,33 @@ sudo mdutil -a -i off
 sudo mdutil -a -E
 sudo mdutil -a -i off
 
-brew bundle install --cleanup --file=~/.config/Brewfile
+# NetNewsWire (not installable via brew-cask:netnewswire)
+curl -fsSL "https://netnewswire.com/NetNewsWire.zip" | ditto -x -k - /Applications
 
-"$(brew --prefix)/opt/fzf/install"
+# Proxyman (not installable via brew-cask:proxyman)
+tmpproxyman="$(mktemp -d)"
+mkdir "$tmpproxyman/mount"
 
-# Setup brew autoupdate (every 12 hours)
-brew autoupdate start 43200
+curl -fsSL "https://proxyman.com/release/osx/Proxyman_latest.dmg" -o "$tmpproxyman/Proxyman.dmg"
+
+hdiutil attach "$tmpproxyman/Proxyman.dmg" -mountpoint "$tmpproxyman/mount" -nobrowse -readonly
+
+sudo ditto "$tmpproxyman/mount/Proxyman.app" "/Applications/Proxyman.app"
+ln -sfn /Applications/Proxyman.app/Contents/MacOS/proxyman-cli ~/.local/bin/proxyman-cli
+
+hdiutil detach "$tmpproxyman/mount"
+rm -rf "$tmpproxyman"
+
+# Codiff (not installable via brew-cask:nkzw-tech/tap/codiff)
+codiff_release_url="$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/nkzw-tech/codiff/releases/latest)"
+codiff_tag="${codiff_release_url##*/}"
+codiff_version="${codiff_tag#v}"
+curl -fsSL "https://github.com/nkzw-tech/codiff/releases/download/$codiff_tag/Codiff-darwin-arm64-$codiff_version.zip" |
+  ditto -x -k - /Applications
+ln -sfn /Applications/Codiff.app/Contents/Resources/app/bin/codiff-app ~/.local/bin/codiff
+
+HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
+"$HOMEBREW_PREFIX/opt/fzf/install"
 
 # Programming language stuff
 mise plugin install pnpm
@@ -249,15 +240,14 @@ mise settings set python.uv_venv_auto true
 mise settings set npm.package_manager pnpm
 mise settings ruby.compile=false
 ERL_AFLAGS="-kernel shell_history enabled" \
-JEMALLOC_LIBS="-L$(brew --prefix jemalloc)/lib -ljemalloc" \
-JEMALLOC_CFLAGS="-I$(brew --prefix jemalloc)/include" \
-CPPFLAGS="-I$(brew --prefix openssl@3)/include -I$(brew --prefix jemalloc)/include -I$(brew --prefix gmp)/include -I$(xcrun --show-sdk-path)/usr/include -I$(brew --prefix sqlite)/include"F \
-LDFLAGS="-L$(brew --prefix openssl@3)/lib -L$(brew --prefix jemalloc)/lib -L$(brew --prefix gmp)/lib -L$(xcrun --show-sdk-path)/usr/lib -L$(brew --prefix sqlite)/lib" \
-PKG_CONFIG_PATH="$(brew --prefix openssl@3)/lib/pkgconfig:$(brew --prefix gmp)/lib/pkgconfig:$(brew --prefix jemalloc)/lib/pkgconfig:$PKG_CONFIG_PATH" \
-RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
+  JEMALLOC_LIBS="-L$HOMEBREW_PREFIX/opt/jemalloc/lib -ljemalloc" \
+  JEMALLOC_CFLAGS="-I$HOMEBREW_PREFIX/opt/jemalloc/include" \
+  CPPFLAGS="-I$HOMEBREW_PREFIX/opt/openssl@3/include -I$HOMEBREW_PREFIX/opt/jemalloc/include -I$HOMEBREW_PREFIX/opt/gmp/include -I$MACOS_SDK_PATH/usr/include -I$HOMEBREW_PREFIX/opt/sqlite/include" \
+  LDFLAGS="-L$HOMEBREW_PREFIX/opt/openssl@3/lib -L$HOMEBREW_PREFIX/opt/jemalloc/lib -L$HOMEBREW_PREFIX/opt/gmp/lib -L$MACOS_SDK_PATH/usr/lib -L$HOMEBREW_PREFIX/opt/sqlite/lib" \
+  PKG_CONFIG_PATH="$HOMEBREW_PREFIX/opt/openssl@3/lib/pkgconfig:$HOMEBREW_PREFIX/opt/gmp/lib/pkgconfig:$HOMEBREW_PREFIX/opt/jemalloc/lib/pkgconfig:$PKG_CONFIG_PATH" \
+  RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
   mise install
 
-go install golang.org/x/tools/gopls@latest
 rustup component add rust-analyzer rust-src clippy rustfmt rust-docs llvm-tools
 mise reshim
 mix local.hex --force
