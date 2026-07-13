@@ -366,10 +366,9 @@ function git-fetch-all-repos() {
 
 function update-programming-languages() {
   mise cache clear
-  mise plugins up
-  mise up --bump
+  GITHUB_TOKEN=$(gh auth token) mise plugins up
+  GITHUB_TOKEN=$(gh auth token) mise up --bump
   mise reshim
-  go install golang.org/x/tools/gopls@latest
   rustup component add rust-analyzer rust-src clippy rustfmt rust-docs llvm-tools
   mise reshim
   cargo clean-all --yes --keep-days 7 "$HOME/Developer"
@@ -449,9 +448,9 @@ function update-everything() {
   brew update
   brew bundle install --force-cleanup --file=~/.config/Brewfile
   brew upgrade
-  # mise bootstrap packages apply --update
-  # mise bootstrap packages upgrade
-  # mise bootstrap packages prune
+  # GITHUB_TOKEN=$(gh auth token) mise bootstrap packages apply --update
+  # GITHUB_TOKEN=$(gh auth token) mise bootstrap packages upgrade
+  # GITHUB_TOKEN=$(gh auth token) mise bootstrap packages prune
   update-programming-languages
   pi-update-ext
   rm -f ~/.cache/macos_sdk_path

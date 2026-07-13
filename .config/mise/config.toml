@@ -19,6 +19,7 @@
 "github:lexiforest/curl-impersonate" = "latest"
 "go:github.com/orlangure/gocovsh" = "latest"
 "go:github.com/ramonvermeulen/whosthere" = "latest"
+"go:golang.org/x/tools/gopls" = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
 "npm:portless" = "latest"
 "npm:sfw" = "latest"
