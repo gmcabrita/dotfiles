@@ -34,7 +34,6 @@ for skill_dir in "$TEMP_DIR/$SKILLS_PATH"/*/; do
 done
 
 SYNC_EXTENSIONS=(
-  "goal.ts"
   "review.ts"
   "session-breakdown.ts"
   "todos.ts"
