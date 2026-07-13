@@ -18,8 +18,7 @@ git sparse-checkout set "$SKILLS_PATH"
 
 SYNC_SKILLS=(
   "librarian"
-  "native-web-search"
-  "web-browser"
+  "uv"
 )
 
 # Sync each skill folder individually
