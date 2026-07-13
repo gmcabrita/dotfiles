@@ -2,7 +2,8 @@
 
 source bin/copy-dotfiles.sh
 
-mkdir ~/.zfunc
+mkdir "$HOME/.zfunc"
+mkdir -p "$HOME/.local/bin"
 
 # iCloud Drive symlink
 ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/iCloud Drive"
@@ -10,7 +11,33 @@ ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/iCloud Drive"
 # Mise
 /bin/bash -c "$(curl -fsSL https://mise.run)"
 
-# TODO: remove entirely once we finish moving to
+# NetNewsWire (not installable via brew-cask:netnewswire)
+curl -fsSL "https://netnewswire.com/NetNewsWire.zip" | ditto -x -k - /Applications
+
+# Proxyman (not installable via brew-cask:proxyman)
+tmpproxyman="$(mktemp -d)"
+mkdir "$tmpproxyman/mount"
+
+curl -fsSL "https://proxyman.com/release/osx/Proxyman_latest.dmg" -o "$tmpproxyman/Proxyman.dmg"
+
+hdiutil attach "$tmpproxyman/Proxyman.dmg" -mountpoint "$tmpproxyman/mount" -nobrowse -readonly
+
+sudo ditto "$tmpproxyman/mount/Proxyman.app" "/Applications/Proxyman.app"
+ln -sfn /Applications/Proxyman.app/Contents/MacOS/proxyman-cli ~/.local/bin/proxyman-cli
+
+hdiutil detach "$tmpproxyman/mount"
+rm -rf "$tmpproxyman"
+
+# Codiff (not installable via brew-cask:nkzw-tech/tap/codiff)
+codiff_release_url="$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/nkzw-tech/codiff/releases/latest)"
+codiff_tag="${codiff_release_url##*/}"
+codiff_version="${codiff_tag#v}"
+curl -fsSL "https://github.com/nkzw-tech/codiff/releases/download/$codiff_tag/Codiff-darwin-arm64-$codiff_version.zip" |
+  ditto -x -k - /Applications
+ln -sfn /Applications/Codiff.app/Contents/Resources/app/bin/codiff-app ~/.local/bin/codiff
+
+
+# TODO: remove entirely once we finish moving to mise bootstrap
 # Brew
 # /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
