@@ -1,3 +1,5 @@
+tap "nkzw-tech/tap", trusted: true
+
 brew "asciinema"
 brew "ast-grep"
 brew "autoconf"
@@ -103,10 +105,10 @@ cask "font-jetbrains-mono"
 cask "ghostty"
 cask "google-chrome"
 cask "httpie-desktop"
-cask "mitmproxy"
 cask "modern-csv"
 cask "monodraw"
 cask "NetNewsWire"
+cask "nkzw-tech/tap/codiff"
 cask "openvpn-connect"
 cask "orbstack"
 cask "proxyman"

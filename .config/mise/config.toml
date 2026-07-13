@@ -1,3 +1,5 @@
+[bootstrap.brew.taps]
+
 [bootstrap.packages]
 # "brew:mas" = "latest"
 # "mas:1586435171" = "latest" # Actions for Shortcuts
@@ -13,9 +15,8 @@
 "cargo:hurlfmt" = "latest"
 "cargo:oha" = "latest"
 "cargo:rustdoc-text" = "latest"
-"github:lexiforest/curl-impersonate" = "latest"
-"github:nkzw-tech/codiff" = "latest"
 "github:blacktop/ipsw" = { version = "latest", asset_pattern = "ipsw_*_macOS_arm64_extras.tar.gz" }
+"github:lexiforest/curl-impersonate" = "latest"
 "go:github.com/orlangure/gocovsh" = "latest"
 "go:github.com/ramonvermeulen/whosthere" = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
