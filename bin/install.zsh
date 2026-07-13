@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+curl -L mise.run | sh
+
 source bin/copy-dotfiles.sh
 
 mkdir ~/.zfunc

@@ -1,3 +1,5 @@
+[bootstrap.packages]
+
 [tools]
 "aqua:smol-machines/smolvm" = "latest"
 "cargo:cargo-clean-all" = "latest"
