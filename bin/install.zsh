@@ -204,9 +204,6 @@ sudo mdutil -a -i off
 sudo mdutil -a -E
 sudo mdutil -a -i off
 
-# NetNewsWire (not installable via brew-cask:netnewswire)
-curl -fsSL "https://netnewswire.com/NetNewsWire.zip" | ditto -x -k - /Applications
-
 # Proxyman (not installable via brew-cask:proxyman)
 tmpproxyman="$(mktemp -d)"
 mkdir "$tmpproxyman/mount"
