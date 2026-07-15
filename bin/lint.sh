@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-find . -type f ! -path "*/.git/*" -exec sh -c '
+find . \( -path "./.git" -o -path "./.pi/agent" -o -path "./.agents" \) -prune -o -type f -exec sh -c '
    exitcode=0
    for f do
        # Skip binaries quickly

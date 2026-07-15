@@ -1,0 +1,49 @@
+[tasks.default]
+description = "Update, format, and sync dotfiles"
+run = [{ task = "update" }, { task = "fmt" }, { task = "sync" }]
+
+[tasks.install]
+description = "Install dotfiles"
+run = "./bin/install.zsh"
+
+[tasks.sync]
+description = "Install agent dependencies and copy dotfiles"
+run = '''
+pnpm install --prefix .pi/agent || true
+./bin/copy-dotfiles.sh
+'''
+
+[tasks.fmt]
+description = "Format queries"
+run = "./bin/format-queries.sh"
+
+[tasks.lint]
+description = "Lint dotfiles"
+run = "./bin/lint.sh"
+
+[tasks.update]
+description = "Update dependencies, skills, and extensions"
+run = '''
+sfw pnpm update --prefix .pi/agent --latest &
+pids="$!"
+./bin/update-chrome-cdp-skills.sh &
+pids="$pids $!"
+./bin/update-hegel-skills.sh &
+pids="$pids $!"
+./bin/update-cursor-skills.sh &
+pids="$pids $!"
+./bin/update-mitsuhiko-skills-and-pi-extensions.sh &
+pids="$pids $!"
+./bin/update-davis7dotsh-extensions.sh &
+pids="$pids $!"
+./bin/update-modern-go-skills.sh &
+pids="$pids $!"
+./bin/update-pi-autoresearch-skills-and-extensions.sh &
+pids="$pids $!"
+status=0
+for pid in $pids; do
+  wait "$pid" || status=1
+done
+./bin/ensure-disabled-skill-model-invocation.sh || status=1
+exit "$status"
+'''
