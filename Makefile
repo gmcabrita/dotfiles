@@ -21,6 +21,7 @@ update:
 		./bin/update-hegel-skills.sh \
 		./bin/update-cursor-skills.sh \
 		./bin/update-mitsuhiko-skills-and-pi-extensions.sh \
+		./bin/update-davis7dotsh-extensions.sh \
 		./bin/update-modern-go-skills.sh \
 		./bin/update-pi-autoresearch-skills-and-extensions.sh; do \
 		$$script & pids="$$pids $$!"; \

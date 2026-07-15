@@ -2,6 +2,7 @@
 
 # Cache expensive lookups
 HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
+MISE_PREFIX="{MISE_PREFIX:-$HOME/.local/share/mise}"
 # Cache xcrun result to avoid fork on every shell startup (~5ms savings)
 if [[ -z "$MACOS_SDK_PATH" ]]; then
   if [[ -f ~/.cache/macos_sdk_path ]]; then
@@ -13,7 +14,7 @@ if [[ -z "$MACOS_SDK_PATH" ]]; then
   fi
 fi
 
-PATH="$HOME/.local/bin:$HOME/go/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/mariadb/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$HOME/go/bin:$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/mariadb/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$PATH"
 export PGCLIENT=pgcli
 export CARGO_TERM_COLOR=always
 export GIT_MERGE_AUTOEDIT=no
@@ -123,26 +124,23 @@ function __expand_or_complete_with_init() {
 zle -N __expand_or_complete_with_init
 bindkey '^I' __expand_or_complete_with_init
 
-export PATH="$HOME/.local/share/mise/shims:$PATH"
-
-# gcloud path (inlined from path.zsh.inc)
-export PATH="$HOMEBREW_PREFIX/share/google-cloud-sdk/bin:$PATH"
 # Cache zoxide init (regenerate with: zoxide init zsh > ~/.zoxide.zsh)
 source ~/.zoxide.zsh
 
 function gcloud() {
   unfunction gcloud gsutil bq
-  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
+  source "$MISE_PREFIX/installs/gcloud/latest/completion.zsh.inc"
+  /Users/gmcabrita/.local/share/mise/installs/gcloud/latest
   command gcloud "$@"
 }
 function gsutil() {
   unfunction gcloud gsutil bq
-  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
+  source "$MISE_PREFIX/installs/gcloud/latest/completion.zsh.inc"
   command gsutil "$@"
 }
 function bq() {
   unfunction gcloud gsutil bq
-  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
+  source "$MISE_PREFIX/installs/gcloud/latest/completion.zsh.inc"
   command bq "$@"
 }
 
@@ -760,16 +758,16 @@ function af() {
     '"'"' sh {})'
 }
 
-function claude() {
-  "$HOMEBREW_PREFIX/bin/claude" \
-    --dangerously-skip-permissions \
-    --system-prompt-file "${CLAUDE_BASIC_PROMPT_FILE:-$HOME/.claude/prompts/minimal-system-prompt.md}" \
-    --tools "${CLAUDE_BASIC_TOOLS:-Bash,Read,Edit,Write,Skill}" \
-    --strict-mcp-config \
-    --mcp-config '{"mcpServers":{}}' \
-    --settings '{"disableAllHooks":true}' \
-    "$@"
-}
+# function claude() {
+#   "$HOMEBREW_PREFIX/bin/claude" \
+#     --dangerously-skip-permissions \
+#     --system-prompt-file "${CLAUDE_BASIC_PROMPT_FILE:-$HOME/.claude/prompts/minimal-system-prompt.md}" \
+#     --tools "${CLAUDE_BASIC_TOOLS:-Bash,Read,Edit,Write,Skill}" \
+#     --strict-mcp-config \
+#     --mcp-config '{"mcpServers":{}}' \
+#     --settings '{"disableAllHooks":true}' \
+#     "$@"
+# }
 
 function ca() {
   codex app "$@"
