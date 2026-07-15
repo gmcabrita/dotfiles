@@ -453,13 +453,10 @@ function update-everything() {
   GITHUB_TOKEN=$(gh auth token) || return
   export GITHUB_TOKEN
 
-  brew update
-  brew bundle install --force-cleanup --file=~/.config/Brewfile
-  brew upgrade
   mise self-update
-  # mise bootstrap packages apply --update
-  # mise bootstrap packages upgrade
-  # mise bootstrap packages prune
+  mise bootstrap packages apply --update
+  mise bootstrap packages upgrade
+  mise bootstrap packages prune
   update-programming-languages
   pi-update-ext
   rm -f ~/.cache/macos_sdk_path

@@ -204,20 +204,6 @@ sudo mdutil -a -i off
 sudo mdutil -a -E
 sudo mdutil -a -i off
 
-# Proxyman (not installable via brew-cask:proxyman)
-tmpproxyman="$(mktemp -d)"
-mkdir "$tmpproxyman/mount"
-
-curl -fsSL "https://proxyman.com/release/osx/Proxyman_latest.dmg" -o "$tmpproxyman/Proxyman.dmg"
-
-hdiutil attach "$tmpproxyman/Proxyman.dmg" -mountpoint "$tmpproxyman/mount" -nobrowse -readonly
-
-sudo ditto "$tmpproxyman/mount/Proxyman.app" "/Applications/Proxyman.app"
-ln -sfn /Applications/Proxyman.app/Contents/MacOS/proxyman-cli ~/.local/bin/proxyman-cli
-
-hdiutil detach "$tmpproxyman/mount"
-rm -rf "$tmpproxyman"
-
 HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
 "$HOMEBREW_PREFIX/opt/fzf/install"
 
