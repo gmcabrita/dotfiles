@@ -7,7 +7,7 @@ TARGET_DIR="$(git rev-parse --show-toplevel)/.agents/skills"
 
 # Clone to temp directory
 TEMP_DIR=$(mktemp -d)
-trap "rm -rf $TEMP_DIR" EXIT
+trap 'rm -rf "$TEMP_DIR"' EXIT
 
 echo "Fetching latest cursor skills..."
 git clone --depth 1 --filter=blob:none --sparse "$REPO_URL" "$TEMP_DIR"

@@ -38,7 +38,8 @@ addStep() {
 
 resetSystemReg() {
   local file="$1"
-  local current_date=$(date +%Y-%m-%d)
+  local current_date
+  current_date=$(date +%Y-%m-%d)
   local backup_file="${file}.${current_date}.bak"
 
   if [[ ! -f "$file" ]]; then
@@ -57,7 +58,8 @@ resetSystemReg() {
 
 resetBottle() {
   local bottlePath="$1"
-  local bottleName=$(basename "$bottlePath")
+  local bottleName
+  bottleName=$(basename "$bottlePath")
 
   rm -rf "$bottlePath"/.version 2>/dev/null
   rm -rf "$bottlePath"/.update-timestamp 2>/dev/null
@@ -75,7 +77,8 @@ generate_license() {
   local expiry_year=$(($(date +%Y) + 10))
   local email="user@activated.local"
   local customer="Activated User"
-  local license_id=$(openssl rand -hex 8 2>/dev/null || echo "ACTV$(date +%s)")
+  local license_id
+  license_id=$(openssl rand -hex 8 2>/dev/null || echo "ACTV$(date +%s)")
 
   cat > "$LICENSE_FILE" <<EOF
 [crossmac]
@@ -110,8 +113,8 @@ activate() {
   # Kill cfprefsd to ensure preferences are refreshed
   killall cfprefsd 2>/dev/null
 
-  local current_date=$(date +"%Y-%m-%d %H:%M:%S")
-  local future_date=$(date -v+10y +"%Y-%m-%d %H:%M:%S" 2>/dev/null || date +"%Y-%m-%d %H:%M:%S")
+  local current_date
+  current_date=$(date +"%Y-%m-%d %H:%M:%S")
 
   # Set CrossOver preferences to bypass trial checks
   defaults write com.codeweavers.CrossOver FirstRunDate -date "$current_date"
@@ -161,7 +164,8 @@ execute_only() {
   STEP=0
 
   addStep "Executing trial reset..."
-  local date=$(date +"%Y-%m-%d %H:%M:%S")
+  local date
+  date=$(date +"%Y-%m-%d %H:%M:%S")
 
   defaults write com.codeweavers.CrossOver FirstRunDate -date "$date"
   defaults write com.codeweavers.CrossOver SULastCheckTime -date "$date"
@@ -268,7 +272,7 @@ uninstall() {
   addStep "Removing script directory..."
 
   if [[ -d "$HOME/$FOLDER_NAME" ]]; then
-    rm -rf "$HOME/$FOLDER_NAME"
+    rm -rf "${HOME:?}/${FOLDER_NAME:?}"
     echo -e "${GREEN}  ✓ Directory removed${NC}"
   else
     echo -e "${YELLOW}  Directory not found${NC}"
