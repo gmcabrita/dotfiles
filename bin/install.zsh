@@ -221,14 +221,6 @@ ln -sfn /Applications/Proxyman.app/Contents/MacOS/proxyman-cli ~/.local/bin/prox
 hdiutil detach "$tmpproxyman/mount"
 rm -rf "$tmpproxyman"
 
-# Codiff (not installable via brew-cask:nkzw-tech/tap/codiff)
-codiff_release_url="$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/nkzw-tech/codiff/releases/latest)"
-codiff_tag="${codiff_release_url##*/}"
-codiff_version="${codiff_tag#v}"
-curl -fsSL "https://github.com/nkzw-tech/codiff/releases/download/$codiff_tag/Codiff-darwin-arm64-$codiff_version.zip" |
-  ditto -x -k - /Applications
-ln -sfn /Applications/Codiff.app/Contents/Resources/app/bin/codiff-app ~/.local/bin/codiff
-
 HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
 "$HOMEBREW_PREFIX/opt/fzf/install"
 
