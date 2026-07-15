@@ -1,7 +1,7 @@
 [bootstrap.brew.taps]
 
 [bootstrap.packages]
-"brew-cask:netnewswire" = "latest"
+# "brew-cask:netnewswire" = "latest"
 # "brew:mas" = "latest"
 # "mas:1586435171" = "latest" # Actions for Shortcuts
 # "mas:497799835" = "latest"  # Xcode
