@@ -11,6 +11,7 @@
 
 [tools]
 "aqua:smol-machines/smolvm" = "latest"
+"aqua:tsenart/vegeta" = "latest"
 "aqua:wader/fq" = "latest"
 "cargo:cargo-clean-all" = "latest"
 "cargo:hurlfmt" = "latest"
@@ -18,6 +19,7 @@
 "cargo:rustdoc-text" = "latest"
 "github:blacktop/ipsw" = { version = "latest", asset_pattern = "ipsw_*_macOS_arm64_extras.tar.gz" }
 "github:lexiforest/curl-impersonate" = { version = "latest", prerelease = true }
+"go:github.com/boyter/scc" = "latest"
 "go:github.com/orlangure/gocovsh" = "latest"
 "go:github.com/ramonvermeulen/whosthere" = "latest"
 "go:golang.org/x/tools/gopls" = "latest"
@@ -38,14 +40,23 @@ node = "latest"
 pitchfork = "latest"
 pkl = "latest"
 pnpm = "latest"
+pulumi = "latest"
 python = "latest"
+ripgrep = "latest"
 ruby = "latest"
 rust = "latest"
+shellcheck = "latest"
 sops = "latest"
+sqlc = "latest"
+tokei = "latest"
+tree-sitter = "latest"
+trufflehog = "latest"
 uv = "latest"
 watchexec = "latest"
 zig = "latest"
+zizmor = "latest"
 zls = "latest"
+zoxide = "latest"
 
 [settings]
 idiomatic_version_file_enable_tools = ["rust"]

@@ -240,3 +240,6 @@ ERL_AFLAGS="-kernel shell_history enabled" \
 rustup component add rust-analyzer rust-src clippy rustfmt rust-docs llvm-tools
 mise reshim
 mix local.hex --force
+
+# Cache zoxide init
+zoxide init zsh > ~/.zoxide.zsh
