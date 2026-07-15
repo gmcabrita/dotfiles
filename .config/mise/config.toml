@@ -12,6 +12,7 @@
 [tools]
 "aqua:smol-machines/smolvm" = "latest"
 "aqua:tsenart/vegeta" = "latest"
+jless = "latest"
 "aqua:wader/fq" = "latest"
 "cargo:cargo-clean-all" = "latest"
 "cargo:hurlfmt" = "latest"
