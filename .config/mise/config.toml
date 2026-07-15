@@ -48,7 +48,6 @@
 "brew:libpq" = "latest"
 "brew:libyaml" = "latest"
 "brew:mariadb" = "latest"
-"brew:mas" = "latest"
 "brew:mole" = "latest"
 "brew:moreutils" = "latest"
 "brew:ncdu" = "latest"
@@ -77,11 +76,6 @@
 "brew:yt-dlp" = "latest"
 "brew:zlib" = "latest"
 "brew:zstd" = "latest"
-"mas:1136220934" = "latest" # Infuse
-"mas:1586435171" = "latest" # Actions for Shortcuts
-"mas:497799835" = "latest"  # Xcode
-"mas:6465250302" = "latest" # AI Actions for Shortcuts
-"mas:899247664" = "latest"  # TestFlight
 # "brew-cask:cleanshot" = "latest"
 # "brew-cask:monodraw" = "latest"
 # "brew-cask:orbstack" = "latest"

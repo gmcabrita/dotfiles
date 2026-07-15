@@ -140,6 +140,9 @@ wget -P "$HOME/Downloads" "$(curl -fsSL 'https://www.raycast.com/download-beta' 
   - `git pull origin`
   - `zig build install -Doptimize=ReleaseFast --prefix $HOME/.local`
 - Balance Lock
-- App Store (TODO: remove once we're using brew:mas)
+- App Store
   - https://apps.apple.com/pt/app/actions/id1586435171
   - https://apps.apple.com/pt/app/ai-actions-for-shortcuts/id6465250302
+  - https://apps.apple.com/pt/app/infuse/id1136220934
+  - https://apps.apple.com/pt/app/testflight/id899247664
+  - https://apps.apple.com/pt/app/xcode/id497799835
