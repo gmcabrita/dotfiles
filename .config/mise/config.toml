@@ -13,7 +13,6 @@
 "aqua:ast-grep/ast-grep" = "latest"
 "aqua:cli/cli" = "latest"
 "aqua:GoogleCloudPlatform/cloud-sql-proxy" = "latest"
-"aqua:junegunn/fzf" = "latest"
 "aqua:mr-karan/doggo" = "latest"
 "aqua:muesli/duf" = "latest"
 "aqua:sharkdp/fd" = "latest"
