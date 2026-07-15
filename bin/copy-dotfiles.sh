@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# TODO: consider migrating to https://mise.jdx.dev/dotfiles.html at some point
+
 cp .hushlogin "$HOME/"
 cp .gitconfig "$HOME/"
 cp .gitignore "$HOME/"
