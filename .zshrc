@@ -129,18 +129,18 @@ source ~/.zoxide.zsh
 
 function gcloud() {
   unfunction gcloud gsutil bq
-  source "$MISE_PREFIX/installs/gcloud/latest/completion.zsh.inc"
+  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
   /Users/gmcabrita/.local/share/mise/installs/gcloud/latest
   command gcloud "$@"
 }
 function gsutil() {
   unfunction gcloud gsutil bq
-  source "$MISE_PREFIX/installs/gcloud/latest/completion.zsh.inc"
+  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
   command gsutil "$@"
 }
 function bq() {
   unfunction gcloud gsutil bq
-  source "$MISE_PREFIX/installs/gcloud/latest/completion.zsh.inc"
+  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
   command bq "$@"
 }
 
