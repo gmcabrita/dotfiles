@@ -17,7 +17,7 @@ export PATH="$HOMEBREW_PREFIX/share/google-cloud-sdk/bin:$HOME/.local/bin:$HOME/
 export PGCLIENT=pgcli
 export CARGO_TERM_COLOR=always
 export GIT_MERGE_AUTOEDIT=no
-export HOMEBREW_CLEANUP_MAX_AGE_DAYS=7
+export HOMEBREW_CLEANUP_MAX_AGE_DAYS=5
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export PI_SKIP_VERSION_CHECK=1
 export HK_MISE=1
@@ -371,7 +371,7 @@ function update-programming-languages() {
   mise reshim
   rustup component add rust-analyzer rust-src clippy rustfmt rust-docs llvm-tools
   mise reshim
-  cargo clean-all --yes --keep-days 7 "$HOME/Developer"
+  cargo clean-all --yes --keep-days 5 "$HOME/Developer"
   mix local.hex --force
   rm -rf "$HOME/Library/Application Support/Zed/extensions/work/elixir"/expert-*(N)
 
