@@ -20,9 +20,6 @@
   fsmonitor = true
   excludesfile = ~/.gitignore
   untrackedCache = false
-[pager]
-  diff = "hunk pager"
-  log = "less"
 [diff]
   algorithm = histogram
   colorMoved = plain
