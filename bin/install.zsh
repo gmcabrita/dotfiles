@@ -8,8 +8,8 @@ mkdir -p "$HOME/.local/bin"
 # iCloud Drive symlink
 ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/iCloud Drive"
 
-# Mise
-/bin/bash -c "$(curl -fsSL https://mise.run)"
+# Brew
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Rosetta
 /usr/sbin/softwareupdate --install-rosetta --agree-to-license
@@ -204,8 +204,13 @@ sudo mdutil -a -i off
 sudo mdutil -a -E
 sudo mdutil -a -i off
 
+brew bundle install --cleanup --file=~/.config/Brewfile
+
 HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
 "$HOMEBREW_PREFIX/opt/fzf/install"
+
+# Setup brew autoupdate (every 12 hours)
+brew autoupdate start 43200
 
 # Programming language stuff
 mise plugin install pnpm

@@ -2,7 +2,6 @@
 
 # Cache expensive lookups
 HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
-MISE_PREFIX="${MISE_PREFIX:-$HOME/.local/share/mise}"
 # Cache xcrun result to avoid fork on every shell startup (~5ms savings)
 if [[ -z "$MACOS_SDK_PATH" ]]; then
   if [[ -f ~/.cache/macos_sdk_path ]]; then
@@ -14,7 +13,7 @@ if [[ -z "$MACOS_SDK_PATH" ]]; then
   fi
 fi
 
-export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$HOME/go/bin:$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/mariadb/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$MISE_PREFIX/installs/gcloud/latest/bin:$PATH"
+export PATH="$HOMEBREW_PREFIX/share/google-cloud-sdk/bin:$HOME/.local/bin:$HOME/.local/share/mise/shims:$HOME/go/bin:$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/mariadb/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$PATH"
 export PGCLIENT=pgcli
 export CARGO_TERM_COLOR=always
 export GIT_MERGE_AUTOEDIT=no
@@ -129,18 +128,17 @@ source ~/.zoxide.zsh
 
 function gcloud() {
   unfunction gcloud gsutil bq
-  source "$MISE_PREFIX/installs/gcloud/latest/completion.zsh.inc"
-  /Users/gmcabrita/.local/share/mise/installs/gcloud/latest
+  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
   command gcloud "$@"
 }
 function gsutil() {
   unfunction gcloud gsutil bq
-  source "$MISE_PREFIX/installs/gcloud/latest/completion.zsh.inc"
+  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
   command gsutil "$@"
 }
 function bq() {
   unfunction gcloud gsutil bq
-  source "$MISE_PREFIX/installs/gcloud/latest/completion.zsh.inc"
+  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
   command bq "$@"
 }
 
@@ -451,10 +449,10 @@ function update-everything() {
   GITHUB_TOKEN=$(gh auth token) || return
   export GITHUB_TOKEN
 
-  mise self-update
-  mise bootstrap packages apply --update
-  mise bootstrap packages upgrade
-  mise bootstrap packages prune
+  brew update
+  brew bundle install --force-cleanup --file=~/.config/Brewfile
+  brew upgrade
+
   update-programming-languages
   pi-update-ext
   rm -f ~/.cache/macos_sdk_path

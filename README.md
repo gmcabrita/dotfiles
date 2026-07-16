@@ -58,22 +58,6 @@
 
 ## Post-install script setup
 
-```shell
-wget -P "$HOME/Downloads" "$(curl -fsSL https://formulae.brew.sh/api/cask/cleanshot.json | jq -rc '.url')"
-wget -P "$HOME/Downloads" "$(curl -fsSL https://formulae.brew.sh/api/cask/monodraw.json | jq -rc '.url')"
-wget -P "$HOME/Downloads" "$(curl -fsSL https://formulae.brew.sh/api/cask/orbstack.json | jq -rc '.url')"
-wget -P "$HOME/Downloads" "$(curl -fsSL https://formulae.brew.sh/api/cask/proxyman.json | jq -rc '.url')"
-wget -P "$HOME/Downloads" "$(curl -fsSL https://formulae.brew.sh/api/cask/zoom.json | jq -rc '.url')"
-wget -P "$HOME/Downloads" "$(curl -fsSL 'https://www.raycast.com/download-beta' | rg -o 'https://x-r2\.raycast-releases\.com/[^"'"'"'<>[:space:]\\]+\.dmg' | head -n 1)"
-```
-
-- Monodraw
-- OrbStack
-- Proxyman
-- https://www.raycast.com/download-beta
-  - Disable spotlight
-  - Import config from iCloud Drive
-- Zoom
 - Chrome
   - Configure 1Password
     - Show autofill menu on field focus: No
@@ -101,6 +85,13 @@ wget -P "$HOME/Downloads" "$(curl -fsSL 'https://www.raycast.com/download-beta' 
 - Discord
 - WhatsApp
 - NetNewsWire
+- Monodraw
+- OrbStack
+- Proxyman
+- https://www.raycast.com/download-beta
+  - Disable spotlight
+  - Import config from iCloud Drive
+- Zoom
 - [Tailscale](https://pkgs.tailscale.com/stable/#macos)
 - SetApp
   - CleanShot X
