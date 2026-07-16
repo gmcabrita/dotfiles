@@ -119,6 +119,7 @@
 "go:github.com/Zxilly/go-size-analyzer/cmd/gsa" = { version = "latest", install_env = { GOEXPERIMENT = "jsonv2" } }
 "go:golang.org/x/tools/gopls" = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
+"npm:hunk" = "latest"
 "npm:portless" = "latest"
 "npm:sfw" = "latest"
 bun = "latest"
