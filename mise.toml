@@ -34,8 +34,6 @@ pids="$pids $!"
 pids="$pids $!"
 ./bin/update-mitsuhiko-skills-and-pi-extensions.sh &
 pids="$pids $!"
-./bin/update-davis7dotsh-extensions.sh &
-pids="$pids $!"
 ./bin/update-modern-go-skills.sh &
 pids="$pids $!"
 ./bin/update-pi-autoresearch-skills-and-extensions.sh &

@@ -1,4 +1,3 @@
 allowBuilds:
   koffi: true
-  msgpackr-extract: true
   protobufjs: true
