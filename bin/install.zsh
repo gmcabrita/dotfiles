@@ -204,7 +204,7 @@ sudo mdutil -a -i off
 sudo mdutil -a -E
 sudo mdutil -a -i off
 
-brew bundle install --cleanup --file=~/.config/Brewfile
+brew bundle install --file=~/.config/Brewfile
 
 HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
 "$HOMEBREW_PREFIX/opt/fzf/install"
