@@ -36,9 +36,6 @@
       - Show Help Menu = `⇧ ⌘ /` (disabled?)
     - Notes.app
       - Note List Search... = `⌘ P`
-    - Google Chrome.app / Helium.app
-      - New Tab to the Right = `⌃ ⌘ T`
-      - New Tab = `⌘ T`
   - Input Sources > Edit
     - Disable everything
 - Trackpad:
