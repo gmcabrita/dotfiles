@@ -209,9 +209,6 @@ brew bundle install --cleanup --file=~/.config/Brewfile
 HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
 "$HOMEBREW_PREFIX/opt/fzf/install"
 
-# Setup brew autoupdate (every 12 hours)
-brew autoupdate start 43200
-
 # Programming language stuff
 mise plugin install pnpm
 mise plugin install odin
