@@ -14,7 +14,7 @@ if [[ -z "$MACOS_SDK_PATH" ]]; then
   fi
 fi
 
-export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$HOME/go/bin:$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/mariadb/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$HOME/go/bin:$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/mariadb/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$MISE_PREFIX/installs/gcloud/latest/bin:$PATH"
 export PGCLIENT=pgcli
 export CARGO_TERM_COLOR=always
 export GIT_MERGE_AUTOEDIT=no
@@ -129,18 +129,18 @@ source ~/.zoxide.zsh
 
 function gcloud() {
   unfunction gcloud gsutil bq
-  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
+  source "$MISE_PREFIX/installs/gcloud/latest/completion.zsh.inc"
   /Users/gmcabrita/.local/share/mise/installs/gcloud/latest
   command gcloud "$@"
 }
 function gsutil() {
   unfunction gcloud gsutil bq
-  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
+  source "$MISE_PREFIX/installs/gcloud/latest/completion.zsh.inc"
   command gsutil "$@"
 }
 function bq() {
   unfunction gcloud gsutil bq
-  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
+  source "$MISE_PREFIX/installs/gcloud/latest/completion.zsh.inc"
   command bq "$@"
 }
 
