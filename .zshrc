@@ -450,6 +450,7 @@ function update-everything() {
   brew upgrade
 
   update-programming-languages
+  pi update --models || true
   pi-update-ext
   rm -f ~/.cache/macos_sdk_path
 
