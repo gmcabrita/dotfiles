@@ -2,7 +2,7 @@
 
 # Cache expensive lookups
 HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
-MISE_PREFIX="{MISE_PREFIX:-$HOME/.local/share/mise}"
+MISE_PREFIX="${MISE_PREFIX:-$HOME/.local/share/mise}"
 # Cache xcrun result to avoid fork on every shell startup (~5ms savings)
 if [[ -z "$MACOS_SDK_PATH" ]]; then
   if [[ -f ~/.cache/macos_sdk_path ]]; then
