@@ -445,10 +445,6 @@ function pi-update-ext() {
 }
 
 function update-everything() {
-  local GITHUB_TOKEN
-  GITHUB_TOKEN=$(gh auth token) || return
-  export GITHUB_TOKEN
-
   brew update
   brew bundle install --force-cleanup --file=~/.config/Brewfile
   brew upgrade
