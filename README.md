@@ -4,6 +4,7 @@
 
 - `cp ~/.zsh_history ~/iCloud\ Drive/Software/.zsh_history`
 - `cp -r ~/Library/Application\ Support/qBittorrent/ ~/iCloud\ Drive/Software/qBittorrent`
+- `cp -r ~/Library/Application Support/net.imput.helium/ ~/iCloud\ Drive/Software/net.imput.helium`
 - Export Raycast settings
 - Export uBlock Origin Lite settings
 
@@ -35,7 +36,7 @@
       - Show Help Menu = `⇧ ⌘ /` (disabled?)
     - Notes.app
       - Note List Search... = `⌘ P`
-    - Google Chrome.app
+    - Google Chrome.app / Helium.app
       - New Tab to the Right = `⌃ ⌘ T`
       - New Tab = `⌘ T`
   - Input Sources > Edit
@@ -58,7 +59,9 @@
 
 ## Post-install script setup
 
-- Chrome
+- Chrome / Helium
+  - `mkdir -p ~/Library/Application\ Support/net.imput.helium/`
+  - `cp -r ~/iCloud\ Drive/Software/net.imput.helium ~/Library/Application\ Support/net.imput.helium/`
   - Configure 1Password
     - Show autofill menu on field focus: No
     - Sign in automatically after autofill: No

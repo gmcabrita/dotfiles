@@ -748,8 +748,8 @@ function af() {
     --bind "change:reload:rg -li -g '*.html' {q} \"$root\" || true" \
     --bind 'enter:become(sh -c '"'"'
       /usr/bin/xattr -dr com.apple.quarantine "$1"
-      open -a "Google Chrome" "$1"
-      osascript -e "tell application \"Google Chrome\" to activate"
+      open -a "Helium" "$1"
+      osascript -e "tell application \"Helium\" to activate"
     '"'"' sh {})'
 }
 
