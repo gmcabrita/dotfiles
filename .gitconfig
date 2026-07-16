@@ -19,7 +19,8 @@
   symlinks = true
   fsmonitor = true
   excludesfile = ~/.gitignore
-  untrackedCache = true
+  untrackedCache = false
+  pager = hunk pager
 [diff]
   algorithm = histogram
   colorMoved = plain
@@ -83,7 +84,7 @@
   w = worktree
   wt = worktree
   wa = worktree add
-  wad = 
+  wad = worktree add
   wl = worktree list
   wlo = worktree lock
   wlk = worktree lock
