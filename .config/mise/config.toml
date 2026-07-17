@@ -4,7 +4,6 @@
 
 [bootstrap.packages]
 
-
 [tools]
 "aqua:smol-machines/smolvm" = "latest"
 "cargo:cargo-clean-all" = "latest"
@@ -53,7 +52,7 @@ zoxide = "latest"
 
 [settings]
 idiomatic_version_file_enable_tools = ["rust"]
-minimum_release_age = "24h"
+minimum_release_age = "12h"
 experimental = true
 
 [settings.status]
