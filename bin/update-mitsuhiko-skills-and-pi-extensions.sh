@@ -34,10 +34,8 @@ for skill_dir in "$TEMP_DIR/$SKILLS_PATH"/*/; do
 done
 
 SYNC_EXTENSIONS=(
-  "review.ts"
   "session-breakdown.ts"
   "todos.ts"
-  "whimsical.ts"
 )
 
 git sparse-checkout set "$EXTENSIONS_PATH"
