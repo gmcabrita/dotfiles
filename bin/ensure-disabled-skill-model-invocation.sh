@@ -4,6 +4,7 @@ set -euo pipefail
 TARGET_DIR="${SKILLS_TARGET_DIR:-$(git rev-parse --show-toplevel)/.agents/skills}"
 DISABLED_SKILLS=(
   "chrome-cdp"
+  "fix-merge-conflicts"
   "gh-stack"
   "hegel"
   "thermo-nuclear-code-quality-review"
