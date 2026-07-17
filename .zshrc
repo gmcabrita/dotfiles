@@ -447,7 +447,7 @@ function pi-update-ext() {
 function update-everything() {
   brew update
   brew bundle install --force-cleanup --file=~/.config/Brewfile
-  brew upgrade
+  brew upgrade --yes
 
   update-programming-languages
   pi update --models || true
