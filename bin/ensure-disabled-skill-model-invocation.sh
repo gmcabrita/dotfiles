@@ -4,7 +4,11 @@ set -euo pipefail
 TARGET_DIR="${SKILLS_TARGET_DIR:-$(git rev-parse --show-toplevel)/.agents/skills}"
 DISABLED_SKILLS=(
   "chrome-cdp"
+  "gh-stack"
   "hegel"
+  "thermo-nuclear-code-quality-review"
+  "weekly-review"
+  "what-did-i-get-done"
 )
 
 temp_file=""
