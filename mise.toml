@@ -1,6 +1,6 @@
 [tasks.default]
 description = "Update, format, and sync dotfiles"
-run = [{ task = "update" }, { task = "fmt" }, { task = "sync" }]
+run = [{ task = "update" }, { task = "sync" }]
 
 [tasks.install]
 description = "Install dotfiles"
