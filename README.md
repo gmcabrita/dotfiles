@@ -4,7 +4,7 @@
 
 - `cp ~/.zsh_history ~/iCloud\ Drive/Software/.zsh_history`
 - `cp -r ~/Library/Application\ Support/qBittorrent/ ~/iCloud\ Drive/Software/qBittorrent`
-- `cp -r ~/Library/Application Support/net.imput.helium/ ~/iCloud\ Drive/Software/net.imput.helium`
+- `cp -r ~/Library/Application\ Support/net.imput.helium/ ~/iCloud\ Drive/Software/net.imput.helium`
 - Export Raycast settings
 - Export uBlock Origin Lite settings
 
