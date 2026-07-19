@@ -1,5 +1,6 @@
 tap "blacktop/tap", trusted: true
 tap "jnsahaj/lumen", trusted: true
+tap "lightpanda-io/browser", trusted: true
 tap "orlangure/tap", trusted: true
 tap "ramonvermeulen/whosthere", trusted: true
 tap "tw93/tap", trusted: true
@@ -58,6 +59,7 @@ brew "less"
 brew "libffi"
 brew "libpq"
 brew "libyaml"
+brew "lightpanda-io/browser/lightpanda"
 brew "mariadb"
 brew "mdcat"
 brew "mise"
@@ -67,7 +69,6 @@ brew "ncdu"
 brew "neovim"
 brew "orlangure/tap/gocovsh"
 brew "p7zip"
-brew "pcre"
 brew "pg_top"
 brew "pgcli"
 brew "pkgconf"
@@ -125,7 +126,6 @@ cask "NetNewsWire"
 cask "openvpn-connect"
 cask "orbstack"
 cask "ramonvermeulen/whosthere/whosthere"
-cask "rar"
 cask "raycast"
 cask "setapp"
 cask "slack"

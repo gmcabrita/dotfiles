@@ -13,7 +13,7 @@ if [[ -z "$MACOS_SDK_PATH" ]]; then
   fi
 fi
 
-export PATH="$HOMEBREW_PREFIX/share/google-cloud-sdk/bin:$HOME/.local/bin:$HOME/.local/share/mise/shims:$HOME/go/bin:$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/mariadb/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$PATH"
+export PATH="$HOMEBREW_PREFIX/share/google-cloud-sdk/bin:$HOME/.local/bin:$HOME/.local/share/mise/shims:$HOME/go/bin:$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin:$HOMEBREW_PREFIX/opt/sqlite/bin:$HOMEBREW_PREFIX/opt/mariadb/bin:$HOMEBREW_PREFIX/opt/libpq/bin:$PATH"
 export PGCLIENT=pgcli
 export UV_MALWARE_CHECK=1
 export CARGO_TERM_COLOR=always
