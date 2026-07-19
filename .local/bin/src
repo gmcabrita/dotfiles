@@ -2,4 +2,11 @@
 set -e
 set -u
 
-cat $(which "$@")
+path=$(which "$@")
+
+if [[ $(file --brief --mime-encoding "$path") == binary ]]; then
+  printf 'src: refusing to print binary file: %s\n' "$path" >&2
+  exit 1
+fi
+
+cat "$path"
