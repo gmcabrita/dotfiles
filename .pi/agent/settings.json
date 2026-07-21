@@ -1,5 +1,5 @@
 {
-  "packages": ["git:github.com/dmmulroy/pi-mcp"],
+  "packages": ["git:github.com/dmmulroy/pi-mcp", "npm:pi-anthropic-oauth"],
   "startup": {
     "model": "gpt-5.6-sol",
     "provider": "openai-codex-lb",
@@ -9,6 +9,7 @@
     "openai-codex-lb/gpt-5.6-sol",
     "openai-codex-lb/gpt-5.6-terra",
     "openai-codex-lb/gpt-5.6-luna",
+    "anthropic/claude-fable-5",
     "deepseek/deepseek-v4-pro",
     "deepseek/deepseek-v4-flash",
     "openrouter/deepseek/deepseek-v4-pro",
