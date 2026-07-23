@@ -7,6 +7,9 @@
 // custom settings, run the `open default settings` command
 // from the command palette or from `Zed` application menu.
 {
+  "git_panel": {
+    "group_by": "staging",
+  },
   "agent_ui_font_size": 17.0,
   "cli_default_open_behavior": "new_window",
   "ui_font_weight": 400.0,
