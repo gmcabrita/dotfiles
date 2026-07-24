@@ -44,7 +44,7 @@ zizmor = "latest"
 zls = "latest"
 
 [settings]
-idiomatic_version_file_enable_tools = ["rust"]
+idiomatic_version_file_enable_tools = ["rust", "go"]
 minimum_release_age = "12h"
 experimental = true
 
