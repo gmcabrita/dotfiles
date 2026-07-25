@@ -52,6 +52,9 @@ chflags nohidden ~/Library
 defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
 defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
 
+# Disable power chime
+defaults write com.apple.PowerChime ChimeOnAllHardware -bool false
+
 # Disable all animations
 defaults write NSGlobalDomain DisableAllAnimations -bool true
 defaults write NSGlobalDomain NSAutomaticWindowAnimationsEnabled -bool false
