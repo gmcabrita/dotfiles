@@ -131,6 +131,10 @@ interface DayAgg {
 	sessionsByModel: Map<ModelKey, number>;
 	messagesByModel: Map<ModelKey, number>;
 	tokensByModel: Map<ModelKey, number>;
+	groupedCostByModel: Map<ModelKey, number>;
+	groupedSessionsByModel: Map<ModelKey, number>;
+	groupedMessagesByModel: Map<ModelKey, number>;
+	groupedTokensByModel: Map<ModelKey, number>;
 	sessionsByCwd: Map<CwdKey, number>;
 	messagesByCwd: Map<CwdKey, number>;
 	tokensByCwd: Map<CwdKey, number>;
@@ -152,6 +156,11 @@ interface RangeAgg {
 	modelSessions: Map<ModelKey, number>; // number of sessions where model was used
 	modelMessages: Map<ModelKey, number>;
 	modelTokens: Map<ModelKey, number>;
+	// Provider-agnostic (grouped by model name, e.g. radius/foo + openai/foo → foo)
+	groupedModelCost: Map<ModelKey, number>;
+	groupedModelSessions: Map<ModelKey, number>;
+	groupedModelMessages: Map<ModelKey, number>;
+	groupedModelTokens: Map<ModelKey, number>;
 	cwdCost: Map<CwdKey, number>;
 	cwdSessions: Map<CwdKey, number>;
 	cwdMessages: Map<CwdKey, number>;
@@ -176,6 +185,11 @@ interface BreakdownData {
 	generatedAt: Date;
 	ranges: Map<number, RangeAgg>;
 	palette: {
+		modelColors: Map<ModelKey, RGB>;
+		otherColor: RGB;
+		orderedModels: ModelKey[];
+	};
+	groupedPalette: {
 		modelColors: Map<ModelKey, RGB>;
 		otherColor: RGB;
 		orderedModels: ModelKey[];
@@ -671,6 +685,10 @@ function buildRangeAgg(days: number, now: Date): RangeAgg {
 			sessionsByModel: new Map(),
 			messagesByModel: new Map(),
 			tokensByModel: new Map(),
+			groupedCostByModel: new Map(),
+			groupedSessionsByModel: new Map(),
+			groupedMessagesByModel: new Map(),
+			groupedTokensByModel: new Map(),
 			sessionsByCwd: new Map(),
 			messagesByCwd: new Map(),
 			tokensByCwd: new Map(),
@@ -695,6 +713,10 @@ function buildRangeAgg(days: number, now: Date): RangeAgg {
 		modelSessions: new Map(),
 		modelMessages: new Map(),
 		modelTokens: new Map(),
+		groupedModelCost: new Map(),
+		groupedModelSessions: new Map(),
+		groupedModelMessages: new Map(),
+		groupedModelTokens: new Map(),
 		cwdCost: new Map(),
 		cwdSessions: new Map(),
 		cwdMessages: new Map(),
@@ -747,6 +769,30 @@ function addSessionToRange(range: RangeAgg, session: ParsedSession): void {
 		range.modelCost.set(mk, (range.modelCost.get(mk) ?? 0) + cost);
 	}
 
+	// Provider-agnostic (grouped) model aggregation.
+	// Collapse `${provider}/${model}` → `${model}` and de-duplicate session presence.
+	const groupedModels = new Set<ModelKey>();
+	for (const mk of session.modelsUsed) groupedModels.add(displayModelName(mk));
+	for (const gk of groupedModels) {
+		day.groupedSessionsByModel.set(gk, (day.groupedSessionsByModel.get(gk) ?? 0) + 1);
+		range.groupedModelSessions.set(gk, (range.groupedModelSessions.get(gk) ?? 0) + 1);
+	}
+	for (const [mk, n] of session.messagesByModel.entries()) {
+		const gk = displayModelName(mk);
+		day.groupedMessagesByModel.set(gk, (day.groupedMessagesByModel.get(gk) ?? 0) + n);
+		range.groupedModelMessages.set(gk, (range.groupedModelMessages.get(gk) ?? 0) + n);
+	}
+	for (const [mk, n] of session.tokensByModel.entries()) {
+		const gk = displayModelName(mk);
+		day.groupedTokensByModel.set(gk, (day.groupedTokensByModel.get(gk) ?? 0) + n);
+		range.groupedModelTokens.set(gk, (range.groupedModelTokens.get(gk) ?? 0) + n);
+	}
+	for (const [mk, cost] of session.costByModel.entries()) {
+		const gk = displayModelName(mk);
+		day.groupedCostByModel.set(gk, (day.groupedCostByModel.get(gk) ?? 0) + cost);
+		range.groupedModelCost.set(gk, (range.groupedModelCost.get(gk) ?? 0) + cost);
+	}
+
 	// CWD aggregation
 	const cwd = session.cwd;
 	if (cwd) {
@@ -785,21 +831,26 @@ function sortMapByValueDesc<K extends string>(m: Map<K, number>): Array<{ key: K
 		.sort((a, b) => b.value - a.value);
 }
 
-function choosePaletteFromLast30Days(range30: RangeAgg, topN = 4): {
+function choosePaletteFromLast30Days(range30: RangeAgg, topN = 4, groupProviders = false): {
 	modelColors: Map<ModelKey, RGB>;
 	otherColor: RGB;
 	orderedModels: ModelKey[];
 } {
+	const modelCost = groupProviders ? range30.groupedModelCost : range30.modelCost;
+	const modelTokens = groupProviders ? range30.groupedModelTokens : range30.modelTokens;
+	const modelMessages = groupProviders ? range30.groupedModelMessages : range30.modelMessages;
+	const modelSessions = groupProviders ? range30.groupedModelSessions : range30.modelSessions;
+
 	// Prefer cost if any cost exists, else tokens, else messages, else sessions.
-	const costSum = [...range30.modelCost.values()].reduce((a, b) => a + b, 0);
+	const costSum = [...modelCost.values()].reduce((a, b) => a + b, 0);
 	const popularity =
 		costSum > 0
-			? range30.modelCost
+			? modelCost
 			: range30.totalTokens > 0
-				? range30.modelTokens
+				? modelTokens
 				: range30.totalMessages > 0
-					? range30.modelMessages
-					: range30.modelSessions;
+					? modelMessages
+					: modelSessions;
 
 	const sorted = sortMapByValueDesc(popularity);
 	const orderedModels = sorted.slice(0, topN).map((x) => x.key);
@@ -887,6 +938,7 @@ function dayMixedColor(
 	otherColor: RGB,
 	mode: MeasurementMode,
 	view: BreakdownView = "model",
+	groupProviders = false,
 ): RGB {
 	const parts: Array<{ color: RGB; weight: number }> = [];
 	let otherWeight = 0;
@@ -914,12 +966,15 @@ function dayMixedColor(
 			map = day.sessionsByCwd;
 		}
 	} else {
+		const sByModel = groupProviders ? day.groupedSessionsByModel : day.sessionsByModel;
+		const mByModel = groupProviders ? day.groupedMessagesByModel : day.messagesByModel;
+		const tByModel = groupProviders ? day.groupedTokensByModel : day.tokensByModel;
 		if (mode === "tokens") {
-			map = day.tokens > 0 ? day.tokensByModel : day.messages > 0 ? day.messagesByModel : day.sessionsByModel;
+			map = day.tokens > 0 ? tByModel : day.messages > 0 ? mByModel : sByModel;
 		} else if (mode === "messages") {
-			map = day.messages > 0 ? day.messagesByModel : day.sessionsByModel;
+			map = day.messages > 0 ? mByModel : sByModel;
 		} else {
-			map = day.sessionsByModel;
+			map = sByModel;
 		}
 	}
 
@@ -971,6 +1026,7 @@ function renderGraphLines(
 	mode: MeasurementMode,
 	options?: { cellWidth?: number; gap?: number },
 	view: BreakdownView = "model",
+	groupProviders = false,
 ): string[] {
 	const days = range.days;
 	const start = days[0].date;
@@ -1024,7 +1080,7 @@ function renderGraphLines(
 				continue;
 			}
 
-			const hue = dayMixedColor(day, colorMap, otherColor, mode, view);
+			const hue = dayMixedColor(day, colorMap, otherColor, mode, view, groupProviders);
 			let t = denom > 0 ? Math.log1p(value) / denom : 0;
 			t = clamp01(t);
 			const minVisible = 0.2;
@@ -1089,23 +1145,28 @@ function renderLegendBlock(leftLabel: string, items: string[], width: number): s
 	return lines;
 }
 
-function renderModelTable(range: RangeAgg, mode: MeasurementMode, maxRows = 8): string[] {
-	// Keep this relatively narrow: model + selected metric + cost + share.
+function renderModelTable(range: RangeAgg, mode: MeasurementMode, maxRows = 8, groupProviders = false): string[] {
+	// Keep this relatively narrow: model + selected metric + cost + cost/session + share.
 	const metric = graphMetricForRange(range, mode);
 	const kind = metric.kind;
+
+	const modelCost = groupProviders ? range.groupedModelCost : range.modelCost;
+	const modelSessions = groupProviders ? range.groupedModelSessions : range.modelSessions;
+	const modelMessages = groupProviders ? range.groupedModelMessages : range.modelMessages;
+	const modelTokens = groupProviders ? range.groupedModelTokens : range.modelTokens;
 
 	let perModel: Map<ModelKey, number>;
 	let total = 0;
 	let label = kind;
 
 	if (kind === "tokens") {
-		perModel = range.modelTokens;
+		perModel = modelTokens;
 		total = range.totalTokens;
 	} else if (kind === "messages") {
-		perModel = range.modelMessages;
+		perModel = modelMessages;
 		total = range.totalMessages;
 	} else {
-		perModel = range.modelSessions;
+		perModel = modelSessions;
 		total = range.sessions;
 	}
 
@@ -1116,15 +1177,17 @@ function renderModelTable(range: RangeAgg, mode: MeasurementMode, maxRows = 8): 
 	const modelWidth = Math.min(52, Math.max("model".length, ...rows.map((r) => r.key.length)));
 
 	const lines: string[] = [];
-	lines.push(`${padRight("model", modelWidth)}  ${padLeft(label, valueWidth)}  ${padLeft("cost", 10)}  ${padLeft("share", 6)}`);
-	lines.push(`${"-".repeat(modelWidth)}  ${"-".repeat(valueWidth)}  ${"-".repeat(10)}  ${"-".repeat(6)}`);
+	lines.push(`${padRight("model", modelWidth)}  ${padLeft(label, valueWidth)}  ${padLeft("cost", 10)}  ${padLeft("cost/s", 8)}  ${padLeft("share", 6)}`);
+	lines.push(`${"-".repeat(modelWidth)}  ${"-".repeat(valueWidth)}  ${"-".repeat(10)}  ${"-".repeat(8)}  ${"-".repeat(6)}`);
 
 	for (const r of rows) {
 		const value = perModel.get(r.key) ?? 0;
-		const cost = range.modelCost.get(r.key) ?? 0;
+		const cost = modelCost.get(r.key) ?? 0;
+		const sess = modelSessions.get(r.key) ?? 0;
+		const costPerSession = sess > 0 ? formatUsd(cost / sess) : "-";
 		const share = total > 0 ? `${Math.round((value / total) * 100)}%` : "0%";
 		lines.push(
-			`${padRight(r.key.slice(0, modelWidth), modelWidth)}  ${padLeft(formatCount(value), valueWidth)}  ${padLeft(formatUsd(cost), 10)}  ${padLeft(share, 6)}`,
+			`${padRight(r.key.slice(0, modelWidth), modelWidth)}  ${padLeft(formatCount(value), valueWidth)}  ${padLeft(formatUsd(cost), 10)}  ${padLeft(costPerSession, 8)}  ${padLeft(share, 6)}`,
 		);
 	}
 
@@ -1162,16 +1225,18 @@ function renderCwdTable(range: RangeAgg, mode: MeasurementMode, maxRows = 8): st
 	const cwdWidth = Math.min(42, Math.max("directory".length, ...displayPaths.map((p) => p.length)));
 
 	const lines: string[] = [];
-	lines.push(`${padRight("directory", cwdWidth)}  ${padLeft(label, valueWidth)}  ${padLeft("cost", 10)}  ${padLeft("share", 6)}`);
-	lines.push(`${"-".repeat(cwdWidth)}  ${"-".repeat(valueWidth)}  ${"-".repeat(10)}  ${"-".repeat(6)}`);
+	lines.push(`${padRight("directory", cwdWidth)}  ${padLeft(label, valueWidth)}  ${padLeft("cost", 10)}  ${padLeft("cost/s", 8)}  ${padLeft("share", 6)}`);
+	lines.push(`${"-".repeat(cwdWidth)}  ${"-".repeat(valueWidth)}  ${"-".repeat(10)}  ${"-".repeat(8)}  ${"-".repeat(6)}`);
 
 	for (let i = 0; i < rows.length; i++) {
 		const r = rows[i];
 		const value = perCwd.get(r.key) ?? 0;
 		const cost = range.cwdCost.get(r.key) ?? 0;
+		const sess = range.cwdSessions.get(r.key) ?? 0;
+		const costPerSession = sess > 0 ? formatUsd(cost / sess) : "-";
 		const share = total > 0 ? `${Math.round((value / total) * 100)}%` : "0%";
 		lines.push(
-			`${padRight(displayPaths[i].slice(0, cwdWidth), cwdWidth)}  ${padLeft(formatCount(value), valueWidth)}  ${padLeft(formatUsd(cost), 10)}  ${padLeft(share, 6)}`,
+			`${padRight(displayPaths[i].slice(0, cwdWidth), cwdWidth)}  ${padLeft(formatCount(value), valueWidth)}  ${padLeft(formatUsd(cost), 10)}  ${padLeft(costPerSession, 8)}  ${padLeft(share, 6)}`,
 		);
 	}
 
@@ -1241,16 +1306,18 @@ function renderDowTable(range: RangeAgg, mode: MeasurementMode): string[] {
 	const dowWidth = 5; // "day  "
 
 	const lines: string[] = [];
-	lines.push(`${padRight("day", dowWidth)}  ${padLeft(kind, valueWidth)}  ${padLeft("cost", 10)}  ${padLeft("share", 6)}`);
-	lines.push(`${"-".repeat(dowWidth)}  ${"-".repeat(valueWidth)}  ${"-".repeat(10)}  ${"-".repeat(6)}`);
+	lines.push(`${padRight("day", dowWidth)}  ${padLeft(kind, valueWidth)}  ${padLeft("cost", 10)}  ${padLeft("cost/s", 8)}  ${padLeft("share", 6)}`);
+	lines.push(`${"-".repeat(dowWidth)}  ${"-".repeat(valueWidth)}  ${"-".repeat(10)}  ${"-".repeat(8)}  ${"-".repeat(6)}`);
 
 	// Always show in Mon–Sun order
 	for (const dow of DOW_NAMES) {
 		const value = perDow.get(dow) ?? 0;
 		const cost = range.dowCost.get(dow) ?? 0;
+		const sess = range.dowSessions.get(dow) ?? 0;
+		const costPerSession = sess > 0 ? formatUsd(cost / sess) : "-";
 		const share = total > 0 ? `${Math.round((value / total) * 100)}%` : "0%";
 		lines.push(
-			`${padRight(dow, dowWidth)}  ${padLeft(formatCount(value), valueWidth)}  ${padLeft(formatUsd(cost), 10)}  ${padLeft(share, 6)}`,
+			`${padRight(dow, dowWidth)}  ${padLeft(formatCount(value), valueWidth)}  ${padLeft(formatUsd(cost), 10)}  ${padLeft(costPerSession, 8)}  ${padLeft(share, 6)}`,
 		);
 	}
 
@@ -1279,16 +1346,18 @@ function renderTodTable(range: RangeAgg, mode: MeasurementMode): string[] {
 	const todWidth = 22; // widest label
 
 	const lines: string[] = [];
-	lines.push(`${padRight("time of day", todWidth)}  ${padLeft(kind, valueWidth)}  ${padLeft("cost", 10)}  ${padLeft("share", 6)}`);
-	lines.push(`${"-".repeat(todWidth)}  ${"-".repeat(valueWidth)}  ${"-".repeat(10)}  ${"-".repeat(6)}`);
+	lines.push(`${padRight("time of day", todWidth)}  ${padLeft(kind, valueWidth)}  ${padLeft("cost", 10)}  ${padLeft("cost/s", 8)}  ${padLeft("share", 6)}`);
+	lines.push(`${"-".repeat(todWidth)}  ${"-".repeat(valueWidth)}  ${"-".repeat(10)}  ${"-".repeat(8)}  ${"-".repeat(6)}`);
 
 	// Always show in chronological order
 	for (const b of TOD_BUCKETS) {
 		const value = perTod.get(b.key) ?? 0;
 		const cost = range.todCost.get(b.key) ?? 0;
+		const sess = range.todSessions.get(b.key) ?? 0;
+		const costPerSession = sess > 0 ? formatUsd(cost / sess) : "-";
 		const share = total > 0 ? `${Math.round((value / total) * 100)}%` : "0%";
 		lines.push(
-			`${padRight(b.label, todWidth)}  ${padLeft(formatCount(value), valueWidth)}  ${padLeft(formatUsd(cost), 10)}  ${padLeft(share, 6)}`,
+			`${padRight(b.label, todWidth)}  ${padLeft(formatCount(value), valueWidth)}  ${padLeft(formatUsd(cost), 10)}  ${padLeft(costPerSession, 8)}  ${padLeft(share, 6)}`,
 		);
 	}
 
@@ -1371,10 +1440,11 @@ async function computeBreakdown(
 	onProgress?.({ phase: "finalize", currentFile: undefined });
 
 	const palette = choosePaletteFromLast30Days(ranges.get(30)!, 4);
+	const groupedPalette = choosePaletteFromLast30Days(ranges.get(30)!, 4, true);
 	const cwdPalette = chooseCwdPaletteFromLast30Days(ranges.get(30)!, 4);
 	const dowPalette = buildDowPalette();
 	const todPalette = buildTodPalette();
-	return { generatedAt: now, ranges, palette, cwdPalette, dowPalette, todPalette };
+	return { generatedAt: now, ranges, palette, groupedPalette, cwdPalette, dowPalette, todPalette };
 }
 
 class BreakdownComponent implements Component {
@@ -1384,7 +1454,9 @@ class BreakdownComponent implements Component {
 	private rangeIndex = 1; // default 30d
 	private measurement: MeasurementMode = "sessions";
 	private view: BreakdownView = "model";
+	private splitProviders = false;
 	private cachedWidth?: number;
+	private cachedRows?: number;
 	private cachedLines?: string[];
 
 	constructor(data: BreakdownData, tui: TUI, onDone: () => void) {
@@ -1395,7 +1467,17 @@ class BreakdownComponent implements Component {
 
 	invalidate(): void {
 		this.cachedWidth = undefined;
+		this.cachedRows = undefined;
 		this.cachedLines = undefined;
+	}
+
+	private tableMaxRows(): number {
+		const rows = this.tui.terminal.rows || 0;
+		if (rows <= 0) return 12;
+		// Fixed chrome above/around the table: header, help, blank, summary,
+		// blank, graph (7), blank, table header + divider (2), plus some margin.
+		const overhead = 17;
+		return Math.max(4, Math.min(12, rows - overhead));
 	}
 
 	handleInput(data: string): void {
@@ -1424,6 +1506,13 @@ class BreakdownComponent implements Component {
 			this.invalidate();
 			this.tui.requestRender();
 		};
+
+		if (data.toLowerCase() === "p") {
+			this.splitProviders = !this.splitProviders;
+			this.invalidate();
+			this.tui.requestRender();
+			return;
+		}
 
 		if (matchesKey(data, Key.left) || data.toLowerCase() === "h") prev();
 		if (matchesKey(data, Key.right) || data.toLowerCase() === "l") next();
@@ -1456,7 +1545,8 @@ class BreakdownComponent implements Component {
 	}
 
 	render(width: number): string[] {
-		if (this.cachedWidth === width && this.cachedLines) return this.cachedLines;
+		const termRows = this.tui.terminal.rows || 0;
+		if (this.cachedWidth === width && this.cachedRows === termRows && this.cachedLines) return this.cachedLines;
 
 		const selectedDays = RANGE_DAYS[this.rangeIndex];
 		const range = this.data.ranges.get(selectedDays)!;
@@ -1489,11 +1579,12 @@ class BreakdownComponent implements Component {
 		const legendItems: string[] = [];
 
 		if (this.view === "model") {
-			activeColorMap = this.data.palette.modelColors;
-			activeOtherColor = this.data.palette.otherColor;
-			for (const mk of this.data.palette.orderedModels) {
+			const pal = this.splitProviders ? this.data.palette : this.data.groupedPalette;
+			activeColorMap = pal.modelColors;
+			activeOtherColor = pal.otherColor;
+			for (const mk of pal.orderedModels) {
 				const c = activeColorMap.get(mk);
-				if (c) legendItems.push(`${ansiFg(c, "█")} ${displayModelName(mk)}`);
+				if (c) legendItems.push(`${ansiFg(c, "█")} ${mk}`);
 			}
 			legendItems.push(`${ansiFg(activeOtherColor, "█")} other`);
 		} else if (this.view === "cwd") {
@@ -1541,17 +1632,24 @@ class BreakdownComponent implements Component {
 				this.measurement,
 				{ cellWidth, gap },
 				this.view,
+				this.view === "model" && !this.splitProviders,
 			);
 		}
+		const maxRows = this.tableMaxRows();
 		const tableLines =
-			this.view === "model" ? renderModelTable(range, metric.kind, 8)
-			: this.view === "cwd" ? renderCwdTable(range, metric.kind, 8)
+			this.view === "model" ? renderModelTable(range, metric.kind, maxRows, !this.splitProviders)
+			: this.view === "cwd" ? renderCwdTable(range, metric.kind, maxRows)
 			: this.view === "dow" ? renderDowTable(range, metric.kind)
 			: renderTodTable(range, metric.kind);
 
 		const lines: string[] = [];
 		lines.push(truncateToWidth(header, width));
-		lines.push(truncateToWidth(dim("←/→ range · ↑/↓ view · tab metric · q to close"), width));
+		lines.push(
+			truncateToWidth(
+				dim(`←/→ range · ↑/↓ view · tab metric · p providers (${this.splitProviders ? "split" : "grouped"}) · q to close`),
+				width,
+			),
+		);
 		lines.push("");
 		lines.push(truncateToWidth(summary, width));
 		lines.push("");
@@ -1611,6 +1709,7 @@ class BreakdownComponent implements Component {
 
 		// Ensure no overly long lines (truncateToWidth already), but keep at least 1 line.
 		this.cachedWidth = width;
+		this.cachedRows = termRows;
 		this.cachedLines = lines.map((l) => (visibleWidth(l) > width ? truncateToWidth(l, width) : l));
 		return this.cachedLines;
 	}

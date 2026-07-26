@@ -35,6 +35,7 @@ done
 
 SYNC_EXTENSIONS=(
   "session-breakdown.ts"
+  "subagent.ts"
   "todos.ts"
 )
 
