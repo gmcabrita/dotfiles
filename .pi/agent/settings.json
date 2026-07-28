@@ -10,7 +10,7 @@
     "openai-codex-lb/gpt-5.6-terra",
     "openai-codex-lb/gpt-5.6-luna",
     "anthropic/claude-fable-5",
-    "anthropic/claude-opus-5-fast",
+    "anthropic/claude-opus-5",
     "deepseek/deepseek-v4-pro",
     "deepseek/deepseek-v4-flash",
     "openrouter/deepseek/deepseek-v4-pro",
