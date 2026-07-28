@@ -11,6 +11,17 @@ type StartupConfig = {
 	thinkingLevel?: ThinkingLevel;
 };
 
+function hasCliFlag(name: string): boolean {
+	const flag = `--${name}`;
+
+	for (const argument of process.argv.slice(2)) {
+		if (argument === "--") return false;
+		if (argument === flag || argument.startsWith(`${flag}=`)) return true;
+	}
+
+	return false;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -71,12 +82,15 @@ function getStartupConfig(cwd: string): StartupConfig {
 }
 
 export default function startupExtension(pi: ExtensionAPI) {
+	const explicitModel = hasCliFlag("provider") || hasCliFlag("model");
+	const explicitThinking = hasCliFlag("thinking");
+
 	pi.on("session_start", async (event, ctx) => {
 		if ("reason" in event && event.reason !== "startup") return;
 
 		const startup = getStartupConfig(ctx.cwd);
 
-		if (startup.provider && startup.model) {
+		if (!explicitModel && startup.provider && startup.model) {
 			const model = ctx.modelRegistry.find(startup.provider, startup.model);
 			if (!model) {
 				ctx.ui.notify(`Startup: model not found ${startup.provider}/${startup.model}`, "warning");
@@ -88,7 +102,7 @@ export default function startupExtension(pi: ExtensionAPI) {
 			}
 		}
 
-		if (startup.thinkingLevel && pi.getThinkingLevel() !== startup.thinkingLevel) {
+		if (!explicitThinking && startup.thinkingLevel && pi.getThinkingLevel() !== startup.thinkingLevel) {
 			pi.setThinkingLevel(startup.thinkingLevel);
 		}
 	});
