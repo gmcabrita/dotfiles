@@ -1,11 +1,12 @@
-theme = "auto" # any built-in theme id, auto, or custom
-mode = "stack"        # auto, split, stack
-vcs = "git"          # git, jj, sl
+theme = "auto"  # any built-in theme id, auto, or custom
+mode = "stack"  # auto, split, stack
+vcs = "git"     # git, jj, sl
 watch = false
 exclude_untracked = false
 line_numbers = true
+tab_width = 2
 wrap_lines = true
-menu_bar = true
+menu_bar = false
 agent_notes = false
 prompt_save_view_preferences = true
 transparent_background = false

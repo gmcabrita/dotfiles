@@ -13,7 +13,6 @@
 "github:lexiforest/curl-impersonate" = { version = "latest", prerelease = true }
 "go:golang.org/x/tools/gopls" = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
-"npm:hunkdiff" = "latest"
 "npm:portless" = "latest"
 "npm:sfw" = "latest"
 bun = "latest"
