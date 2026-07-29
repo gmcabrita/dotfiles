@@ -11,7 +11,9 @@ function play(sound: string) {
 }
 
 function isMainInteractiveSession(ctx: ExtensionContext) {
-  // Skip print/json runs and most subagent/background runs
+  // The tmux subagent runs in TUI mode and starts an unparented session, so
+  // neither hasUI nor parentSession identifies it.
+  if (process.env.PI_TMUX_SUBAGENT_CHILD === "1") return false;
   if (!ctx.hasUI) return false;
 
   // Optional: also skip forked sessions

@@ -4,7 +4,7 @@ import type {
   ExtensionContext,
   ExtensionUIContext,
 } from "@earendil-works/pi-coding-agent";
-import type { OverlayHandle } from "@earendil-works/pi-tui";
+import type { KeyId, OverlayHandle } from "@earendil-works/pi-tui";
 import { buildSessionContext, ExtensionRunner } from "@earendil-works/pi-coding-agent";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import { FileActivityTracker } from "./file-activity-tracker.ts";
 import { SideChatOverlay, type ForkContext } from "./side-chat-overlay.ts";
 import { extractWritePaths } from "./tool-wrapper.ts";
+import { isKeyId } from "../shared/key-id.ts";
 
 // Patch to capture the runner instance for extension tool access in side chat.
 let capturedRunner: ExtensionRunner | null = null;
@@ -22,8 +23,10 @@ ExtensionRunner.prototype.getAllRegisteredTools = function () {
 };
 
 function getExtensionAgentTools(): AgentTool[] {
-  if (!capturedRunner) return [];
-  return capturedRunner.getAllRegisteredTools().map((rt): AgentTool => {
+  const runner = capturedRunner;
+  if (!runner) return [];
+
+  return runner.getAllRegisteredTools().map((rt): AgentTool => {
     const { definition } = rt;
     return {
       name: definition.name,
@@ -31,20 +34,24 @@ function getExtensionAgentTools(): AgentTool[] {
       description: definition.description,
       parameters: definition.parameters,
       execute: (toolCallId, params, signal, onUpdate) =>
-        definition.execute(toolCallId, params, signal, onUpdate, capturedRunner!.createContext()),
+        definition.execute(toolCallId, params, signal, onUpdate, runner.createContext()),
     };
   });
 }
 
-const DEFAULT_SHORTCUT = "ctrl+/";
+const DEFAULT_SHORTCUT: KeyId = "ctrl+/";
 const OVERLAY_BLOCKED_ERROR = "PI_SIDE_CHAT_OVERLAY_BLOCKED";
 
-function loadConfig(): { shortcut: string } {
+function loadConfig(): { shortcut: KeyId } {
   const configPath = join(dirname(fileURLToPath(import.meta.url)), "config.json");
   try {
-    const config = JSON.parse(readFileSync(configPath, "utf-8"));
+    const config: unknown = JSON.parse(readFileSync(configPath, "utf-8"));
+    if (typeof config !== "object" || config === null || !("shortcut" in config)) {
+      return { shortcut: DEFAULT_SHORTCUT };
+    }
+
     const shortcut = typeof config.shortcut === "string" ? config.shortcut.trim() : "";
-    return { shortcut: shortcut || DEFAULT_SHORTCUT };
+    return { shortcut: isKeyId(shortcut) ? shortcut : DEFAULT_SHORTCUT };
   } catch {
     return { shortcut: DEFAULT_SHORTCUT };
   }

@@ -6,12 +6,12 @@ import {
   createCodingTools,
   createReadOnlyTools,
   getSelectListTheme,
+  type ExtensionContext,
   type ModelRegistry,
-  type SessionManager,
   type Theme,
 } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { Editor, Key, matchesKey, truncateToWidth, visibleWidth, type Component, type Focusable, type TUI } from "@earendil-works/pi-tui";
+import { Editor, Key, matchesKey, truncateToWidth, visibleWidth, type Component, type Focusable, type KeyId, type TUI } from "@earendil-works/pi-tui";
 import type { FileActivityTracker } from "./file-activity-tracker.ts";
 import { SideChatMessages } from "./side-chat-messages.ts";
 import { wrapToolsWithOverlapDetection } from "./tool-wrapper.ts";
@@ -25,14 +25,16 @@ export interface ForkContext {
   extensionTools: AgentTool[];
 }
 
+type SideChatSessionManager = ExtensionContext["sessionManager"];
+
 interface SideChatOverlayOptions {
   tui: TUI;
   theme: Theme;
   forkContext: ForkContext;
   tracker: FileActivityTracker;
   modelRegistry: ModelRegistry;
-  sessionManager: SessionManager;
-  shortcut: string;
+  sessionManager: SideChatSessionManager;
+  shortcut: KeyId;
   onOverlapWarning: (path: string) => Promise<boolean>;
   onUnfocus: () => void;
   onClose: (action: "close" | "refork" | "clear", messages: AgentMessage[]) => void;
@@ -50,6 +52,10 @@ Use \`peek_main({ since_fork: true })\` for activity since side chat opened.
 Be concise - this is for quick questions. If user wants something main is doing, suggest waiting.`;
 
 const SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+const PeekMainParams = Type.Object({
+  lines: Type.Optional(Type.Integer({ description: "Max items (default: 20)", minimum: 1, maximum: 50 })),
+  since_fork: Type.Optional(Type.Boolean({ description: "Only show activity after side chat opened" })),
+});
 
 function mergeRecords<T>(base: Record<string, T> | undefined, override: Record<string, T> | undefined): Record<string, T> | undefined {
   return base || override ? { ...base, ...override } : undefined;
@@ -84,7 +90,7 @@ export class SideChatOverlay implements Component, Focusable {
   private _focused = true;
   private disposed = false;
   private forkLeafId: string | null;
-  private peekMainTool: AgentTool;
+  private peekMainTool: AgentTool<typeof PeekMainParams, undefined>;
   private spinnerInterval: NodeJS.Timeout | null = null;
   private spinnerFrame = 0;
 
@@ -118,16 +124,13 @@ export class SideChatOverlay implements Component, Focusable {
     this.editor.onSubmit = (text) => this.handleSubmit(text);
   }
 
-  private createPeekMainTool(sessionManager: SessionManager): AgentTool {
+  private createPeekMainTool(sessionManager: SideChatSessionManager): AgentTool<typeof PeekMainParams, undefined> {
     return {
       name: "peek_main",
       label: "peek_main",
       description: "View main agent's recent activity. Use when user asks about main's progress or status.",
-      parameters: Type.Object({
-        lines: Type.Optional(Type.Integer({ description: "Max items (default: 20)", minimum: 1, maximum: 50 })),
-        since_fork: Type.Optional(Type.Boolean({ description: "Only show activity after side chat opened" })),
-      }),
-      execute: async (_id, args: { lines?: number; since_fork?: boolean }) => {
+      parameters: PeekMainParams,
+      execute: async (_id, args) => {
         const entries = sessionManager.getEntries();
         const context = buildSessionContext(entries, sessionManager.getLeafId());
         let msgs = context.messages;
@@ -139,11 +142,17 @@ export class SideChatOverlay implements Component, Focusable {
 
         const recent = msgs.slice(-(args.lines ?? 20));
         if (!recent.length) {
-          return { content: [{ type: "text", text: args.since_fork ? "No new activity since fork." : "No recent activity." }] };
+          return {
+            content: [{ type: "text", text: args.since_fork ? "No new activity since fork." : "No recent activity." }],
+            details: undefined,
+          };
         }
 
         const formatted = recent.map((m) => this.formatMessage(m)).filter(Boolean).join("\n\n");
-        return { content: [{ type: "text", text: `Main agent activity (${recent.length} items):\n\n${formatted}` }] };
+        return {
+          content: [{ type: "text", text: `Main agent activity (${recent.length} items):\n\n${formatted}` }],
+          details: undefined,
+        };
       },
     };
   }
@@ -156,7 +165,7 @@ export class SideChatOverlay implements Component, Focusable {
     if (msg.role === "assistant") {
       const fullText = msg.content.filter((b) => b.type === "text").map((b) => b.text).join("\n");
       const text = fullText.slice(0, 500);
-      const tools = msg.content.filter((b) => b.type === "tool_call").map((t) => t.toolName);
+      const tools = msg.content.filter((b) => b.type === "toolCall").map((toolCall) => toolCall.name);
       const parts = [text && (text + (fullText.length > 500 ? "..." : "")), tools.length && `[Calling: ${tools.join(", ")}]`].filter(Boolean);
       return parts.length ? `[Assistant]: ${parts.join("\n")}` : "";
     }
@@ -245,13 +254,13 @@ export class SideChatOverlay implements Component, Focusable {
     const { theme, tracker } = this.options;
     const innerWidth = width - 4;
     const lines: string[] = [];
-    const borderColor = this._focused ? "border" : "borderMuted";
+    const borderColor: "border" | "borderMuted" = this._focused ? "border" : "borderMuted";
 
     const title = "Side Chat";
     const focusHint = this._focused ? "" : " (unfocused)";
     const mainLabel = tracker.writeCount ? `${tracker.writeCount} file${tracker.writeCount > 1 ? "s" : ""}` : "idle";
     const modeLabel = this.toolMode === "full" ? "Edit" : "Read-only";
-    const modeColor = this.toolMode === "full" ? "warning" : "dim";
+    const modeColor: "warning" | "dim" = this.toolMode === "full" ? "warning" : "dim";
     const status = theme.fg("dim", `[Main: ${mainLabel}] `) + theme.fg(modeColor, `[${modeLabel}]`);
     const stream = this.isStreaming ? theme.fg("warning", " ●") : "";
     const left = theme.fg(this._focused ? "accent" : "dim", title) + theme.fg("dim", focusHint) + stream;
@@ -287,7 +296,7 @@ export class SideChatOverlay implements Component, Focusable {
     return lines.map((l) => visibleWidth(l) > width ? truncateToWidth(l, width) : l);
   }
 
-  private frameLine(line: string, width: number, theme: Theme, borderColor: string): string {
+  private frameLine(line: string, width: number, theme: Theme, borderColor: "border" | "borderMuted"): string {
     return theme.fg(borderColor, "│ ") + truncateToWidth(line, width, "...", true) + theme.fg(borderColor, " │");
   }
 
@@ -309,7 +318,7 @@ export class SideChatOverlay implements Component, Focusable {
       const builtinTools = this.toolMode === "read-only"
         ? createReadOnlyTools(forkContext.cwd)
         : wrapToolsWithOverlapDetection(createCodingTools(forkContext.cwd), tracker, forkContext.cwd, onOverlapWarning);
-      this.agent.setTools([...builtinTools, ...forkContext.extensionTools, this.peekMainTool]);
+      this.agent.state.tools = [...builtinTools, ...forkContext.extensionTools, this.peekMainTool];
       this.options.tui.requestRender();
       return;
     }

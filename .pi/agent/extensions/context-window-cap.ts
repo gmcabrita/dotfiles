@@ -101,8 +101,8 @@ function patchRegistryRefresh(
   if (patchedRegistries.has(ctx.modelRegistry)) return;
 
   const refresh = ctx.modelRegistry.refresh.bind(ctx.modelRegistry);
-  ctx.modelRegistry.refresh = () => {
-    refresh();
+  ctx.modelRegistry.refresh = async () => {
+    await refresh();
     if (shouldCap()) {
       applyCap(ctx, getCap());
     }

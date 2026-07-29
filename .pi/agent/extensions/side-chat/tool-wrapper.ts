@@ -30,6 +30,7 @@ function wrapTool(
           if (!proceed) {
             return {
               content: [{ type: "text", text: `Skipped: ${path} (main agent has modified it)` }],
+              details: {},
             };
           }
         }
