@@ -27,5 +27,6 @@
   },
   "npmCommand": ["sfw", "npm"],
   "showCacheMissNotices": true,
-  "theme": "light"
+  "theme": "light",
+  "tuiMode": "fullscreen"
 }
