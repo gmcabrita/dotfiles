@@ -70,8 +70,7 @@ defaults write com.apple.dock autohide-delay -int 1000
 defaults write com.apple.dock autohide-time-modifier -float 0
 defaults write com.apple.dock expose-animation-duration -int 0
 defaults write com.apple.dock launchanim -bool false
-defaults write com.apple.dock launchanim -bool false
-defaults write com.apple.dock magnification -float 1
+defaults write com.apple.dock magnification -float 0
 defaults write com.apple.dock mineffect -string "scale"
 defaults write com.apple.dock missioncontrol-animation-duration -float 0
 defaults write com.apple.dock no-bouncing -bool true
@@ -83,6 +82,7 @@ defaults write com.apple.dock showMissionControlGestureEnabled -bool false
 defaults write com.apple.dock springboard-hide-duration -float 0
 defaults write com.apple.dock springboard-page-duration -float 0
 defaults write com.apple.dock springboard-show-duration -float 0
+defaults write com.apple.dock largesize -int 16
 defaults write com.apple.dock tilesize -int 128
 defaults write com.apple.Accessibility ReduceMotionEnabled -bool true
 defaults write com.apple.universalaccess reduceMotion -bool true
