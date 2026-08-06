@@ -32,6 +32,8 @@
   - Disable everything in Mission Control except:
     - Mission Control
     - Application windows
+  - Dock
+    - Disable "Turn Dock hiding on/off"
   - App Shortcuts
     - All Applications
       - Show Help Menu = `⇧ ⌘ /` (disabled?)
