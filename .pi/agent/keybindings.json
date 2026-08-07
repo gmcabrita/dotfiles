@@ -1,3 +1,5 @@
 {
-  "tui.editor.deleteWordBackward": ["ctrl+w", "alt+backspace", "ctrl+backspace"]
+  "tui.editor.deleteWordBackward": ["ctrl+w", "alt+backspace", "ctrl+backspace"],
+  "tui.altScreen.pageUp": "ctrl+pageUp",
+  "tui.altScreen.pageDown": "ctrl+pageDown"
 }
