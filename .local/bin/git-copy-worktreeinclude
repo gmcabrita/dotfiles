@@ -39,11 +39,8 @@ copy_include() {
 
     mkdir -p "$(dirname "$to")"
 
-    if [[ -d "$from" && ! -L "$from" ]]; then
-      rsync -a "$from/" "$to/"
-    else
-      rsync -a "$from" "$to"
-    fi
+    # clonefile(2) provides copy-on-write on APFS and falls back to a full copy.
+    cp -a -c "$from" "$to"
 
     echo "Copied $path"
   done < "$include"
