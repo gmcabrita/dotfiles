@@ -101,11 +101,12 @@ function patchRegistryRefresh(
   if (patchedRegistries.has(ctx.modelRegistry)) return;
 
   const refresh = ctx.modelRegistry.refresh.bind(ctx.modelRegistry);
-  ctx.modelRegistry.refresh = async () => {
-    await refresh();
+  ctx.modelRegistry.refresh = async (options) => {
+    const result = await refresh(options);
     if (shouldCap()) {
       applyCap(ctx, getCap());
     }
+    return result;
   };
 
   patchedRegistries.add(ctx.modelRegistry);
