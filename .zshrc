@@ -56,7 +56,11 @@ source ~/.zsh_cache/fzf-key-bindings.zsh
 
 #### History
 
-export HISTFILE=$HOME/.zsh_history
+HISTFILE=$HOME/.zsh_history
+# Remove the "export" flag from $HISTFILE so that even when zsh is started
+# with $HISTFILE in the environment variables, $HISTFILE=~/.zsh_history
+# will never end up in env (otherwise, a nested bash might clobber our history).
+typeset +x HISTFILE
 export HISTSIZE=10000000
 export SAVEHIST=10000000
 export HISTORY_IGNORE="(ls|cd|pwd|exit|cd|mv|rm)*"
