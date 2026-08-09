@@ -460,6 +460,7 @@ function update-everything() {
   rm -f ~/.cache/macos_sdk_path
 
   echo "Remember that these exist:"
+  echo "\tpdf2md           Convert PDF to Markdown"
   echo "\tdoggo            DNS Client"
   echo "\tgsa              Analyze the size of Go binaries"
   echo "\tmo               Deep clean and optimize your Mac"
@@ -474,6 +475,7 @@ function update-everything() {
   echo "\ttspin            Log file highlighter"
   echo "\tbenchmark-zsh    Benchmark ZSH startup"
   echo "\tprofile-zsh      Profile ZSH startup"
+  echo "\twitr             Understand why a process is running"
 }
 
 function nosleep() {
