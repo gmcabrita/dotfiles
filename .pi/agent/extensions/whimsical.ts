@@ -483,6 +483,7 @@ const messages = [
   "Liberating the lambdas...",
   "Lifting a pure value into the effectful world...",
   "Lighting candles for the flaky tests...",
+  "Load-bearing the seams...",
   "Lobbying the scheduler...",
   "Making friendship bracelets for the dependencies...",
   "Making illegal states unrepresentable...",
