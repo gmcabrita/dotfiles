@@ -3,6 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "test:firecrawl-auth": "node --experimental-strip-types --test tests/firecrawl-auth.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
