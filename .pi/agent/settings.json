@@ -1,5 +1,9 @@
 {
-  "packages": ["git:github.com/dmmulroy/pi-mcp", "npm:pi-anthropic-oauth"],
+  "packages": [
+    "git:github.com/dmmulroy/pi-mcp",
+    "npm:pi-anthropic-oauth",
+    "npm:@narumitw/pi-firecrawl"
+  ],
   "startup": {
     "model": "gpt-5.6-sol",
     "provider": "openai-codex-lb",
