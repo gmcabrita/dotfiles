@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "test:firecrawl-auth": "node --experimental-strip-types --test tests/firecrawl-auth.test.ts",
+    "test:openai-codex-compaction": "node --experimental-strip-types --test extensions/openai-codex-compaction/openai-codex-compaction.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
