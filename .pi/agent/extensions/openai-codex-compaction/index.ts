@@ -191,18 +191,28 @@ export default function openAICodexCompactionExtension(pi: ExtensionAPI) {
     ]);
 
     if (remoteResult.status !== "fulfilled") {
-      if (localResult.status === "fulfilled") {
-        return { compaction: localResult.value };
-      }
+      const reason =
+        remoteResult.reason instanceof Error
+          ? remoteResult.reason.message
+          : String(remoteResult.reason);
       if (!event.signal.aborted && ctx.hasUI) {
-        const reason =
-          remoteResult.reason instanceof Error
-            ? remoteResult.reason.message
-            : String(remoteResult.reason);
         ctx.ui.notify(
-          `OpenAI Codex remote compaction failed. Pi will use default compaction. ${reason}`,
+          `OpenAI Codex remote compaction failed. Pi will use local compaction. ${reason}`,
           "warning",
         );
+      }
+      if (localResult.status === "fulfilled") {
+        return {
+          compaction: {
+            ...localResult.value,
+            details: {
+              ...(localResult.value.details === undefined
+                ? {}
+                : { localSummaryDetails: localResult.value.details }),
+              remoteCompactionError: reason,
+            },
+          },
+        };
       }
       return;
     }

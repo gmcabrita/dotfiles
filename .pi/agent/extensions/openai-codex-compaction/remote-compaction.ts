@@ -130,6 +130,11 @@ export function remoteCompactionV2EndpointUrl(model: Model<any>): string {
     throw new Error("OpenAI Codex LB remote compaction requires the model's LB base URL.");
   }
   const baseUrl = normalizeBaseUrl(configuredBaseUrl, "https://chatgpt.com/backend-api");
+  if (isOpenAICodexLbModel(model)) {
+    if (baseUrl.endsWith("/codex/responses")) return `${baseUrl}/compact`;
+    if (baseUrl.endsWith("/codex")) return `${baseUrl}/responses/compact`;
+    return `${baseUrl}/codex/responses/compact`;
+  }
   if (baseUrl.endsWith("/codex/responses")) return baseUrl;
   if (baseUrl.endsWith("/codex")) return `${baseUrl}/responses`;
   return `${baseUrl}/codex/responses`;
@@ -823,18 +828,27 @@ export function buildRemoteCompactionRequestBody(params: {
   text?: ResponsesTextConfig;
   sessionId?: string;
 }): Record<string, unknown> {
-  return {
+  const common = {
     model: params.model.id,
+    instructions: params.instructions ?? "",
+    store: false,
+    ...(params.sessionId ? { prompt_cache_key: params.sessionId } : {}),
+    ...(params.reasoning ? { reasoning: params.reasoning } : {}),
+  };
+  if (isOpenAICodexLbModel(params.model)) {
+    return {
+      ...common,
+      input: params.input,
+    };
+  }
+  return {
+    ...common,
     input: [...params.input, { type: "compaction_trigger" }],
-    instructions: params.instructions,
     tools: params.tools,
     parallel_tool_calls: params.parallelToolCalls,
     tool_choice: "auto",
     stream: true,
-    store: false,
     include: ["reasoning.encrypted_content"],
-    ...(params.sessionId ? { prompt_cache_key: params.sessionId } : {}),
-    ...(params.reasoning ? { reasoning: params.reasoning } : {}),
     ...(params.text ? { text: params.text } : {}),
   };
 }
@@ -903,6 +917,32 @@ export function parseRemoteCompactionV2Events(events: unknown[]): RemoteCompacti
   return { compactionItem: compactionItems[0], usage };
 }
 
+function parseRemoteCompactionResponse(value: unknown): RemoteCompactionV2Events {
+  if (!isRecord(value)) {
+    throw new Error("OpenAI remote compaction v2 returned an invalid response.");
+  }
+  const error = isRecord(value.error) ? value.error : undefined;
+  if (error) {
+    const message = typeof error.message === "string" ? error.message : "Unknown Responses API error";
+    throw new Error(`OpenAI remote compaction v2 failed: ${message}`);
+  }
+  const output = Array.isArray(value.output) ? value.output : [];
+  const compactionItems = output.flatMap((item): ResponseItem[] => {
+    if (!isResponseItem(item)) return [];
+    if (item.type === "compaction") return [item];
+    if (item.type === "compaction_summary" && typeof item.encrypted_content === "string") {
+      return [{ ...item, type: "compaction" }];
+    }
+    return [];
+  });
+  if (compactionItems.length !== 1) {
+    throw new Error(
+      `OpenAI remote compaction v2 expected exactly one compaction item, got ${compactionItems.length}.`,
+    );
+  }
+  return { compactionItem: compactionItems[0], usage: value.usage };
+}
+
 export async function callRemoteCompactionEndpoint(params: {
   model: Model<any>;
   apiKey: string;
@@ -946,8 +986,9 @@ export async function callRemoteCompactionEndpoint(params: {
     throw new Error(`OpenAI remote compaction v2 failed (${response.status}): ${text || response.statusText}`);
   }
 
-  const responseText = await response.text();
-  const parsed = parseRemoteCompactionV2Events(parseSseData(responseText));
+  const parsed = isOpenAICodexLbModel(params.model)
+    ? parseRemoteCompactionResponse(await response.json())
+    : parseRemoteCompactionV2Events(parseSseData(await response.text()));
   return {
     output: buildRemoteCompactionV2History(params.input, parsed.compactionItem),
     usage: extractRemoteCompactionUsage(params.model, parsed.usage),

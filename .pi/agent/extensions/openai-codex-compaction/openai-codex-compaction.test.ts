@@ -65,6 +65,10 @@ test("uses Codex response routes and provider-specific account headers", () => {
     remoteCompactionV2EndpointUrl(codexModel),
     "https://chatgpt.com/backend-api/codex/responses",
   );
+  assert.equal(
+    remoteCompactionV2EndpointUrl(lbModel),
+    "http://127.0.0.1/backend-api/codex/responses/compact",
+  );
 
   const jwtPayload = Buffer.from(
     JSON.stringify({
@@ -158,29 +162,22 @@ test("replaces normal Codex history only after remote compaction", () => {
 });
 
 let port = 0;
+let requestPath: string | undefined;
 let requestBody: Record<string, unknown> | undefined;
 let requestHeaders: Record<string, string | string[] | undefined> | undefined;
 const server = createServer(async (request, response) => {
+  requestPath = request.url;
   requestHeaders = request.headers;
   const chunks: Buffer[] = [];
   for await (const chunk of request) chunks.push(Buffer.from(chunk));
   requestBody = JSON.parse(Buffer.concat(chunks).toString("utf8")) as Record<string, unknown>;
 
-  response.writeHead(200, { "content-type": "text/event-stream" });
-  response.end(
-    [
-      `data: ${JSON.stringify({
-        type: "response.output_item.done",
-        item: { type: "compaction", encrypted_content: "opaque" },
-      })}`,
-      `data: ${JSON.stringify({
-        type: "response.completed",
-        response: { usage: { input_tokens: 10, output_tokens: 2, total_tokens: 12 } },
-      })}`,
-      "data: [DONE]",
-      "",
-    ].join("\n\n"),
-  );
+  response.writeHead(200, { "content-type": "application/json" });
+  response.end(JSON.stringify({
+    object: "response.compaction",
+    output: [{ type: "compaction_summary", encrypted_content: "opaque" }],
+    usage: { input_tokens: 10, output_tokens: 2, total_tokens: 12 },
+  }));
 });
 
 before(async () => {
@@ -228,9 +225,12 @@ test("calls remote compaction for openai-codex-lb without ChatGPT account auth",
     parallelToolCalls: true,
   });
 
+  assert.equal(requestPath, "/backend-api/codex/responses/compact");
   assert.equal(requestHeaders?.authorization, "Bearer sk-clb-test");
   assert.equal(requestHeaders?.["chatgpt-account-id"], undefined);
-  assert.deepEqual(requestBody?.input, [...input, { type: "compaction_trigger" }]);
+  assert.deepEqual(requestBody?.input, input);
+  assert.equal(requestBody?.stream, undefined);
+  assert.equal(requestBody?.tools, undefined);
   assert.equal(requestBody?.store, false);
   assert.equal(result.output.at(-1)?.type, "compaction");
   assert.equal(result.usage?.totalTokens, 12);
