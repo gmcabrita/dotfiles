@@ -2,7 +2,7 @@
 set -e
 
 REPO_URL="https://github.com/JetBrains/go-modern-guidelines.git"
-SKILLS_PATH="claude/modern-go-guidelines/skills"
+SKILLS_PATH="plugin/skills"
 TARGET_DIR="$(git rev-parse --show-toplevel)/.agents/skills"
 
 # Clone to temp directory
