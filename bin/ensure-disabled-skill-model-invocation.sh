@@ -7,6 +7,7 @@ DISABLED_SKILLS=(
   "fix-merge-conflicts"
   "gh-stack"
   "hegel"
+  "show-me"
   "thermo-nuclear-code-quality-review"
   "weekly-review"
   "what-did-i-get-done"
