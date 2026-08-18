@@ -162,6 +162,7 @@
     "sql": true,
     "toml": true,
     "xml": true,
+    "zig": true,
   },
   "file_types": {
     "Just": ["Justfile"],
