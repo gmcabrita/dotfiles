@@ -1,7 +1,7 @@
 /**
  * /session-breakdown
  *
- * Interactive TUI that analyzes ~/.pi/agent/sessions (recursively, *.jsonl) and shows
+ * Interactive TUI that analyzes standard and subagent sessions (recursively, *.jsonl) and shows
  * last 7/30/90 days of:
  * - sessions/day
  * - messages/day
@@ -209,7 +209,10 @@ interface BreakdownData {
 	};
 }
 
-const SESSION_ROOT = path.join(os.homedir(), ".pi", "agent", "sessions");
+const SESSION_ROOTS = [
+	path.join(os.homedir(), ".pi", "agent", "sessions"),
+	path.join(os.homedir(), ".pi", "agent", "tmux-subagents"),
+] as const;
 const RANGE_DAYS = [7, 30, 90] as const;
 
 type MeasurementMode = "sessions" | "messages" | "tokens";
@@ -494,13 +497,13 @@ function extractTokensTotal(usage: any): number {
 }
 
 async function walkSessionFiles(
-	root: string,
+	roots: readonly string[],
 	startCutoffLocal: Date,
 	signal?: AbortSignal,
 	onFound?: (found: number) => void,
 ): Promise<string[]> {
 	const out: string[] = [];
-	const stack: string[] = [root];
+	const stack: string[] = [...roots];
 	while (stack.length) {
 		if (signal?.aborted) break;
 		const dir = stack.pop()!;
@@ -1405,7 +1408,7 @@ async function computeBreakdown(
 
 	onProgress?.({ phase: "scan", foundFiles: 0, parsedFiles: 0, totalFiles: 0, currentFile: undefined });
 
-	const candidates = await walkSessionFiles(SESSION_ROOT, start90, signal, (found) => {
+	const candidates = await walkSessionFiles(SESSION_ROOTS, start90, signal, (found) => {
 		onProgress?.({ phase: "scan", foundFiles: found });
 	});
 
@@ -1717,7 +1720,7 @@ class BreakdownComponent implements Component {
 
 export default function sessionBreakdownExtension(pi: ExtensionAPI) {
 	pi.registerCommand("session-breakdown", {
-		description: "Interactive breakdown of last 7/30/90 days of ~/.pi session usage (sessions/messages/tokens + cost by model)",
+		description: "Interactive breakdown of last 7/30/90 days of ~/.pi session and subagent usage (sessions/messages/tokens + cost by model)",
 		handler: async (_args, ctx: ExtensionContext) => {
 			if (!ctx.hasUI) {
 				// Non-interactive fallback: just notify.
