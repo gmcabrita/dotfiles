@@ -5,8 +5,6 @@ tap "ramonvermeulen/whosthere", trusted: true
 tap "tw93/tap", trusted: true
 tap "wader/tap", trusted: true
 
-# Uncomment Raycast once Raycast Beta is no longer in beta
-# cask "raycast"
 brew "age"
 brew "asciinema"
 brew "ast-grep"
@@ -124,6 +122,7 @@ cask "NetNewsWire"
 cask "openvpn-connect"
 cask "orbstack"
 cask "ramonvermeulen/whosthere/whosthere"
+cask "raycast"
 cask "setapp"
 cask "slack"
 cask "the-unarchiver"
