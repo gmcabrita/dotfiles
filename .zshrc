@@ -460,6 +460,7 @@ function update-everything() {
   pi update --models || true
   pi-update-ext
   rm -f ~/.cache/macos_sdk_path
+  rm -f "$HOME/.zcompdump" "$HOME/.zcompdump.zwc"
 
   echo "Remember that these exist:"
   echo "\tpdf2md           Convert PDF to Markdown"
