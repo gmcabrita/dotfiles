@@ -11,6 +11,9 @@ ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/iCloud Drive"
 # Brew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
+# mise
+/bin/bash -c "$(curl -fsSL https://mise.run)"
+
 # Rosetta
 /usr/sbin/softwareupdate --install-rosetta --agree-to-license
 

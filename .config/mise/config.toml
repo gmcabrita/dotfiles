@@ -49,6 +49,7 @@ zls = "latest"
 idiomatic_version_file_enable_tools = ["rust", "go"]
 minimum_release_age = "12h"
 experimental = true
+auto_update = true
 
 [settings.status]
 show_tools = true

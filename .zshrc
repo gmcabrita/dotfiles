@@ -370,6 +370,7 @@ function update-programming-languages() {
   GITHUB_TOKEN=$(gh auth token) || return
   export GITHUB_TOKEN
 
+  mise self-update
   mise cache clear
   mise plugins up
   mise up --bump
