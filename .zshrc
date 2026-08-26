@@ -476,7 +476,7 @@ function update-everything() {
   echo "\tt                Time program (Clocks, RSS, Context Switches)"
   echo "\tgt               Time program (Clocks, RSS, Context Switches), uses gnutime"
   echo "\ttspin            Log file highlighter"
-  echo "\ttrippy           Network diagnostic tool"
+  echo "\ttrip             Network diagnostic tool"
   echo "\tgping            Ping, but with a graph"
   echo "\tbenchmark-zsh    Benchmark ZSH startup"
   echo "\tprofile-zsh      Profile ZSH startup"
