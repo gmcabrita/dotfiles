@@ -162,6 +162,9 @@
   uncommit = reset --soft HEAD^
   undo = reset HEAD~
 
+  create-repo = "!f() { gh repo create --private \"$(basename $PWD)\" --source=. --remote=origin --push; }; f"
+  create-public-repo = "!f() { gh repo create --public \"$(basename $PWD)\" --source=. --remote=origin --push; }; f"
+
   cleanup = "!f() { git remote prune origin; git for-each-ref --format '%(refname:short)' 'refs/heads' | grep -v \"master\\|main\\|develop\" | xargs git branch -D; }; f"
 
   gcaf = gc --aggressive --prune=now
