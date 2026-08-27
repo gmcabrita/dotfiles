@@ -10,6 +10,7 @@
 "cargo:hurlfmt" = "latest"
 "cargo:oha" = "latest"
 "cargo:pdf-inspector" = "latest"
+"cargo:ree-cli" = "latest"
 "cargo:rustdoc-text" = "latest"
 "github:lexiforest/curl-impersonate" = { version = "latest", prerelease = true }
 "github:qbdi/qbdi" = "latest"
