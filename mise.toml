@@ -28,6 +28,8 @@ sfw pnpm update --prefix .pi/agent --latest &
 pids="$!"
 ./bin/update-chrome-cdp-skills.sh &
 pids="$pids $!"
+./bin/update-cloudflare-skills.sh &
+pids="$pids $!"
 ./bin/update-hegel-skills.sh &
 pids="$pids $!"
 ./bin/update-humanlayer-skills.sh &
