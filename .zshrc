@@ -780,4 +780,12 @@ function ca() {
   codex app "$@"
 }
 
+function reset() {
+  ree
+}
+
+function rst() {
+  ree
+}
+
 [[ $ZPROF == 1 ]] && zprof
