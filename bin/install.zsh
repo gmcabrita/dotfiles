@@ -226,8 +226,6 @@ HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
 "$HOMEBREW_PREFIX/opt/fzf/install"
 
 # Programming language stuff
-mise plugin install pnpm
-mise plugin install odin
 mise settings add idiomatic_version_file_enable_tools rust
 mise settings set python.uv_venv_auto true
 mise settings set npm.package_manager pnpm
