@@ -18,12 +18,8 @@ install_skills cursor/plugins \
   --skill what-did-i-get-done
 install_skills github/gh-stack \
   --skill gh-stack
-install_skills hegeldev/hegel-skill \
-  --skill hegel
 install_skills humanlayer/skills \
   --skill show-me
-install_skills JetBrains/go-modern-guidelines \
-  --skill use-modern-go
 install_skills mitsuhiko/agent-stuff \
   --skill librarian \
   --skill uv
