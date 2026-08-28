@@ -30,12 +30,6 @@ rsync -a ".ssh/" "$HOME/.ssh/"
 mkdir -p "$HOME/.agents/skills"
 rsync -a --delete ".agents/skills/" "$HOME/.agents/skills/"
 
-mkdir -p "$HOME/.codex"
-rsync -a ".codex/" "$HOME/.codex/"
-
-mkdir -p "$HOME/.claude"
-rsync -a ".claude/" "$HOME/.claude/"
-
 mkdir -p "$HOME/.codiff"
 rsync -a ".codiff/" "$HOME/.codiff/"
 
