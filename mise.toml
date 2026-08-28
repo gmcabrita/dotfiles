@@ -26,7 +26,7 @@ description = "Update dependencies, skills, and extensions"
 run = '''
 sfw pnpm update --prefix .pi/agent --latest &
 pids="$!"
-./bin/update-agent-skills.sh &
+DISABLE_TELEMETRY=1 skills update --project --yes &
 pids="$pids $!"
 status=0
 for pid in $pids; do
