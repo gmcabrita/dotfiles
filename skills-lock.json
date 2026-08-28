@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "skills": {
+    "chrome-cdp": {
+      "source": "pasky/chrome-cdp-skill",
+      "sourceType": "github",
+      "skillPath": "skills/chrome-cdp/SKILL.md",
+      "computedHash": "d9a2a1ff8b0df2a381a0ae630af0bfbc0bf642132d49aead946cf3724ecf5cb4"
+    },
+    "fix-merge-conflicts": {
+      "source": "cursor/plugins",
+      "sourceType": "github",
+      "skillPath": "cursor-team-kit/skills/fix-merge-conflicts/SKILL.md",
+      "computedHash": "8404e1b711c7da7a35049ecb6e722af7da64af849ff61d6b1ebcaac046f3f35e"
+    },
+    "gh-stack": {
+      "source": "github/gh-stack",
+      "sourceType": "github",
+      "skillPath": "skills/gh-stack/SKILL.md",
+      "computedHash": "28d42250d52f33424b807add6fbdec75736e835f98752311db321ab51733fea6"
+    },
+    "hegel": {
+      "source": "hegeldev/hegel-skill",
+      "sourceType": "github",
+      "skillPath": "skills/hegel/SKILL.md",
+      "computedHash": "910eaf31932ca55a8370e88939db01f57880582bfa3928d0c4d4a44f097e204d"
+    },
+    "librarian": {
+      "source": "mitsuhiko/agent-stuff",
+      "sourceType": "github",
+      "skillPath": "skills/librarian/SKILL.md",
+      "computedHash": "7a280f1415ae063f089fd1cf0d1208a549565098c94b85a325988e07511a9c99"
+    },
+    "show-me": {
+      "source": "humanlayer/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/show-me/skills/show-me/SKILL.md",
+      "computedHash": "de32a72f802801f08a84641b467f2c6306d35a58ce5e59ea607ac3a993a18c91"
+    },
+    "thermo-nuclear-code-quality-review": {
+      "source": "cursor/plugins",
+      "sourceType": "github",
+      "skillPath": "cursor-team-kit/skills/thermo-nuclear-code-quality-review/SKILL.md",
+      "computedHash": "9052b01b46b1d8dbf94c45f9313ec1983443f9a460e83d49cdc7fe0f640ca476"
+    },
+    "use-modern-go": {
+      "source": "JetBrains/go-modern-guidelines",
+      "sourceType": "github",
+      "skillPath": "plugin/skills/use-modern-go/SKILL.md",
+      "computedHash": "a965eabdf8e51c4cab6fcd08d6a7711176ac60c55a458d57f95df7115e93a6cb"
+    },
+    "uv": {
+      "source": "mitsuhiko/agent-stuff",
+      "sourceType": "github",
+      "skillPath": "skills/uv/SKILL.md",
+      "computedHash": "06312b169342bcb29085065db174b1579fe7d3f5d5e58138ea01edb4bb997df4"
+    },
+    "weekly-review": {
+      "source": "cursor/plugins",
+      "sourceType": "github",
+      "skillPath": "cursor-team-kit/skills/weekly-review/SKILL.md",
+      "computedHash": "44758e8294c79fc6906253b319a18fb76e318fd2c99d697b39b94848cc8494da"
+    },
+    "what-did-i-get-done": {
+      "source": "cursor/plugins",
+      "sourceType": "github",
+      "skillPath": "cursor-team-kit/skills/what-did-i-get-done/SKILL.md",
+      "computedHash": "c2b206c90991d42a771bb5250fabe2a0b4e9a5ffb5b59856512ebbcdb4e43be9"
+    }
+  }
+}

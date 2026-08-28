@@ -26,17 +26,9 @@ description = "Update dependencies, skills, and extensions"
 run = '''
 sfw pnpm update --prefix .pi/agent --latest &
 pids="$!"
-./bin/update-chrome-cdp-skills.sh &
+./bin/update-agent-skills.sh &
 pids="$pids $!"
-./bin/update-hegel-skills.sh &
-pids="$pids $!"
-./bin/update-humanlayer-skills.sh &
-pids="$pids $!"
-./bin/update-cursor-skills.sh &
-pids="$pids $!"
-./bin/update-mitsuhiko-skills-and-pi-extensions.sh &
-pids="$pids $!"
-./bin/update-modern-go-skills.sh &
+./bin/update-mitsuhiko-pi-extensions.sh &
 pids="$pids $!"
 ./bin/update-pi-autoresearch-skills-and-extensions.sh &
 pids="$pids $!"

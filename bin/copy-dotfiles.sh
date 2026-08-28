@@ -27,8 +27,8 @@ rsync -a ".local/" "$HOME/.local/"
 mkdir -p "$HOME/.ssh"
 rsync -a ".ssh/" "$HOME/.ssh/"
 
-mkdir -p "$HOME/.agents"
-rsync -a ".agents/" "$HOME/.agents/"
+mkdir -p "$HOME/.agents/skills"
+rsync -a --delete ".agents/skills/" "$HOME/.agents/skills/"
 
 mkdir -p "$HOME/.codex"
 rsync -a ".codex/" "$HOME/.codex/"

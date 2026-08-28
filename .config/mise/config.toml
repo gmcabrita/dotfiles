@@ -16,6 +16,7 @@
 "github:qbdi/qbdi" = "latest"
 "go:golang.org/x/tools/gopls" = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
+"npm:skills" = "latest"
 "npm:portless" = "latest"
 "npm:sfw" = "latest"
 bun = "latest"
