@@ -28,10 +28,6 @@ sfw pnpm update --prefix .pi/agent --latest &
 pids="$!"
 ./bin/update-agent-skills.sh &
 pids="$pids $!"
-./bin/update-mitsuhiko-pi-extensions.sh &
-pids="$pids $!"
-./bin/update-pi-autoresearch-skills-and-extensions.sh &
-pids="$pids $!"
 status=0
 for pid in $pids; do
   wait "$pid" || status=1

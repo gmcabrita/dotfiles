@@ -48,6 +48,9 @@ if [ ! -f "$HOME/.pi/agent/auth.json" ]; then
 else
   rsync -a --exclude "agent/auth.json" ".pi/" "$HOME/.pi/"
 fi
+mkdir -p "$HOME/.pi/agent/extensions" "$HOME/.pi/agent/skills"
+rsync -a --delete ".pi/agent/extensions/" "$HOME/.pi/agent/extensions/"
+rsync -a --delete ".pi/agent/skills/" "$HOME/.pi/agent/skills/"
 cp .AGENTS.md "$HOME/.pi/agent/AGENTS.md"
 
 mkdir -p "$HOME/.raycast-scripts"
