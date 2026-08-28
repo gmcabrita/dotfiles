@@ -3,16 +3,6 @@
     "git:github.com/dmmulroy/pi-mcp",
     "npm:pi-anthropic-oauth",
     "npm:@narumitw/pi-firecrawl",
-    {
-      "source": "git:github.com/mitsuhiko/agent-stuff",
-      "extensions": [
-        "extensions/subagent.ts",
-        "extensions/todos.ts"
-      ],
-      "skills": [],
-      "prompts": [],
-      "themes": []
-    },
     "npm:pi-autoresearch"
   ],
   "startup": {
