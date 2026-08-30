@@ -49,10 +49,10 @@
   - Window Tiling
     - Disable "Tiled windows have margins"
 - Change DNS
-  - 8.8.8.8
-  - 8.8.4.4
-  - 2001:4860:4860::8888
-  - 2001:4860:4860::8844
+  - 1.1.1.2
+  - 1.0.0.2
+  - 2606:4700:4700::1112
+  - 2606:4700:4700::1002
 - Wallpaper:
   - Custom color: #000000
 - `./install.zsh`
