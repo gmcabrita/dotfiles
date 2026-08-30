@@ -133,6 +133,9 @@
   - `gh repo set-default`
   - `git pull origin`
   - `zig build install -Doptimize=ReleaseFast --prefix $HOME/.local`
+- https://github.com/rockorager/ziglint
+  - `gh repo clone rockorager/ziglint`
+  - `zig build install -Doptimize=ReleaseFast --prefix $HOME/.local`
 - Balance Lock
 - App Store
   - https://apps.apple.com/pt/app/actions/id1586435171
