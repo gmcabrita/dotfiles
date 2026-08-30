@@ -14,6 +14,8 @@
 "cargo:rustdoc-text" = "latest"
 "github:lexiforest/curl-impersonate" = { version = "latest", prerelease = true }
 "github:qbdi/qbdi" = "latest"
+"github:rockorager/zigdoc" = "latest"
+"github:rockorager/ziglint" = "latest"
 "go:golang.org/x/tools/gopls" = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
 "npm:skills" = "latest"
