@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -ne 0 ]]; then
+  echo "Usage: go-init" >&2
+  exit 64
+fi
+
+for command_name in go gum skills; do
+  if ! command -v "$command_name" >/dev/null 2>&1; then
+    echo "go-init: required command not found: $command_name" >&2
+    exit 69
+  fi
+done
+
+for path in go.mod AGENTS.md mise.toml; do
+  if [[ -e "$path" ]]; then
+    echo "go-init: file already exists: $path" >&2
+    exit 73
+  fi
+done
+
+default_module_path="github.com/gmcabrita/$(basename "$PWD")"
+module_path=$(gum input --prompt "Repository: " --value "$default_module_path")
+if [[ -z "$module_path" ]]; then
+  echo "go-init: repository cannot be empty" >&2
+  exit 64
+fi
+
+go mod init "$module_path"
+
+go get -tool \
+  github.com/kisielk/errcheck@latest \
+  golang.org/x/tools/cmd/goimports@latest \
+  golang.org/x/vuln/cmd/govulncheck@latest \
+  honnef.co/go/tools/cmd/staticcheck@latest \
+  mvdan.cc/gofumpt@latest
+
+gitignore_entries=(
+  '*.test'
+  '.DS_Store'
+  '.hegel/'
+  '.pi/'
+  'dist/'
+  'coverage.txt'
+)
+for entry in "${gitignore_entries[@]}"; do
+  if grep -Fqx -- "$entry" .gitignore 2>/dev/null; then
+    continue
+  fi
+  if [[ -s .gitignore && -n $(tail -c 1 .gitignore) ]]; then
+    printf '\n' >>.gitignore
+  fi
+  printf '%s\n' "$entry" >>.gitignore
+done
+
+cat >AGENTS.md <<'EOF'
+- Use `gopls` for finding APIs or callers
+- Use `godoc` for browsing documentation
+EOF
+
+cat >mise.toml <<'EOF'
+[tools]
+"npm:skills" = "latest"
+
+[tasks.update]
+description = "Update direct dependencies"
+run = [
+  "skills update --project --yes",
+  "go get $(go list -m -f '{{if and (not .Main) (not .Indirect)}}{{.Path}}@latest{{end}}' all)",
+  "go mod tidy",
+  "mise run check",
+]
+
+[tasks.fmt]
+description = "Format Go files"
+run = [
+  "find . -name '*.go' -print0 | xargs -0 go tool goimports -w",
+  "find . -name '*.go' -print0 | xargs -0 go tool gofumpt -w",
+]
+
+[tasks.lint]
+description = "Run Go linters"
+run = [
+  "test -z \"$(find . -name '*.go' -print0 | xargs -0 go tool goimports -l)\"",
+  "test -z \"$(find . -name '*.go' -print0 | xargs -0 go tool gofumpt -l)\"",
+  "go vet ./...",
+  "go tool govulncheck ./...",
+  "go tool staticcheck ./...",
+  "go tool errcheck ./...",
+]
+
+[tasks.test]
+description = "Run tests"
+run = "go test -race ./..."
+
+[tasks.build]
+description = "Build packages"
+run = "go build ./..."
+
+[tasks.check]
+description = "Lint and test"
+run = [
+  "mise run lint",
+  "mise run test",
+]
+EOF
+
+skills add JetBrains/go-modern-guidelines --skill use-modern-go --agent universal --yes
