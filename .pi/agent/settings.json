@@ -20,7 +20,8 @@
     "openrouter/deepseek/deepseek-v4-pro",
     "openrouter/deepseek/deepseek-v4-flash",
     "openrouter/moonshotai/kimi-k3",
-    "openrouter/z-ai/glm-5.3"
+    "openrouter/z-ai/glm-5.3",
+    "opencode/muse-spark-1.3-contributor-free"
   ],
   "enableInstallTelemetry": false,
   "hideThinkingBlock": true,
