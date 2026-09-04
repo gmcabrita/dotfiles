@@ -72,10 +72,11 @@
   },
   "terminal": {
     "font_weight": 400.0,
-    "button": true,
+    "button": false,
     "dock": "right",
     "cursor_shape": "block",
     "blinking": "off",
+    "copy_on_select": true,
     "font_family": "JetBrains Mono NL",
     "font_size": 17.0,
   },

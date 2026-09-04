@@ -7,7 +7,6 @@ tap "tw93/tap", trusted: true
 tap "wader/tap", trusted: true
 
 brew "age"
-brew "anomalyco/tap/opencode"
 brew "asciinema"
 brew "ast-grep"
 brew "autoconf"
