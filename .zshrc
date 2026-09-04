@@ -383,9 +383,11 @@ function update-programming-languages() {
   rm -rf "$HOME/Library/Application Support/Zed/extensions/work/elixir"/expert-*(N)
 
   EDITOR_APP_ID="dev.zed.Zed"
+  # These don't work at this time:
+  # jsx jsonc go rs kt cs scss zig ex exs heex
   for ext in \
-    rb py js jsx ts tsx json jsonc yml yaml toml go rs java kt swift \
-    c h cc cpp cxx m mm cs php css scss md sh bash zsh sql xml zig ex exs heex
+    rb py js ts tsx json yml yaml toml java swift \
+    c h cc cpp cxx m mm php css md sh bash zsh sql xml
   do
     duti -s "$EDITOR_APP_ID" ".$ext" all
   done
@@ -407,6 +409,8 @@ function update-programming-languages() {
   do
     duti -s "$EDITOR_APP_ID" "$uti" all
   done
+
+  duti -s com.mitchellh.ghostty public.unix-executable all
 }
 
 function timestamps() {
