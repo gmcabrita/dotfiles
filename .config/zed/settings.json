@@ -7,12 +7,16 @@
 // custom settings, run the `open default settings` command
 // from the command palette or from `Zed` application menu.
 {
+  "debugger": {
+    "button": false,
+  },
   "search": {
     "button": false,
   },
   "diff_view_style": "unified",
   "git_panel": {
     "group_by": "staging",
+    "dock": "left",
   },
   "agent_ui_font_size": 17.0,
   "cli_default_open_behavior": "new_window",
