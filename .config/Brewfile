@@ -1,3 +1,4 @@
+tap "anomalyco/tap", trusted: true
 tap "blacktop/tap", trusted: true
 tap "lightpanda-io/browser", trusted: true
 tap "orlangure/tap", trusted: true
@@ -108,13 +109,13 @@ brew "zsh"
 brew "zstd"
 cask "1password"
 cask "1password-cli"
+cask "anomalyco/tap/hex"
 cask "balance-lock"
 cask "font-input"
 cask "font-inter"
 cask "font-jetbrains-mono"
 cask "gcloud-cli"
 cask "ghostty"
-cask "handy"
 cask "helium-browser"
 cask "httpie-desktop"
 cask "modern-csv"
