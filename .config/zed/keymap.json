@@ -25,13 +25,8 @@
   {
     "context": "Workspace",
     "bindings": {
-      "ctrl-`": null, // "terminal_panel::Toggle",
+      // "ctrl-`": null, // "terminal_panel::Toggle",
       "cmd-shift-b": null, // "outline_panel::ToggleFocus"
-    },
-  },
-  {
-    "unbind": {
-      "cmd-m": "zed::Minimize",
     },
   },
   {
@@ -41,7 +36,18 @@
     },
   },
   {
+    "context": "Terminal",
     "unbind": {
+      "cmd-shift-t": "pane::ReopenClosedItem",
+    },
+    "bindings": {
+      "cmd-m": "workspace::ToggleZoom",
+      "cmd-t": "workspace::NewTerminal",
+    },
+  },
+  {
+    "unbind": {
+      "cmd-m": "zed::Minimize",
       "shift-escape": "workspace::ToggleZoom",
     },
   },

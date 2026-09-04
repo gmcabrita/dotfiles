@@ -7,6 +7,9 @@
 // custom settings, run the `open default settings` command
 // from the command palette or from `Zed` application menu.
 {
+  "search": {
+    "button": false,
+  },
   "diff_view_style": "unified",
   "git_panel": {
     "group_by": "staging",
@@ -46,29 +49,31 @@
   "preview_tabs": {
     "enabled": false,
   },
+  "disable_ai": false,
   "extend_comment_on_newline": false,
   "agent": {
+    "enabled": false,
     "tool_permissions": {
       "default": "allow",
     },
     "button": false,
     "inline_assistant_model": {
       "provider": "openai",
-      "model": "gpt-5.5",
+      "model": "gpt-6-astra",
       "effort": "high",
       "speed": "fast",
     },
     "default_model": {
       "provider": "openai",
-      "model": "gpt-5.5",
+      "model": "gpt-6-astra",
       "effort": "high",
       "speed": "fast",
     },
   },
   "terminal": {
     "font_weight": 400.0,
-    "button": false,
-    "dock": "bottom",
+    "button": true,
+    "dock": "right",
     "cursor_shape": "block",
     "blinking": "off",
     "font_family": "JetBrains Mono NL",
