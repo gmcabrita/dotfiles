@@ -2,7 +2,6 @@
   "packages": [
     "git:github.com/dmmulroy/pi-mcp",
     "npm:@cortexkit/pi-anthropic-auth",
-    "npm:@narumitw/pi-firecrawl",
     "npm:pi-autoresearch"
   ],
   "startup": {
