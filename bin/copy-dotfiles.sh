@@ -42,9 +42,9 @@ if [ ! -f "$HOME/.pi/agent/auth.json" ]; then
 else
   rsync -a --exclude "agent/auth.json" ".pi/" "$HOME/.pi/"
 fi
-mkdir -p "$HOME/.pi/agent/extensions" "$HOME/.pi/agent/commands" "$HOME/.pi/agent/skills"
+mkdir -p "$HOME/.pi/agent/extensions" "$HOME/.pi/agent/prompts" "$HOME/.pi/agent/skills"
 rsync -a --delete ".pi/agent/extensions/" "$HOME/.pi/agent/extensions/"
-rsync -a --delete ".pi/agent/commands/" "$HOME/.pi/agent/commands/"
+rsync -a --delete ".pi/agent/prompts/" "$HOME/.pi/agent/prompts/"
 rsync -a --delete ".pi/agent/skills/" "$HOME/.pi/agent/skills/"
 cp .AGENTS.md "$HOME/.pi/agent/AGENTS.md"
 
