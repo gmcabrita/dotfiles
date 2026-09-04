@@ -71,7 +71,7 @@ export function normalizeBaseUrl(value: string): string {
 /** Registers an isolated Codex adapter backed by codex-lb's API-key-authenticated Codex route. */
 export default async function openAICodexLbExtension(pi: ExtensionAPI) {
 	const adapterUrl = resolveCodexAdapterUrl();
-	const [adapter, models] = await Promise.all([
+	const [adapter, catalog] = await Promise.all([
 		loadOpenAICodexLbAdapter({ sourceUrl: adapterUrl }),
 		loadOpenAICodexModels(adapterUrl),
 	]);
@@ -82,9 +82,18 @@ export default async function openAICodexLbExtension(pi: ExtensionAPI) {
 		baseUrl,
 		apiKey: resolveApiKeyConfig(getAgentDir()),
 		api: API_ID,
-		models,
+		models: catalog.models,
 		streamSimple: adapter.streamSimple,
 	});
+
+	if (catalog.gpt6AstraSource === "upstream") {
+		pi.on("session_start", (_event, ctx) => {
+			ctx.ui.notify(
+				"GPT-6 Astra is now in the upstream Codex catalog. Remove the local Astra patch from openai-codex-lb/models.ts.",
+				"warning",
+			);
+		});
+	}
 
 	pi.on("session_shutdown", () => {
 		adapter.closeOpenAICodexWebSocketSessions();
