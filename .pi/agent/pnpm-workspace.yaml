@@ -1,4 +1,5 @@
 allowBuilds:
+  esbuild: true
   koffi: true
   msgpackr-extract: true
   protobufjs: true

@@ -6,8 +6,10 @@ DISABLED_SKILLS=(
   "chrome-cdp"
   "fix-merge-conflicts"
   "gh-stack"
+  "librarian"
   "show-me"
   "thermo-nuclear-code-quality-review"
+  "uv"
   "weekly-review"
   "what-did-i-get-done"
 )
