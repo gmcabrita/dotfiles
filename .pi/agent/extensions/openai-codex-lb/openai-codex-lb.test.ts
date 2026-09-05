@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import type { Api, Context, Model } from "@earendil-works/pi-ai";
 import { loadOpenAICodexLbAdapter, resolveCodexAdapterUrl } from "./clone.ts";
 import { API_ID, findCodexLbApiKey, normalizeBaseUrl, PROVIDER_ID, resolveApiKeyConfig } from "./index.ts";
-import { buildCodexLbModelCatalog, loadOpenAICodexModels, type CodexLbModel } from "./models.ts";
+import { loadOpenAICodexModels, parseCodexModelCatalog } from "./models.ts";
 import { CODEX_LB_PATCH_MARKER, patchOpenAICodexAdapter } from "./patch.ts";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -59,55 +59,15 @@ test("patches a separate, fail-closed Codex adapter instance", async () => {
 	assert.notEqual(original.streamSimple, clone.streamSimple);
 });
 
-test("loads the Codex model catalog beside the cloned runtime adapter", async () => {
-	const catalog = await loadOpenAICodexModels(resolveCodexAdapterUrl());
-	assert.equal(catalog.gpt6AstraSource, "local");
-	assert.ok(catalog.models.length > 0);
-	assert.ok(catalog.models.every((model) => model.reasoning));
+test("loads only the upstream Codex model catalog beside the cloned runtime adapter", async () => {
+	const adapterUrl = resolveCodexAdapterUrl();
+	const modelModuleUrl = new URL("../providers/openai-codex.models.js", adapterUrl);
+	const moduleValue: unknown = await import(modelModuleUrl.href);
+	const models = await loadOpenAICodexModels(adapterUrl);
 
-	const astra = catalog.models.find((model) => model.id === "gpt-6-astra");
-	assert.ok(astra);
-	assert.equal(astra.name, "GPT-6 Astra");
-	assert.deepEqual(astra.input, ["text", "image"]);
-	assert.deepEqual(astra.thinkingLevelMap, {
-		xhigh: "xhigh",
-		max: "max",
-		minimal: "low",
-		off: null,
-	});
-	assert.deepEqual(astra.cost, {
-		input: 10,
-		output: 50,
-		cacheRead: 1,
-		cacheWrite: 12.5,
-		tiers: [
-			{
-				inputTokensAbove: 272_000,
-				input: 20,
-				output: 75,
-				cacheRead: 2,
-				cacheWrite: 25,
-			},
-		],
-	});
-	assert.equal(astra.contextWindow, 1_050_000);
-	assert.equal(astra.maxTokens, 128_000);
-});
-
-test("keeps upstream Astra and marks the local patch for removal", () => {
-	const upstreamAstra: CodexLbModel = {
-		id: "gpt-6-astra",
-		name: "Upstream GPT-6 Astra",
-		reasoning: true,
-		input: ["text", "image"],
-		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-		contextWindow: 1_050_000,
-		maxTokens: 128_000,
-	};
-
-	const catalog = buildCodexLbModelCatalog([upstreamAstra]);
-	assert.equal(catalog.gpt6AstraSource, "upstream");
-	assert.deepEqual(catalog.models, [upstreamAstra]);
+	assert.ok(models.length > 0);
+	assert.ok(models.every((model) => model.reasoning));
+	assert.deepEqual(models, parseCodexModelCatalog(moduleValue));
 });
 
 test("uses the codex-lb bearer key without a ChatGPT account header", { timeout: 10_000 }, async () => {

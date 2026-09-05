@@ -113,7 +113,7 @@ function patchRegistryRefresh(
 }
 
 export default function contextWindowCapExtension(pi: ExtensionAPI) {
-  let enabled = true;
+  let enabled = false;
   let cap = DEFAULT_CAP;
 
   function install(ctx: ExtensionContext): number {

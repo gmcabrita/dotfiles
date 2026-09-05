@@ -1,6 +1,4 @@
 const MODEL_EXPORT = "OPENAI_CODEX_MODELS";
-const GPT_6_ASTRA_ID = "gpt-6-astra";
-const GPT_5_6_SOL_ID = "gpt-5.6-sol";
 const THINKING_LEVELS = ["off", "minimal", "low", "medium", "high", "xhigh", "max"] as const;
 
 type ThinkingLevel = (typeof THINKING_LEVELS)[number];
@@ -32,11 +30,6 @@ export type CodexLbModel = Readonly<{
 	contextWindow: number;
 	maxTokens: number;
 	headers?: Record<string, string>;
-}>;
-
-export type CodexLbModelCatalog = Readonly<{
-	models: CodexLbModel[];
-	gpt6AstraSource: "local" | "upstream";
 }>;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -160,49 +153,9 @@ export function parseCodexModelCatalog(moduleValue: unknown): CodexLbModel[] {
 	return models;
 }
 
-/** Adds Astra from official metadata when it is not yet available in the upstream Codex catalog. */
-export function buildCodexLbModelCatalog(upstreamModels: readonly CodexLbModel[]): CodexLbModelCatalog {
-	if (upstreamModels.some((model) => model.id === GPT_6_ASTRA_ID)) {
-		return { models: [...upstreamModels], gpt6AstraSource: "upstream" };
-	}
-
-	const sol = upstreamModels.find((model) => model.id === GPT_5_6_SOL_ID);
-	if (!sol) {
-		throw new Error("OpenAI Codex catalog does not contain gpt-5.6-sol; remove or update the local Astra patch");
-	}
-
-	const astra: CodexLbModel = {
-		...sol,
-		id: GPT_6_ASTRA_ID,
-		name: "GPT-6 Astra",
-		thinkingLevelMap: {
-			...sol.thinkingLevelMap,
-			off: null,
-		},
-		cost: {
-			input: 10,
-			output: 50,
-			cacheRead: 1,
-			cacheWrite: 12.5,
-			tiers: [
-				{
-					inputTokensAbove: 272_000,
-					input: 20,
-					output: 75,
-					cacheRead: 2,
-					cacheWrite: 25,
-				},
-			],
-		},
-		contextWindow: 1_050_000,
-		maxTokens: 128_000,
-	};
-
-	return { models: [...upstreamModels, astra], gpt6AstraSource: "local" };
-}
-
-export async function loadOpenAICodexModels(adapterUrl: URL): Promise<CodexLbModelCatalog> {
+/** Loads only the upstream Codex model catalog beside the runtime adapter. */
+export async function loadOpenAICodexModels(adapterUrl: URL): Promise<CodexLbModel[]> {
 	const modelModuleUrl = new URL("../providers/openai-codex.models.js", adapterUrl);
 	const moduleValue: unknown = await import(modelModuleUrl.href);
-	return buildCodexLbModelCatalog(parseCodexModelCatalog(moduleValue));
+	return parseCodexModelCatalog(moduleValue);
 }
