@@ -45,7 +45,7 @@ fi
 mkdir -p "$HOME/.pi/agent/extensions" "$HOME/.pi/agent/prompts" "$HOME/.pi/agent/skills"
 rsync -a --delete ".pi/agent/extensions/" "$HOME/.pi/agent/extensions/"
 rsync -a --delete ".pi/agent/prompts/" "$HOME/.pi/agent/prompts/"
-rsync -a --delete ".pi/agent/skills/" "$HOME/.pi/agent/skills/"
+# rsync -a --delete ".pi/agent/skills/" "$HOME/.pi/agent/skills/"
 cp .AGENTS.md "$HOME/.pi/agent/AGENTS.md"
 
 mkdir -p "$HOME/.raycast-scripts"

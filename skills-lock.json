@@ -54,6 +54,12 @@
       "sourceType": "github",
       "skillPath": "cursor-team-kit/skills/what-did-i-get-done/SKILL.md",
       "computedHash": "c2b206c90991d42a771bb5250fabe2a0b4e9a5ffb5b59856512ebbcdb4e43be9"
+    },
+    "write-discoverable-code": {
+      "source": "modem-dev/skills",
+      "sourceType": "github",
+      "skillPath": "write-discoverable-code/SKILL.md",
+      "computedHash": "6402f2e0718be1665ab52620b81cd8c7abfbdfadd127b64bb3b368fcbe49259c"
     }
   }
 }
