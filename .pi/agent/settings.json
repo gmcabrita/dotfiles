@@ -13,6 +13,7 @@
     "openai-codex-lb/gpt-6-astra",
     "openai-codex-lb/gpt-reserve",
     "openai-codex-lb/gpt-5.3-codex-spark",
+    "google/gemini-3.8-flash",
     "anthropic/claude-fable-5-1",
     "deepseek/deepseek-v4-pro",
     "deepseek/deepseek-v4-flash",
