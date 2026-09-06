@@ -83,3 +83,6 @@ code = "JetBrains Mono NL"
 diffAdded = "#00a240"
 diffRemoved = "#e02e2a"
 skill = "#751ed9"
+
+[projects."/Users/gmcabrita/Developer/dotfiles"]
+trust_level = "trusted"
