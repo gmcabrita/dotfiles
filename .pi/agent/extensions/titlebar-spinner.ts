@@ -1,8 +1,9 @@
 import { basename } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-const SPINNER_FRAMES = ["▁", "▃", "▅", "▇", "▅", "▃"] as const;
-const FRAME_INTERVAL_MS = 120;
+// Match Codex's terminal title spinner in codex-rs/tui/src/chatwidget/status_surfaces.rs.
+const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"] as const;
+const FRAME_INTERVAL_MS = 100;
 
 function baseTitle(pi: ExtensionAPI, ctx: ExtensionContext): string {
   const project = basename(ctx.cwd);
