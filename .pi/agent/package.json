@@ -3,6 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "test:notification": "node --experimental-strip-types --test extensions/notification/notification.test.ts",
     "test:firecrawl-auth": "node --experimental-strip-types --test tests/firecrawl-auth.test.ts",
     "test:openai-codex-compaction": "node --experimental-strip-types --test extensions/openai-codex-compaction/openai-codex-compaction.test.ts",
     "typecheck": "tsc --noEmit"
