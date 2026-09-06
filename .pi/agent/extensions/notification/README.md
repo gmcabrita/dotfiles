@@ -1,8 +1,21 @@
 # Terminal notification
 
-Replaces `sounds.ts`. Sends OSC 9 (`ESC ] 9 ; Pi is ready for input BEL`)
+Replaces `sounds.ts`. Sends OSC 9 (`ESC ] 9 ; <response> BEL`)
 when the main TUI session has finished all queued work, retries, and compaction.
 Skips tmux subagents, forked sessions, and output redirected to a file or pipe.
+
+Uses text from the last assistant message. Thinking and tool output are excluded.
+Line breaks, tabs, and repeated spaces become one space. Terminal control codes
+are removed. Markdown stays as text. Empty responses show `Pi is ready for input`.
+
+The preview limit is 200 Unicode graphemes, including `…` when truncated, as in
+[Codex CLI](https://github.com/openai/codex/blob/main/codex-rs/tui/src/chatwidget/notifications.rs).
+The full payload, including any leading space, has a limit of 2047 UTF-8 bytes.
+[Ghostty's OSC parser](https://github.com/ghostty-org/ghostty/blob/492300cad/src/terminal/osc.zig)
+uses a 2048-byte buffer for OSC 9 text and needs one byte for a trailing NUL.
+Truncation preserves complete graphemes, including emoji. Text that starts with
+a digit gets a leading space. This prevents Ghostty from reading the response
+as a ConEmu OSC 9 command.
 
 Ghostty handles notification display and clicks:
 
@@ -38,7 +51,8 @@ Manual checks in a main Pi session, directly in Ghostty:
 
 1. Keep the Pi tab focused until a response finishes. Expect no banner or sound.
 2. Start a response and select another Ghostty tab. Expect a notification when
-   the response finishes. Click it and check that the original tab is selected.
+   the response finishes. Check that it shows the response on one line.
+   Click it and check that the original tab is selected.
 3. Repeat with another app active. Click the notification and check that
    Ghostty and the original tab receive focus.
 
