@@ -7,7 +7,7 @@ model_verbosity = "low"
 # model_auto_compact_token_limit = 180000
 model_provider = "codex-lb"
 personality = "none"
-# service_tier = "fast"
+service_tier = "fast"
 hide_agent_reasoning = true
 show_raw_agent_reasoning = false
 commit_attribution = ""
@@ -41,7 +41,7 @@ use_memories = false
 js_repl = false
 memories = false
 chronicle = false
-# fast_mode = true
+fast_mode = true
 prevent_idle_sleep = true
 
 [features.context_management]
