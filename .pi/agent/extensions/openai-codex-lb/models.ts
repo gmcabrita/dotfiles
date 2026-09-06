@@ -153,9 +153,12 @@ export function parseCodexModelCatalog(moduleValue: unknown): CodexLbModel[] {
 	return models;
 }
 
-/** Loads only the upstream Codex model catalog beside the runtime adapter. */
+/** Loads the upstream Codex catalog and copies gpt-5.6-luna settings for gpt-reserve. */
 export async function loadOpenAICodexModels(adapterUrl: URL): Promise<CodexLbModel[]> {
 	const modelModuleUrl = new URL("../providers/openai-codex.models.js", adapterUrl);
 	const moduleValue: unknown = await import(modelModuleUrl.href);
-	return parseCodexModelCatalog(moduleValue);
+	const models = parseCodexModelCatalog(moduleValue);
+	const luna = models.find((model) => model.id === "gpt-5.6-luna");
+	if (!luna) throw new Error("Codex LB gpt-reserve requires gpt-5.6-luna in the upstream catalog");
+	return [...models, { ...luna, id: "gpt-reserve", name: "gpt-reserve" }];
 }

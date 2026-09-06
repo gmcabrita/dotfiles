@@ -1,8 +1,18 @@
-# Terminal notification
+# Terminal status
 
-Replaces `sounds.ts`. Sends OSC 9 (`ESC ] 9 ; <response> BEL`)
-when the main TUI session has finished all queued work, retries, and compaction.
-Skips tmux subagents, forked sessions, and output redirected to a file or pipe.
+Shows a spinner in the terminal title while Pi works. Sends OSC 9
+(`ESC ] 9 ; <response> BEL`) when the main TUI session has finished all queued
+work, retries, and compaction. Notifications skip tmux subagents, forked
+sessions, and output redirected to a file or pipe.
+
+`index.ts` registers the title spinner before the notification callbacks.
+Pi runs callbacks in that order. Ghostty delays title changes by 75 ms, so the
+notification waits 100 ms after the idle title is sent. New work, session
+changes, and shutdown cancel a pending notification. Session guards are checked
+again before delivery.
+
+The delay allows Ghostty to apply the title update. A busy Ghostty process can
+take longer; OSC 9 does not confirm that the displayed title has changed.
 
 Uses text from the last assistant message. Thinking and tool output are excluded.
 Line breaks, tabs, and repeated spaces become one space. Terminal control codes
@@ -30,9 +40,14 @@ configuration; selecting a tmux pane is outside this extension's scope.
 
 ## Setup
 
-Copy this directory to `~/.pi/agent/extensions/notification/`. Remove the old
-`~/.pi/agent/extensions/sounds.ts` so both extensions do not run. Then run
-`/reload` in Pi.
+Copy this directory to `~/.pi/agent/extensions/terminal-status/`. Remove these
+old extensions to prevent duplicate callbacks:
+
+- `~/.pi/agent/extensions/notification/`
+- `~/.pi/agent/extensions/titlebar-spinner.ts`
+- `~/.pi/agent/extensions/sounds.ts`
+
+Then run `/reload` in Pi.
 
 Allow Ghostty notifications in macOS System Settings → Notifications → Ghostty. Ghostty requests permission on the first notification;
 that first notification can be missed. Enable banners and sounds as required.
@@ -51,13 +66,14 @@ Manual checks in a main Pi session, directly in Ghostty:
 
 1. Keep the Pi tab focused until a response finishes. Expect no banner or sound.
 2. Start a response and select another Ghostty tab. Expect a notification when
-   the response finishes. Check that it shows the response on one line.
-   Click it and check that the original tab is selected.
+   the response finishes. Check that it shows the response on one line and
+   that the tab name has no spinner. Click it and check that the original tab
+   is selected.
 3. Repeat with another app active. Click the notification and check that
    Ghostty and the original tab receive focus.
 
 Native behavior was checked in the source for Ghostty `492300cad`:
 [`shouldPresentNotification` and `handleUserNotification`](https://github.com/ghostty-org/ghostty/blob/492300cad/macos/Sources/Ghostty/Ghostty.App.swift),
 and [`SurfaceView.handleUserNotification`](https://github.com/ghostty-org/ghostty/blob/492300cad/macos/Sources/Ghostty/Surface%20View/SurfaceView_AppKit.swift).
-Unit tests check OSC output and session guards. They do not test macOS display
-or clicks.
+Unit tests check OSC output, session guards, cancellation, and a simulated
+75 ms title delay. They do not test macOS display or clicks.

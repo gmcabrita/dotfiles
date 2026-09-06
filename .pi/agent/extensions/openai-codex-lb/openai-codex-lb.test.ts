@@ -59,7 +59,7 @@ test("patches a separate, fail-closed Codex adapter instance", async () => {
 	assert.notEqual(original.streamSimple, clone.streamSimple);
 });
 
-test("loads only the upstream Codex model catalog beside the cloned runtime adapter", async () => {
+test("loads the upstream Codex catalog plus gpt-reserve with gpt-5.6-luna settings", async () => {
 	const adapterUrl = resolveCodexAdapterUrl();
 	const modelModuleUrl = new URL("../providers/openai-codex.models.js", adapterUrl);
 	const moduleValue: unknown = await import(modelModuleUrl.href);
@@ -67,7 +67,13 @@ test("loads only the upstream Codex model catalog beside the cloned runtime adap
 
 	assert.ok(models.length > 0);
 	assert.ok(models.every((model) => model.reasoning));
-	assert.deepEqual(models, parseCodexModelCatalog(moduleValue));
+	const upstreamModels = parseCodexModelCatalog(moduleValue);
+	const luna = upstreamModels.find((model) => model.id === "gpt-5.6-luna");
+	assert.ok(luna);
+	assert.deepEqual(models.filter((model) => model.id !== "gpt-reserve"), upstreamModels);
+	assert.deepEqual(models.filter((model) => model.id === "gpt-reserve"), [
+		{ ...luna, id: "gpt-reserve", name: "gpt-reserve" },
+	]);
 });
 
 test("uses the codex-lb bearer key without a ChatGPT account header", { timeout: 10_000 }, async () => {

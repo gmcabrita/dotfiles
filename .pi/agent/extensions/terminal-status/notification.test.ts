@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test, type TestContext } from "node:test";
 import type { AssistantMessage } from "@earendil-works/pi-ai";
 import type { AgentEndEvent, ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import registerTerminalNotification from "./index.ts";
+import registerTerminalNotification from "./terminal-notification.ts";
 import { formatNotificationText } from "./notification-text.ts";
 
 type NotificationHandler = (event: { type: string; messages: AgentEndEvent["messages"] }, ctx: ExtensionContext) => void;
@@ -42,6 +42,7 @@ function createNotificationHarness(t: TestContext, options: NotificationTestOpti
     configurable: true,
     value: options.isTTY ?? true,
   });
+  t.mock.timers.enable({ apis: ["setTimeout"] });
   const output = t.mock.method(process.stdout, "write", () => true);
   const handlers = new Map<string, NotificationHandler>();
   registerTerminalNotification({
@@ -71,6 +72,10 @@ test("sends one complete OSC 9 notification when the main TUI session settles", 
   const { emit, output } = createNotificationHarness(t);
   emit("agent_end", [assistantResponse([{ type: "text", text: "Tests passed.\nAll done." }])]);
   emit("agent_settled");
+  assert.equal(output.mock.callCount(), 0);
+  t.mock.timers.tick(99);
+  assert.equal(output.mock.callCount(), 0);
+  t.mock.timers.tick(1);
   assert.equal(output.mock.callCount(), 1);
   assert.deepEqual(output.mock.calls[0].arguments, ["\x1b]9;Tests passed. All done.\x07"]);
 });
@@ -82,6 +87,7 @@ test("waits for settlement after agent_end, retries, and compaction", (t) => {
   emit("agent_end");
   assert.equal(output.mock.callCount(), 0);
   emit("agent_settled");
+  t.mock.timers.tick(100);
   assert.equal(output.mock.callCount(), 1);
 });
 
@@ -99,6 +105,7 @@ test("uses only text blocks from the last assistant response", (t) => {
     { role: "toolResult", toolCallId: "call", toolName: "bash", content: [{ type: "text", text: "Tool output" }], isError: false, timestamp: 0 },
   ]);
   emit("agent_settled");
+  t.mock.timers.tick(100);
   assert.deepEqual(output.mock.calls[0].arguments, ["\x1b]9;Done. Tests passed.\x07"]);
 });
 
@@ -111,6 +118,7 @@ test("uses the final run after retries, compaction, and queued work", (t) => {
   }
   assert.equal(output.mock.callCount(), 0);
   emit("agent_settled");
+  t.mock.timers.tick(100);
   assert.deepEqual(output.mock.calls[0].arguments, ["\x1b]9;Final answer\x07"]);
 });
 
@@ -120,6 +128,7 @@ for (const resetEvent of ["agent_start", "session_start", "agent_end"]) {
     emit("agent_end", [assistantResponse([{ type: "text", text: "Old response" }])]);
     emit(resetEvent);
     emit("agent_settled");
+    t.mock.timers.tick(100);
     assert.deepEqual(output.mock.calls[0].arguments, ["\x1b]9;Pi is ready for input\x07"]);
   });
 }
@@ -132,9 +141,51 @@ for (const stopReason of ["stop", "error", "aborted"] as const) {
       assistantResponse([{ type: "thinking", thinking: "Private reasoning" }], stopReason),
     ]);
     emit("agent_settled");
+    t.mock.timers.tick(100);
     assert.deepEqual(output.mock.calls[0].arguments, ["\x1b]9;Pi is ready for input\x07"]);
   });
 }
+
+for (const event of ["agent_start", "session_start", "session_shutdown"]) {
+  test(`cancels a delayed notification on ${event}`, (t) => {
+    const { emit, output } = createNotificationHarness(t);
+    emit("agent_settled");
+    t.mock.timers.tick(50);
+    emit(event);
+    t.mock.timers.tick(100);
+    assert.equal(output.mock.callCount(), 0);
+  });
+}
+
+for (const [name, change] of [
+  ["new work", { idle: false }],
+  ["queued messages", { pending: true }],
+  ["session fork", { parentSession: "/tmp/parent.jsonl" }],
+] satisfies [string, NotificationTestOptions][]) {
+  test(`suppresses delayed notification after ${name}`, (t) => {
+    const options: NotificationTestOptions = {};
+    const { emit, output } = createNotificationHarness(t, options);
+    emit("agent_settled");
+    Object.assign(options, change);
+    t.mock.timers.tick(100);
+    assert.equal(output.mock.callCount(), 0);
+  });
+}
+
+test("replaces a pending notification after another settlement", (t) => {
+  const { emit, output } = createNotificationHarness(t);
+  emit("agent_end", [assistantResponse([{ type: "text", text: "Old response" }])]);
+  emit("agent_settled");
+  t.mock.timers.tick(50);
+  emit("agent_end", [assistantResponse([{ type: "text", text: "New response" }])]);
+  emit("agent_settled");
+  t.mock.timers.tick(50);
+  assert.equal(output.mock.callCount(), 0);
+  t.mock.timers.tick(50);
+  assert.deepEqual(output.mock.calls[0].arguments, ["\x1b]9;New response\x07"]);
+  t.mock.timers.tick(100);
+  assert.equal(output.mock.callCount(), 1);
+});
 
 const formattingCases: [string, string, string][] = [
   ["whitespace", "  First\r\n\t second\n\nthird\u2028fourth\u2029fifth\u00a0  ", "First second third fourth fifth"],
@@ -187,6 +238,7 @@ for (const [name, options] of suppressedCases) {
   test(`does not send a notification for ${name}`, (t) => {
     const { emit, output } = createNotificationHarness(t, options);
     emit("agent_settled");
+    t.mock.timers.tick(100);
     assert.equal(output.mock.callCount(), 0);
   });
 }
