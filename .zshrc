@@ -794,4 +794,22 @@ function rst() {
   ree
 }
 
+function codex() {
+  __codex_automatically_trust_the_current_dir
+
+  command codex "$@"
+}
+
+function __codex_automatically_trust_the_current_dir() {
+  local key
+  key="[projects.\"$(pwd)\"]"
+
+  if rg --quiet -F "${key}" ~/.codex/config.toml; then
+    return
+  fi
+
+  echo "${key}" >> ~/.codex/config.toml
+  echo 'trust_level = "trusted"' >> ~/.codex/config.toml
+}
+
 [[ $ZPROF == 1 ]] && zprof
