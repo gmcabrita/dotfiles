@@ -3,6 +3,13 @@
     "openai": {
       "baseUrl": "http://codexlb00.usce1.mgmt.internal.amplemarket.com:2455/v1"
     },
+    "openai-codex-lb": {
+      "modelOverrides": {
+        "gpt-6-astra": {
+          "contextWindow": 800000
+        }
+      }
+    },
     "anthropic": {
       "modelOverrides": {
         "claude-fable-5-1": {
