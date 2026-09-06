@@ -50,8 +50,9 @@ experimental_mode = true
 [tui]
 notification_condition = "unfocused"
 notification_method = "osc9"
-theme = "inspired-github"
 notifications = true
+show_tooltips = false
+theme = "inspired-github"
 
 [desktop]
 followUpQueueMode = "queue"
