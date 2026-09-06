@@ -7,7 +7,7 @@
   "startup": {
     "model": "gpt-6-astra",
     "provider": "openai-codex-lb",
-    "thinkingLevel": "medium"
+    "thinkingLevel": "high"
   },
   "enabledModels": [
     "openai-codex-lb/gpt-6-astra",
