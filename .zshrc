@@ -463,6 +463,7 @@ function update-everything() {
   update-programming-languages
   pi update --models || true
   pi-update-ext
+  codex update
   gh extension upgrade --all
   rm -f ~/.cache/macos_sdk_path
   rm -f "$HOME/.zcompdump" "$HOME/.zcompdump.zwc"

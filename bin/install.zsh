@@ -243,5 +243,8 @@ rustup component add rust-analyzer rust-src clippy rustfmt rust-docs llvm-tools
 mise reshim
 mix local.hex --force
 
+# Codex
+curl -fsSL https://chatgpt.com/codex/install.sh | sh
+
 # Cache zoxide init
 zoxide init zsh > ~/.zoxide.zsh
