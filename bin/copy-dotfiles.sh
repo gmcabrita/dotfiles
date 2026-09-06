@@ -33,6 +33,10 @@ rsync -a --delete ".agents/skills/" "$HOME/.agents/skills/"
 mkdir -p "$HOME/.codiff"
 rsync -a ".codiff/" "$HOME/.codiff/"
 
+mkdir -p "$HOME/.codex"
+rsync -a --exclude '/config.toml' ".codex/" "$HOME/.codex/"
+ln -sfn "$(pwd -P)/.codex/config.toml" "$HOME/.codex/config.toml"
+
 mkdir -p "$HOME/.config"
 rsync -a ".config/" "$HOME/.config/"
 
