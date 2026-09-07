@@ -1,0 +1,16 @@
+{
+  "$schema": "https://ccusage.com/config-schema.json",
+  "defaults": {
+    "timezone": "UTC",
+    "breakdown": true,
+    "noCost": true
+  },
+  "pi": {
+    "stores": [
+      {
+        "name": "pi-subagents",
+        "path": "~/.pi/agent/tmux-subagents"
+      }
+    ]
+  }
+}

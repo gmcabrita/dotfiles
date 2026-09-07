@@ -33,6 +33,9 @@ rsync -a --delete ".agents/skills/" "$HOME/.agents/skills/"
 mkdir -p "$HOME/.codiff"
 rsync -a ".codiff/" "$HOME/.codiff/"
 
+mkdir -p "$HOME/.ccusage"
+rsync -a ".ccusage/" "$HOME/.ccusage/"
+
 mkdir -p "$HOME/.codex"
 rsync -a ".codex/" "$HOME/.codex/"
 
