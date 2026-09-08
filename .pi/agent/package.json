@@ -15,7 +15,7 @@
     "@earendil-works/pi-server": "^0.85.1",
     "@earendil-works/pi-tui": "^0.85.1",
     "diff": "^9.0.0",
-    "typebox": "^1.3.28"
+    "typebox": "^1.3.29"
   },
   "devDependencies": {
     "@types/node": "^26.5.0",
