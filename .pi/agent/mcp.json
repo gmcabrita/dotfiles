@@ -9,7 +9,7 @@
       },
       "pganalyze": {
         "type": "remote",
-        "url": "https://pganalyze-mcp.gke00.usce1.mgmt.internal.amplemarket.com/mcp"
+        "url": "https://app.pganalyze.com/mcp"
       }
     }
   }
