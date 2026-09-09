@@ -6,6 +6,7 @@
     "anthropic": {
       "modelOverrides": {
         "claude-fable-5-1": {
+          "contextWindow": 272000,
           "thinkingLevelMap": {
             "off": null,
             "xhigh": "xhigh",
