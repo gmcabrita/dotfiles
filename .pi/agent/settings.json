@@ -5,6 +5,33 @@
     "provider": "anthropic",
     "thinkingLevel": "high"
   },
+  "sessionPurpose": {
+    "implement": {
+      "provider": "anthropic",
+      "model": "claude-fable-5-1",
+      "thinkingLevel": "high"
+    },
+    "reverse": {
+      "provider": "deepseek",
+      "model": "deepseek-v4-pro",
+      "thinkingLevel": "high"
+    },
+    "debug": {
+      "provider": "openai-codex-lb",
+      "model": "gpt-6-astra",
+      "thinkingLevel": "high"
+    },
+    "review": {
+      "provider": "openai-codex-lb",
+      "model": "gpt-6-astra",
+      "thinkingLevel": "high"
+    },
+    "investigate": {
+      "provider": "openai-codex-lb",
+      "model": "gpt-6-astra",
+      "thinkingLevel": "high"
+    }
+  },
   "enabledModels": [
     "openai-codex-lb/gpt-6-astra",
     "openai-codex-lb/gpt-reserve",

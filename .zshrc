@@ -771,17 +771,6 @@ function af() {
     '"'"' sh {})'
 }
 
-# function claude() {
-#   "$HOMEBREW_PREFIX/bin/claude" \
-#     --dangerously-skip-permissions \
-#     --system-prompt-file "${CLAUDE_BASIC_PROMPT_FILE:-$HOME/.claude/prompts/minimal-system-prompt.md}" \
-#     --tools "${CLAUDE_BASIC_TOOLS:-Bash,Read,Edit,Write,Skill}" \
-#     --strict-mcp-config \
-#     --mcp-config '{"mcpServers":{}}' \
-#     --settings '{"disableAllHooks":true}' \
-#     "$@"
-# }
-
 function ca() {
   codex app "$@"
 }
@@ -793,6 +782,17 @@ function reset() {
 function rst() {
   ree
 }
+
+# function claude() {
+#   "$HOMEBREW_PREFIX/bin/claude" \
+#     --dangerously-skip-permissions \
+#     --system-prompt-file "${CLAUDE_BASIC_PROMPT_FILE:-$HOME/.claude/prompts/minimal-system-prompt.md}" \
+#     --tools "${CLAUDE_BASIC_TOOLS:-Bash,Read,Edit,Write,Skill}" \
+#     --strict-mcp-config \
+#     --mcp-config '{"mcpServers":{}}' \
+#     --settings '{"disableAllHooks":true}' \
+#     "$@"
+# }
 
 function codex() {
   __codex_automatically_trust_the_current_dir
@@ -810,6 +810,16 @@ function __codex_automatically_trust_the_current_dir() {
 
   echo "${key}" >> ~/.codex/config.toml
   echo 'trust_level = "trusted"' >> ~/.codex/config.toml
+}
+
+function astra() {
+  pi --provider openai-codex-lb --model gpt-6-astra --thinking high "$@"
+}
+function fable() {
+  pi --provider anthropic --model claude-fable-5-1 --thinking high "$@"
+}
+function deepseek() {
+  pi --provider deepseek --model deepseek-v4-pro --thinking high "$@"
 }
 
 [[ $ZPROF == 1 ]] && zprof
