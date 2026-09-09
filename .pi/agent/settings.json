@@ -37,5 +37,8 @@
   "npmCommand": ["sfw", "npm"],
   "showCacheMissNotices": true,
   "theme": "light",
-  "tuiMode": "fullscreen"
+  "tuiMode": "fullscreen",
+  "warnings": {
+    "anthropicExtraUsage": false
+  }
 }
