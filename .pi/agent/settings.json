@@ -5,8 +5,8 @@
     "npm:pi-autoresearch"
   ],
   "startup": {
-    "model": "gpt-6-astra",
-    "provider": "openai-codex-lb",
+    "model": "claude-fable-5-1",
+    "provider": "anthropic",
     "thinkingLevel": "high"
   },
   "enabledModels": [
