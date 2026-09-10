@@ -12,6 +12,7 @@
 "cargo:pdf-inspector" = "latest"
 "cargo:ree-cli" = "latest"
 "cargo:rustdoc-text" = "latest"
+"github:AmanVarshney01/tcut" = "latest"
 "github:lexiforest/curl-impersonate" = { version = "latest", prerelease = true }
 "github:qbdi/qbdi" = "latest"
 "github:rockorager/zigdoc" = "latest"
