@@ -39,8 +39,6 @@
     "anthropic/claude-fable-5-1",
     "deepseek/deepseek-flash",
     "openrouter/deepseek/deepseek-v4.1-flash",
-    "openrouter/moonshotai/kimi-k3",
-    "openrouter/z-ai/glm-5.3",
     "opencode/muse-spark-1.3-contributor-free"
   ],
   "enableInstallTelemetry": false,
