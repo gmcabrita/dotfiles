@@ -162,6 +162,7 @@
     "basher": true,
     "docker-compose": true,
     "dockerfile": true,
+    "effect-tsgo": true,
     "elixir": true,
     "erlang": true,
     "ghostty": true,
@@ -816,10 +817,40 @@
       "format_on_save": "off",
     },
     "TypeScript": {
-      "language_servers": ["!typescript-language-server", "!eslint", "vtsls", "..."],
+      "language_servers": [
+        "effect-tsgo",
+        "!typescript-language-server",
+        "!eslint",
+        "!vtsls",
+        "...",
+      ],
+    },
+    "TSX": {
+      "language_servers": [
+        "effect-tsgo",
+        "!typescript-language-server",
+        "!eslint",
+        "!vtsls",
+        "...",
+      ],
     },
     "JavaScript": {
-      "language_servers": ["!typescript-language-server", "!eslint", "vtsls", "..."],
+      "language_servers": [
+        "effect-tsgo",
+        "!typescript-language-server",
+        "!eslint",
+        "!vtsls",
+        "...",
+      ],
+    },
+    "JSX": {
+      "language_servers": [
+        "effect-tsgo",
+        "!typescript-language-server",
+        "!eslint",
+        "!vtsls",
+        "...",
+      ],
     },
     "Zig": {
       "tab_size": 4,
