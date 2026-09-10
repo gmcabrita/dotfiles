@@ -48,6 +48,8 @@ prevent_idle_sleep = true
 experimental_mode = true
 
 [tui]
+animations = false
+auto_recap = false
 notification_condition = "unfocused"
 notification_method = "osc9"
 notifications = true
