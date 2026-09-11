@@ -1,5 +1,5 @@
 {
-  "packages": ["git:github.com/dmmulroy/pi-mcp", "npm:@cortexkit/pi-anthropic-auth"],
+  "packages": ["git:github.com/dmmulroy/pi-mcp", "npm:@gotgenes/pi-anthropic-auth"],
   "startup": {
     "model": "claude-fable-5-1",
     "provider": "anthropic",
