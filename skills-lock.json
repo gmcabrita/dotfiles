@@ -1,12 +1,6 @@
 {
   "version": 1,
   "skills": {
-    "chrome-cdp": {
-      "source": "pasky/chrome-cdp-skill",
-      "sourceType": "github",
-      "skillPath": "skills/chrome-cdp/SKILL.md",
-      "computedHash": "d9a2a1ff8b0df2a381a0ae630af0bfbc0bf642132d49aead946cf3724ecf5cb4"
-    },
     "fix-merge-conflicts": {
       "source": "cursor/plugins",
       "sourceType": "github",
@@ -19,12 +13,6 @@
       "skillPath": "skills/gh-stack/SKILL.md",
       "computedHash": "28d42250d52f33424b807add6fbdec75736e835f98752311db321ab51733fea6"
     },
-    "librarian": {
-      "source": "mitsuhiko/agent-stuff",
-      "sourceType": "github",
-      "skillPath": "skills/librarian/SKILL.md",
-      "computedHash": "7a280f1415ae063f089fd1cf0d1208a549565098c94b85a325988e07511a9c99"
-    },
     "show-me": {
       "source": "humanlayer/skills",
       "sourceType": "github",
@@ -36,12 +24,6 @@
       "sourceType": "github",
       "skillPath": "cursor-team-kit/skills/thermo-nuclear-code-quality-review/SKILL.md",
       "computedHash": "9052b01b46b1d8dbf94c45f9313ec1983443f9a460e83d49cdc7fe0f640ca476"
-    },
-    "uv": {
-      "source": "mitsuhiko/agent-stuff",
-      "sourceType": "github",
-      "skillPath": "skills/uv/SKILL.md",
-      "computedHash": "06312b169342bcb29085065db174b1579fe7d3f5d5e58138ea01edb4bb997df4"
     },
     "weekly-review": {
       "source": "cursor/plugins",
