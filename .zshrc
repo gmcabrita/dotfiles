@@ -380,6 +380,7 @@ function update-programming-languages() {
   rustup component add rust-analyzer rust-src clippy rustfmt rust-docs llvm-tools
   mise reshim
   cargo clean-all --yes --keep-days 5 "$HOME/Developer"
+  mbx gc
   mix local.hex --force
   rm -rf "$HOME/Library/Application Support/Zed/extensions/work/elixir"/expert-*(N)
 
