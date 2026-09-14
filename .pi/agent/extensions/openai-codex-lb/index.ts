@@ -8,8 +8,9 @@ export const PROVIDER_ID = "openai-codex-lb";
 export const API_ID = "openai-codex-lb-responses";
 
 const API_KEY_ENV = "CODEX_LB_API_KEY";
-const BASE_URL_ENV = "CODEX_LB_BASE_URL";
-const DEFAULT_BASE_URL = "http://codexlb00.usce1.mgmt.internal.amplemarket.com:2455/backend-api";
+// Exported for the /usage extension, which queries codex-lb's /v1/usage on the same origin.
+export const BASE_URL_ENV = "CODEX_LB_BASE_URL";
+export const DEFAULT_BASE_URL = "http://codexlb00.usce1.mgmt.internal.amplemarket.com:2455/backend-api";
 const FALLBACK_AUTH_PROVIDER = "openai";
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -5,6 +5,7 @@
   "scripts": {
     "test:notification": "node --experimental-strip-types --test extensions/terminal-status/notification.test.ts extensions/terminal-status/terminal-status.test.ts",
     "test:firecrawl-auth": "node --experimental-strip-types --test tests/firecrawl-auth.test.ts",
+    "test:usage": "node --experimental-strip-types --test extensions/usage/usage.test.ts",
     "test:openai-codex-compaction": "node --experimental-strip-types --test extensions/openai-codex-compaction/openai-codex-compaction.test.ts",
     "typecheck": "tsc --noEmit"
   },
