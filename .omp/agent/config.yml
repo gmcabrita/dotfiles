@@ -5,6 +5,7 @@ modelRoles:
   designer: anthropic/claude-fable-5-1:medium
 
   advisor: openai-codex-lb/gpt-6-astra:high
+  review: openai-codex-lb/gpt-6-astra:high
   slow: openai-codex-lb/gpt-6-astra:max
   vision: openai-codex-lb/gpt-6-astra:medium
 
@@ -12,12 +13,12 @@ modelRoles:
   tiny: "@smol"
   commit: "@smol"
 
-  reviewer: openai-codex-lb/gpt-6-astra:high
-  reverser: deepseek/deepseek-v4-flash:high
+  reverse: deepseek/deepseek-flash:high
 
 task:
   agentModelOverrides:
     reviewer: "@review"
+    security-reviewer: "@review"
     reverser: "@reverse"
 
 defaultThinkingLevel: high
@@ -32,7 +33,6 @@ retry:
   modelFallback: true
   fallbackRevertPolicy: cooldown-expiry
   fallbackChains:
-    # roles without their own chain inherit this one
     default:
       - openai-codex-lb/gpt-5.6-sol
     smol:
