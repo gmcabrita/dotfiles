@@ -820,7 +820,7 @@ function fable() {
   pi --provider anthropic --model claude-fable-5-1 --thinking high "$@"
 }
 function deepseek() {
-  pi --provider deepseek --model deepseek-v4-pro --thinking high "$@"
+  pi --provider deepseek --model deepseek-flash --thinking high "$@"
 }
 
 [[ $ZPROF == 1 ]] && zprof
