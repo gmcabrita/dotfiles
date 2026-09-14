@@ -5,6 +5,7 @@ tap "orlangure/tap", trusted: true
 tap "ramonvermeulen/whosthere", trusted: true
 tap "tw93/tap", trusted: true
 tap "wader/tap", trusted: true
+tap "can1357/tap", trusted: true
 
 brew "age"
 brew "asciinema"
@@ -13,6 +14,7 @@ brew "autoconf"
 brew "bash"
 brew "blacktop/tap/ipsw"
 brew "btop"
+brew "can1357/tap/omp"
 brew "cloud-sql-proxy"
 brew "colordiff"
 brew "coreutils"
