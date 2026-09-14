@@ -42,10 +42,6 @@ rsync -a ".codex/" "$HOME/.codex/"
 mkdir -p "$HOME/.config"
 rsync -a ".config/" "$HOME/.config/"
 
-mkdir -p "$HOME/.omp"
-rsync -a ".omp/" "$HOME/.omp/"
-cp .AGENTS.md "$HOME/.omp/agent/AGENTS.md"
-
 mkdir -p "$HOME/.pi"
 if [ ! -f "$HOME/.pi/agent/auth.json" ]; then
   rsync -a ".pi/" "$HOME/.pi/"
@@ -57,7 +53,6 @@ rsync -a --delete ".pi/agent/extensions/" "$HOME/.pi/agent/extensions/"
 rsync -a --delete ".pi/agent/prompts/" "$HOME/.pi/agent/prompts/"
 # rsync -a --delete ".pi/agent/skills/" "$HOME/.pi/agent/skills/"
 cp .AGENTS.md "$HOME/.pi/agent/AGENTS.md"
-printf '%s\n' "- Always review and debug code using \`gpt-6-astra\` from the \`openai-codex-lb\` provider" >> "$HOME/.pi/agent/AGENTS.md"
 
 mkdir -p "$HOME/.raycast-scripts"
 rsync -a ".raycast-scripts/" "$HOME/.raycast-scripts/"
