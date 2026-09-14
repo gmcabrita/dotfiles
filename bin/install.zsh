@@ -40,9 +40,9 @@ defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool
 defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 0
 
 # Google DNS
-networksetup -listallnetworkservices | sed 1d | sed '/^\*/d' | while IFS= read -r service; do
-    networksetup -setdnsservers "$service" 8.8.8.8 8.8.4.4 2001:4860:4860::8888 2001:4860:4860::8844
-done
+# networksetup -listallnetworkservices | sed 1d | sed '/^\*/d' | while IFS= read -r service; do
+#     networksetup -setdnsservers "$service" 8.8.8.8 8.8.4.4 2001:4860:4860::8888 2001:4860:4860::8844
+# done
 
 # Pointer settings
 defaults write NSGlobalDomain CGDisableCursorLocationMagnification -bool false
@@ -204,7 +204,7 @@ defaults write com.apple.Safari SuppressSearchSuggestions -bool true
 defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
 
 # Increase file limits
-sudo sysctl kern.maxfiles=64000 kern.maxfilesperproc=28000
+sudo sysctl kern.maxfiles=122880 kern.maxfilesperproc=28000
 
 # Check for software updates daily, not just once per week
 defaults write com.apple.SoftwareUpdate ScheduleFrequency -int 1
