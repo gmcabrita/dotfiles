@@ -34,6 +34,7 @@ go = "latest"
 helm = "latest"
 herdr = "latest"
 hk = "latest"
+mr-boxington = "latest"
 node = "latest"
 pitchfork = "latest"
 pkl = "latest"
@@ -41,7 +42,7 @@ pnpm = "latest"
 pulumi = "latest"
 python = "latest"
 ruby = "latest"
-rust = "latest"
+rust = { version = "latest", mr_boxington = true }
 shellcheck = "latest"
 sops = "latest"
 tak = "latest"
@@ -54,16 +55,16 @@ zizmor = "latest"
 zls = "latest"
 
 [settings]
+auto_update = true
+auto_update_check_duration = "1d"
+experimental = true
 idiomatic_version_file_enable_tools = ["rust", "go"]
 idiomatic_version_file_ignore_minimum_versions = true
 minimum_release_age = "12h"
-experimental = true
-auto_update = true
-auto_update_check_duration = "1d"
 
 [settings.status]
-show_tools = true
 show_env = true
+show_tools = true
 
 [settings.python]
 uv_venv_auto = true
