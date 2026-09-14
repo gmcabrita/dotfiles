@@ -66,6 +66,10 @@
     - Show autofill menu on field focus: No
     - Sign in automatically after autofill: No
   - uBlacklist import from Google Drive
+  - Tampermonkey import from Google Drive backups
+    - Extension needs: "Allow User Scripts" in helium://extensions/?id=dhdgffkkebhmkfjojejmpbldmpobfkfo
+    - Ensure WebGPU tampermonkey blocker still works
+      - https://webgpu.github.io/webgpu-samples/sample/rotatingCube/
   - Import uBlock Origin Lite settings
   - https://github.com/corbindavenport/just-the-browser/tree/main/chrome
   - Disable:
