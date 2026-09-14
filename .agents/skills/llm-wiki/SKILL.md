@@ -2,6 +2,7 @@
 name: llm-wiki
 description: "Build and maintain a persistent, interlinked markdown knowledge base. Ingest sources, query compiled knowledge, and lint for consistency."
 disable-model-invocation: true
+source: "https://x.com/rough__sea/status/2092091242377265562"
 ---
 
 # LLM Wiki
