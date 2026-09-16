@@ -215,6 +215,9 @@ defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
 # Sort users in Contacts by first name
 defaults write -app Contacts ABNameSortingFormat -string "sortingFirstName sortingLastName"
 
+# Open Shortcuts to Editor
+defaults write com.apple.siri.shortcuts WFDefaultEditorExperience -int 1
+
 # Disable Spotlight indexing
 sudo mdutil -a -i off
 sudo mdutil -a -E
