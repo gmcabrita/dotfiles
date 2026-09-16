@@ -10,7 +10,7 @@ import { Container, fuzzyFilter, Input, type SelectItem, SelectList, Text } from
  *
  * 1. Apply `settings.startup` (default provider/model/thinkingLevel) when no explicit CLI flags were passed.
  * 2. Ask which purpose this session has (implement/review/...) and switch to the model configured for it in
- *    `settings.sessionPurpose`. Escape keeps the startup default.
+ *    `settings.sessionPurpose`. The prompt cannot be dismissed; a purpose must be chosen.
  *
  * Both steps skip when `--provider` or `--model` is passed on the CLI. The purpose prompt also skips when a
  * session is resumed, because the resumed session already carries its own model history. Project settings
@@ -202,11 +202,14 @@ function sessionAlreadyStarted(ctx: ExtensionContext): boolean {
 }
 
 /** Keys owned by the list; every other key goes to the search input. */
-const SELECT_LIST_KEYBINDINGS = ["tui.select.up", "tui.select.down", "tui.select.confirm", "tui.select.cancel"] as const;
+const SELECT_LIST_KEYBINDINGS = ["tui.select.up", "tui.select.down", "tui.select.confirm"] as const;
 
-/** Select dialog with a fuzzy search input above the list. Resolves with the chosen item value or undefined. */
-function selectWithSearch(ctx: ExtensionContext, title: string, items: SelectItem[]): Promise<string | undefined> {
-	return ctx.ui.custom<string | undefined>((tui, theme, keybindings, done) => {
+/**
+ * Select dialog with a fuzzy search input above the list. Resolves with the chosen item value.
+ * The dialog cannot be cancelled: escape is swallowed so the user must pick an item.
+ */
+function selectWithSearch(ctx: ExtensionContext, title: string, items: SelectItem[]): Promise<string> {
+	return ctx.ui.custom<string>((tui, theme, keybindings, done) => {
 		const border = () => new DynamicBorder((text) => theme.fg("accent", text));
 		const container = new Container();
 		container.addChild(border());
@@ -225,18 +228,19 @@ function selectWithSearch(ctx: ExtensionContext, title: string, items: SelectIte
 			listHolder.clear();
 			list = new SelectList(filtered, Math.min(Math.max(filtered.length, 1), 10), getSelectListTheme());
 			list.onSelect = (item) => done(item.value);
-			list.onCancel = () => done(undefined);
+			list.onCancel = () => {};
 			listHolder.addChild(list);
 		};
 		rebuildList();
 
-		container.addChild(new Text(theme.fg("dim", "type to filter • ↑↓ navigate • enter select • esc cancel"), 1, 0));
+		container.addChild(new Text(theme.fg("dim", "type to filter • ↑↓ navigate • enter select"), 1, 0));
 		container.addChild(border());
 
 		return {
 			render: (width) => container.render(width),
 			invalidate: () => container.invalidate(),
 			handleInput: (data) => {
+				if (keybindings.matches(data, "tui.select.cancel")) return;
 				if (SELECT_LIST_KEYBINDINGS.some((id) => keybindings.matches(data, id))) {
 					list.handleInput(data);
 				} else {
@@ -260,8 +264,6 @@ async function askSessionPurpose(
 		description: formatSelection(purpose.selection),
 	}));
 	const choice = await selectWithSearch(ctx, "What is this session for?", items);
-	if (choice === undefined) return;
-
 	const purpose = purposes.find((candidate) => candidate.name === choice);
 	if (!purpose) return;
 
