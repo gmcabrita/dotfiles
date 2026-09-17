@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { extractCodeBlocks } from "./copy-code-block.ts";
+import { extractCodeBlocks } from "../extensions/copy-code-block.ts";
 
 test("extracts multiple fenced blocks in order", () => {
 	const markdown = [
