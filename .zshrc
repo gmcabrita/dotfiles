@@ -379,7 +379,6 @@ function update-programming-languages() {
   mise reshim
   rustup component add rust-analyzer rust-src clippy rustfmt rust-docs llvm-tools
   mise reshim
-  cargo clean-all --yes --keep-days 5 "$HOME/Developer"
   mbx gc
   mbx setup
   mix local.hex --force
