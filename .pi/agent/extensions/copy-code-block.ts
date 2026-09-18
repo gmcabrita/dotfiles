@@ -4,7 +4,7 @@
  * Usage:
  * - `/copy-code`      pick a block (or copy directly when there is only one)
  * - `/copy-code 2`    copy the second block without a picker
- * - ctrl+shift+c      same as `/copy-code`
+ * - ctrl+shift+x      same as `/copy-code`
  */
 import { copyToClipboard, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Key } from "@earendil-works/pi-tui";
@@ -123,7 +123,7 @@ export default function copyCodeBlockExtension(pi: ExtensionAPI): void {
 		},
 	});
 
-	pi.registerShortcut(Key.ctrlShift("c"), {
+	pi.registerShortcut(Key.ctrlShift("x"), {
 		description: "Copy a code block from the last assistant message",
 		handler: (ctx) => copyCodeBlock(ctx),
 	});
