@@ -6,8 +6,13 @@
  * - `/copy-code 2`    copy the second block without a picker
  * - ctrl+shift+x      same as `/copy-code`
  */
-import { copyToClipboard, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { Key } from "@earendil-works/pi-tui";
+import {
+	copyToClipboard,
+	ExtensionSelectorComponent,
+	type ExtensionAPI,
+	type ExtensionContext,
+} from "@earendil-works/pi-coding-agent";
+import { Key, TuiAltScreen } from "@earendil-works/pi-tui";
 
 export interface CodeBlock {
 	language: string;
@@ -62,6 +67,43 @@ function lastAssistantText(ctx: ExtensionContext): string | undefined {
 	return undefined;
 }
 
+/**
+ * Map a raw key press to a zero-based block index when it is a single digit 1-9 within range.
+ * Lets the picker copy block N directly instead of arrowing to it and pressing enter.
+ */
+export function digitKeyToIndex(keyData: string, count: number): number | undefined {
+	if (!/^[1-9]$/.test(keyData)) return undefined;
+	const index = Number(keyData) - 1;
+	return index < count ? index : undefined;
+}
+
+/** Show the block picker. Arrow keys + enter or a digit key choose a block; escape cancels. */
+async function pickBlock(ctx: ExtensionContext, blocks: CodeBlock[]): Promise<number | undefined> {
+	const labels = blocks.map(describeBlock);
+	const choice = await ctx.ui.custom<string | undefined>((tui, _theme, _keybindings, done) => {
+		const selector = new ExtensionSelectorComponent(
+			"Copy code block (press its number to copy)",
+			labels,
+			done,
+			() => done(undefined),
+			{ tui },
+		);
+		const baseHandleInput = selector.handleInput.bind(selector);
+		selector.handleInput = (keyData) => {
+			const index = digitKeyToIndex(keyData, labels.length);
+			if (index !== undefined) {
+				done(labels[index]);
+				return;
+			}
+			baseHandleInput(keyData);
+		};
+		return selector;
+	});
+	if (choice === undefined) return undefined;
+	const index = labels.indexOf(choice);
+	return index === -1 ? undefined : index;
+}
+
 function describeBlock(block: CodeBlock, index: number): string {
 	const firstLine = block.code.split("\n").find((line) => line.trim().length > 0) ?? "";
 	const lineCount = block.code.split("\n").length;
@@ -70,9 +112,32 @@ function describeBlock(block: CodeBlock, index: number): string {
 	return `${index + 1}. [${language}] ${preview} (${lineCount} line${lineCount === 1 ? "" : "s"})`;
 }
 
+/**
+ * Show a transient toast like the built-in `/copy` (ctrl+x) does.
+ *
+ * The extension UI API has no toast method, so borrow the TUI instance via `custom` and close the
+ * dialog before it mounts. `TuiAltScreen.flash` only exists in alt-screen mode; other modes fall
+ * back to an inline notification.
+ */
+async function flashOrNotify(ctx: ExtensionContext, message: string): Promise<void> {
+	let flashed = false;
+	await ctx.ui.custom<void>(
+		(tui, _theme, _keybindings, done) => {
+			if (tui instanceof TuiAltScreen) {
+				tui.flash(message);
+				flashed = true;
+			}
+			done();
+			return { render: () => [], invalidate: () => {} };
+		},
+		{ overlay: true },
+	);
+	if (!flashed) ctx.ui.notify(message, "info");
+}
+
 async function copyBlock(ctx: ExtensionContext, block: CodeBlock, index: number): Promise<void> {
 	await copyToClipboard(block.code);
-	ctx.ui.notify(`Copied code block ${index + 1} (${block.language || "text"})`, "info");
+	await flashOrNotify(ctx, `Copied code block ${index + 1} (${block.language || "text"})`);
 }
 
 async function copyCodeBlock(ctx: ExtensionContext, requested?: number): Promise<void> {
@@ -102,10 +167,8 @@ async function copyCodeBlock(ctx: ExtensionContext, requested?: number): Promise
 		return;
 	}
 
-	const labels = blocks.map(describeBlock);
-	const choice = await ctx.ui.select("Copy code block", labels);
-	if (choice === undefined) return;
-	const index = labels.indexOf(choice);
+	const index = await pickBlock(ctx, blocks);
+	if (index === undefined) return;
 	await copyBlock(ctx, blocks[index], index);
 }
 

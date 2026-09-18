@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { extractCodeBlocks } from "../extensions/copy-code-block.ts";
+import { digitKeyToIndex, extractCodeBlocks } from "../extensions/copy-code-block.ts";
 
 test("extracts multiple fenced blocks in order", () => {
 	const markdown = [
@@ -30,4 +30,13 @@ test("keeps an unclosed block", () => {
 
 test("ignores inline backticks", () => {
 	assert.deepEqual(extractCodeBlocks("use `foo` here"), []);
+});
+
+test("digit keys map to in-range block indexes only", () => {
+	assert.equal(digitKeyToIndex("1", 3), 0);
+	assert.equal(digitKeyToIndex("3", 3), 2);
+	assert.equal(digitKeyToIndex("4", 3), undefined);
+	assert.equal(digitKeyToIndex("0", 3), undefined);
+	assert.equal(digitKeyToIndex("12", 20), undefined);
+	assert.equal(digitKeyToIndex("\x1b[A", 3), undefined);
 });
