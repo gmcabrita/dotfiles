@@ -820,6 +820,9 @@ function astra() {
 function fable() {
   pi --provider anthropic --model claude-fable-5-1 --thinking high "$@"
 }
+function opus() {
+  pi --provider anthropic --model claude-opus-5-5 --thinking  medium "$@"
+}
 function deepseek() {
   pi --provider deepseek --model deepseek-flash --thinking high "$@"
 }
