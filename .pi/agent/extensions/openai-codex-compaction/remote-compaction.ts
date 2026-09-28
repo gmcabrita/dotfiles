@@ -1051,18 +1051,96 @@ function assistantMessageMatchesModelKey(
 ): boolean {
   const target = parseModelKeyParts(targetModelKey);
   if (!target) return false;
-  if (!isRecord(message)) return false;
+  if (message.role !== "assistant") return false;
   return message.provider === target.provider && message.model === target.id;
 }
 
+export type BranchEntryLike = {
+  type: string;
+  id: string;
+  details?: unknown;
+  message?: AgentMessage;
+  targetId?: unknown;
+  replacement?: unknown;
+};
+
+function replaceMessageContent(message: AgentMessage, replacement: unknown): AgentMessage {
+  if (!isRecord(replacement)) return message;
+  const content = replacement.content;
+  if (typeof content !== "string" && !Array.isArray(content)) return message;
+  if (message.role === "assistant" || message.role === "toolResult") {
+    const blocks = typeof content === "string" ? [{ type: "text", text: content }] : content;
+    return { ...message, content: blocks } as AgentMessage;
+  }
+  if (message.role === "user" || message.role === "custom") {
+    return { ...message, content } as AgentMessage;
+  }
+  return message;
+}
+
+/**
+ * Applies Pi `context_edit` entries to the message entries of a branch.
+ *
+ * Pi keeps raw history append-only. It omits failed retries and abandoned
+ * overflow attempts from provider context with `context_edit` entries
+ * (`replacement: null`), and it can replace message content. This extension
+ * builds its own request input, so it must apply the same edits. The rules
+ * match `projectContextEntry()` in Pi's session manager: the last edit for a
+ * target wins, `null` omits the message, and string content becomes one text
+ * block for assistant and tool result messages.
+ */
+export function applyContextEdits<T extends BranchEntryLike>(entries: readonly T[]): T[] {
+  const edits = new Map<string, unknown>();
+  for (const entry of entries) {
+    if (entry.type === "context_edit" && typeof entry.targetId === "string") {
+      edits.set(entry.targetId, entry.replacement);
+    }
+  }
+  if (edits.size === 0) return [...entries];
+
+  return entries.flatMap((entry) => {
+    if (entry.type !== "message" || !entry.message || !edits.has(entry.id)) return [entry];
+    const replacement = edits.get(entry.id);
+    if (replacement === null) return [];
+    return [{ ...entry, message: replaceMessageContent(entry.message, replacement) }];
+  });
+}
+
+/** True when an entry after the compaction edits an entry before it. */
+function hasEditBeforeCompaction(
+  entries: readonly BranchEntryLike[],
+  compactionEntryId: string,
+): boolean {
+  const compactionIndex = entries.findIndex((entry) => entry.id === compactionEntryId);
+  const earlierIds = new Set(entries.slice(0, compactionIndex).map((entry) => entry.id));
+  return entries
+    .slice(compactionIndex + 1)
+    .some(
+      (entry) =>
+        entry.type === "context_edit" &&
+        typeof entry.targetId === "string" &&
+        earlierIds.has(entry.targetId),
+    );
+}
+
+/**
+ * Builds the Codex request history after the latest remote compaction on a
+ * branch: the provider-native replacement history, then the model-visible
+ * messages after the compaction entry. Pi context edits are applied first.
+ *
+ * The replacement history is opaque, so edits made after the compaction to
+ * earlier messages cannot be applied to it. In that case this returns
+ * undefined, and Pi sends its own context with the local summary.
+ */
 export function reconstructRemoteCompactionStateFromBranch(params: {
-  branchEntries: Array<{ type: string; id: string; details?: unknown; message?: AgentMessage }>;
+  branchEntries: readonly BranchEntryLike[];
 }): RemoteCompactionSessionState | undefined {
+  const branchEntries = applyContextEdits(params.branchEntries);
   let latestCompactionIndex = -1;
   let latestCompactionEntryId = "";
   let latestDetails: RemoteCompactionDetails | undefined;
 
-  params.branchEntries.forEach((entry, index) => {
+  branchEntries.forEach((entry, index) => {
     if (entry.type !== "compaction") return;
     latestCompactionIndex = index;
     latestCompactionEntryId = entry.id;
@@ -1070,11 +1148,12 @@ export function reconstructRemoteCompactionStateFromBranch(params: {
   });
 
   if (!latestDetails || latestCompactionIndex < 0) return undefined;
+  if (hasEditBeforeCompaction(params.branchEntries, latestCompactionEntryId)) return undefined;
 
   const trailingMessages: ResponseItem[] = [];
   let pendingTurnItems: ResponseItem[] = [];
 
-  for (const entry of params.branchEntries.slice(latestCompactionIndex + 1)) {
+  for (const entry of branchEntries.slice(latestCompactionIndex + 1)) {
     if (entry.type !== "message" || !entry.message) continue;
 
     const items = messageToResponseItems(entry.message);
@@ -1090,6 +1169,10 @@ export function reconstructRemoteCompactionStateFromBranch(params: {
 
     pendingTurnItems.push(...items);
   }
+
+  // Items after the last assistant message belong to the turn in progress
+  // (the new prompt or tool results), so the next request must include them.
+  trailingMessages.push(...pendingTurnItems);
 
   return {
     compactionEntryId: latestCompactionEntryId,

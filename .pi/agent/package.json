@@ -7,7 +7,7 @@
     "test:firecrawl-auth": "node --experimental-strip-types --test tests/firecrawl-auth.test.ts",
     "test:copy-code-block": "node --experimental-strip-types --test tests/copy-code-block.test.ts",
     "test:usage": "node --experimental-strip-types --test extensions/usage/usage.test.ts",
-    "test:openai-codex-compaction": "node --experimental-strip-types --test extensions/openai-codex-compaction/openai-codex-compaction.test.ts",
+    "test:openai-codex-compaction": "node --experimental-strip-types --test extensions/openai-codex-compaction/openai-codex-compaction.test.ts extensions/openai-codex-compaction/context-edit.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

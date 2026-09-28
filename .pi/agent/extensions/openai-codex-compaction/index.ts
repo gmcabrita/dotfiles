@@ -8,37 +8,30 @@ import {
   isRecord,
   isSupportedCodexModel,
   looksLikeResponsesPayload,
-  messageMatchesModel,
   modelKey,
   thinkingLevelToResponsesReasoning,
 } from "./model.ts";
 import {
+  applyContextEdits,
   buildCompactionSummaryText,
   buildRemoteCompactionDetails,
   buildToolsPayload,
   callRemoteCompactionEndpoint,
   generateBestEffortLocalSummary,
-  messageToResponseItems,
   messagesToResponseItems,
   normalizeResponseItemsForPrompt,
   reconstructRemoteCompactionStateFromBranch,
+  type BranchEntryLike,
   type RemoteCompactionSessionState,
 } from "./remote-compaction.ts";
 import {
   clearAllState,
-  clearRemoteCompactionState,
   clearSessionState,
-  getRemoteCompactionState,
   getResponsesRequestShapeState,
-  setRemoteCompactionState,
   setResponsesRequestShapeState,
 } from "./state.ts";
 
-type BranchEntry = {
-  type: string;
-  id: string;
-  details?: unknown;
-  message?: AgentMessage;
+type BranchEntry = BranchEntryLike & {
   thinkingLevel?: unknown;
 };
 
@@ -79,51 +72,24 @@ function getBranchThinkingLevel(entries: BranchEntry[]): ThinkingLevel | undefin
   return undefined;
 }
 
-function syncRemoteState(ctx: SessionContext): void {
-  const sessionId = getSessionId(ctx);
-  const state = reconstructRemoteCompactionStateFromBranch({
-    branchEntries: ctx.sessionManager.getBranch(),
-  });
-
-  if (state) {
-    setRemoteCompactionState(sessionId, state);
-  } else {
-    clearRemoteCompactionState(sessionId);
-  }
-}
-
+/**
+ * Rebuilds the remote history from the session branch on each use. Pi's
+ * SessionManager is the source of truth for provider context (pi 0.87+), and
+ * it can omit or replace earlier messages with `context_edit` entries. A cache
+ * that grows on `message_end` cannot see those edits.
+ */
 function matchingRemoteState(
-  sessionId: string,
-  model: CodexModel | undefined,
+  branchEntries: readonly BranchEntry[],
+  model: CodexModel,
 ): RemoteCompactionSessionState | undefined {
-  if (!model) return undefined;
-  const state = getRemoteCompactionState(sessionId);
+  const state = reconstructRemoteCompactionStateFromBranch({ branchEntries });
   return state?.modelKey === modelKey(model) ? state : undefined;
-}
-
-function extendRemoteHistory(
-  sessionId: string,
-  model: CodexModel | undefined,
-  message: AgentMessage,
-): void {
-  const state = matchingRemoteState(sessionId, model);
-  if (!state || !model) return;
-  if (message.role === "assistant" && !messageMatchesModel(message, model)) return;
-
-  const items = messageToResponseItems(message);
-  if (items.length === 0) return;
-
-  setRemoteCompactionState(sessionId, {
-    ...state,
-    explicitHistory: [...state.explicitHistory, ...items],
-  });
 }
 
 /** Always enables Codex remote compaction for openai-codex and openai-codex-lb. */
 export default function openAICodexCompactionExtension(pi: ExtensionAPI) {
   pi.on("session_start", (_event, ctx) => {
     clearSessionState(getSessionId(ctx));
-    syncRemoteState(ctx);
   });
 
   const clearBeforeSessionChange = (_event: unknown, ctx: SessionContext): void => {
@@ -133,8 +99,6 @@ export default function openAICodexCompactionExtension(pi: ExtensionAPI) {
   pi.on("session_before_fork", clearBeforeSessionChange);
   pi.on("session_before_tree", clearBeforeSessionChange);
 
-  pi.on("session_tree", (_event, ctx) => syncRemoteState(ctx));
-  pi.on("session_compact", (_event, ctx) => syncRemoteState(ctx));
   pi.on("session_shutdown", () => clearAllState());
 
   pi.on("session_before_compact", async (event, ctx) => {
@@ -148,8 +112,8 @@ export default function openAICodexCompactionExtension(pi: ExtensionAPI) {
     const streamFn = ctx.modelRegistry.getProvider(model.provider)?.streamSimple;
     const sessionId = getSessionId(ctx);
     const branchEntries = event.branchEntries as BranchEntry[];
-    const fullBranchMessages = getBranchMessages(branchEntries);
-    const remoteState = matchingRemoteState(sessionId, model);
+    const fullBranchMessages = getBranchMessages(applyContextEdits(branchEntries));
+    const remoteState = matchingRemoteState(branchEntries, model);
     const responseItems = remoteState
       ? remoteState.explicitHistory
       : messagesToResponseItems(fullBranchMessages);
@@ -245,11 +209,6 @@ export default function openAICodexCompactionExtension(pi: ExtensionAPI) {
     };
   });
 
-  pi.on("message_end", (event, ctx) => {
-    const model = isSupportedCodexModel(ctx.model) ? ctx.model : undefined;
-    extendRemoteHistory(getSessionId(ctx), model, event.message);
-  });
-
   pi.on("before_provider_request", (event, ctx) => {
     const model = ctx.model;
     if (
@@ -266,7 +225,7 @@ export default function openAICodexCompactionExtension(pi: ExtensionAPI) {
       text: extractResponsesTextConfig(event.payload),
     });
 
-    const remoteState = matchingRemoteState(sessionId, model);
+    const remoteState = matchingRemoteState(ctx.sessionManager.getBranch(), model);
     if (!remoteState) return;
 
     return applyRemoteHistoryPayloadPatch(
