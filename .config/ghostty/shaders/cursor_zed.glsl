@@ -16,7 +16,10 @@
 //   2. Zed retargets from the corner's current animated position. Ghostty only
 //      reports the previous settled cursor rectangle.
 //   3. Ghostty already painted the static cursor at the target cell. Zed does
-//      not paint it while the polygon is animating.
+//      not paint it while the polygon is animating. Zed paints the block text
+//      once the polygon overlaps the target cell (zed commit b54cc1d). This
+//      port keeps Ghostty's cursor cell, text included, for the whole
+//      animation.
 //
 // Coordinates: on Metal (macOS) fragCoord has y down and iCurrentCursor.y is
 // the bottom edge of the cursor, so this shader works in the same y down frame
@@ -202,6 +205,14 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     if (!anyCornerActive) return;
 
     // ---- CursorLayout::paint(): fill polygon with the cursor colour ---------
+    // Zed paints block_text over the polygon once it reaches the target cell.
+    // Ghostty's frame already holds the block cursor with its text there, so
+    // leave the target cell unpainted to keep the character visible.
+    if (iCurrentCursorStyle == CURSORSTYLE_BLOCK) {
+        vec2 targetMax = target.origin + target.size;
+        if (all(greaterThanEqual(fragCoord, target.origin)) && all(lessThan(fragCoord, targetMax))) return;
+    }
+
     float d = sdPolygon(fragCoord, corners);
     float coverage = clamp(0.5 - d, 0.0, 1.0);
     vec4 color = iCurrentCursorColor;
