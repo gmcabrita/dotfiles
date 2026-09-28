@@ -5,6 +5,7 @@ description: >
   misleading. Use after writing property-based tests with hegel (or
   proptest, quickcheck, fast-check, jqwik, etc.), when asked to review
   property-based tests, or before shipping a change to a PBT suite.
+disable-model-invocation: true
 ---
 
 # Reviewing property-based tests

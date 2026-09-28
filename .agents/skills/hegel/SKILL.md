@@ -10,6 +10,7 @@ description: >
   "randomized testing", "test with random inputs", "shrinking", or when
   existing tests use proptest, quickcheck, rapid, gopter, rapidcheck,
   fast-check, jqwik, junit-quickcheck, qcheck, or crowbar.
+disable-model-invocation: true
 ---
 
 # Hegel: property-based testing

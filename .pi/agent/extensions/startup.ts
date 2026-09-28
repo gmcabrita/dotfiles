@@ -16,9 +16,13 @@ import { Container, fuzzyFilter, Input, type SelectItem, SelectList, Text } from
  * session is resumed, because the resumed session already carries its own model history. Project settings
  * are only read when the project is trusted. A project purpose replaces the global purpose with the same name.
  *
+ * Set `sessionPurposeEnabled` to false to turn off the purpose prompt. `settings.startup` still applies.
+ * A project value overrides the global value. The default is true.
+ *
  * settings.json shape:
  * {
  *   "startup": { "provider": "anthropic", "model": "claude-fable-5-1", "thinkingLevel": "high" },
+ *   "sessionPurposeEnabled": true,
  *   "sessionPurpose": {
  *     "implement": { "provider": "anthropic", "model": "claude-fable-5-1", "thinkingLevel": "high" },
  *     "review": { "provider": "openai-codex-lb", "model": "gpt-6-astra", "thinkingLevel": "xhigh" }
@@ -146,6 +150,14 @@ function getStartupConfig(settings: ReturnType<typeof loadSettings>): StartupCon
 		provider: projectStartup.provider ?? globalStartup.provider,
 		thinkingLevel: projectStartup.thinkingLevel ?? globalStartup.thinkingLevel,
 	};
+}
+
+function isSessionPurposeEnabled(settings: ReturnType<typeof loadSettings>): boolean {
+	const projectValue = settings.project.sessionPurposeEnabled;
+	if (typeof projectValue === "boolean") return projectValue;
+	const globalValue = settings.global.sessionPurposeEnabled;
+	if (typeof globalValue === "boolean") return globalValue;
+	return true;
 }
 
 /** Project purposes override global purposes with the same name. Global key order is kept. */
@@ -303,7 +315,7 @@ export default function startupExtension(pi: ExtensionAPI) {
 
 		applyThinkingLevel(pi, cliThinkingLevel ?? startup.thinkingLevel);
 
-		if (explicitModel || resumed || ctx.mode !== "tui") return;
+		if (!isSessionPurposeEnabled(settings) || explicitModel || resumed || ctx.mode !== "tui") return;
 
 		const purposes = getPurposeConfigs(settings);
 		if (purposes.length === 0) return;

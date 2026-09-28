@@ -10,6 +10,7 @@
     "provider": "anthropic",
     "thinkingLevel": "medium"
   },
+  "sessionPurposeEnabled": false,
   "sessionPurpose": {
     "implement": {
       "provider": "anthropic",
