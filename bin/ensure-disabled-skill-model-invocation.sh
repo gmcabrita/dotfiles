@@ -10,6 +10,8 @@ DISABLED_SKILLS=(
   "bro"
   "fix-merge-conflicts"
   "gh-stack"
+  "hegel"
+  "hegel-review"
   "llm-wiki"
   "napkin-math"
   "security-audit"

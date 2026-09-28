@@ -13,6 +13,18 @@
       "skillPath": "skills/gh-stack/SKILL.md",
       "computedHash": "28d42250d52f33424b807add6fbdec75736e835f98752311db321ab51733fea6"
     },
+    "hegel": {
+      "source": "hegeldev/hegel-skill",
+      "sourceType": "github",
+      "skillPath": "skills/hegel/SKILL.md",
+      "computedHash": "308b07d00bfd19825d4f4a08f19db4660d9cfdfdadcd00798ed51ea7e99120c7"
+    },
+    "hegel-review": {
+      "source": "hegeldev/hegel-skill",
+      "sourceType": "github",
+      "skillPath": "skills/hegel-review/SKILL.md",
+      "computedHash": "67b091f91961ea1f80608f72681fc30ac60f3e7f4aa6bb50eea89e745a72b104"
+    },
     "security-audit": {
       "source": "cloudflare/security-audit-skill",
       "sourceType": "github",
