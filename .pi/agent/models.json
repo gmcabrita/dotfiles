@@ -2,18 +2,6 @@
   "providers": {
     "openai": {
       "baseUrl": "http://codexlb00.usce1.mgmt.internal.amplemarket.com:2455/v1"
-    },
-    "anthropic": {
-      "modelOverrides": {
-        "claude-fable-5-1": {
-          "contextWindow": 272000,
-          "thinkingLevelMap": {
-            "off": null,
-            "xhigh": "xhigh",
-            "max": "max"
-          }
-        }
-      }
     }
   }
 }
