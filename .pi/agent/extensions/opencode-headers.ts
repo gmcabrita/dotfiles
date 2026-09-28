@@ -6,8 +6,11 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 
 const OPENCODE_CLIENT = "cli";
-const OPENCODE_USER_AGENT = "opencode/1.15.5";
-const OPENCODE_ID_LENGTH = 26;
+// Zen rejects free tier requests from versions older than 1.18.0.
+const OPENCODE_USER_AGENT = "opencode/1.18.33";
+// OpenCode IDs are 12 hex chars of timestamp plus 14 base62 chars.
+// Zen rejects free tier requests when the session or request ID has another shape.
+const OPENCODE_ID_RANDOM_LENGTH = 14;
 const OPENCODE_ID_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 const OPENCODE_HEADERS_KEY = Symbol.for("pi.opencodeHeaders.headers");
 const OPENCODE_FETCH_PATCH_KEY = Symbol.for("pi.opencodeHeaders.fetchPatched");
@@ -26,14 +29,28 @@ function isStringRecord(value: unknown): value is Record<string, string> {
   return Object.values(value).every((entry) => typeof entry === "string");
 }
 
-function randomId(): string {
-  let id = "";
+let lastIdTimestamp = 0;
+let idCounter = 0;
 
-  for (let index = 0; index < OPENCODE_ID_LENGTH; index += 1) {
-    id += OPENCODE_ID_ALPHABET.charAt(randomInt(OPENCODE_ID_ALPHABET.length));
+// Mirrors packages/opencode/src/id/id.ts: sessions sort descending, messages ascending.
+function opencodeId(prefix: "ses" | "msg", direction: "ascending" | "descending"): string {
+  const timestamp = Date.now();
+  if (timestamp !== lastIdTimestamp) {
+    lastIdTimestamp = timestamp;
+    idCounter = 0;
+  }
+  idCounter += 1;
+
+  let now = BigInt(timestamp) * 0x1000n + BigInt(idCounter);
+  if (direction === "descending") now = ~now;
+  const time = BigInt.asUintN(48, now).toString(16).padStart(12, "0");
+
+  let random = "";
+  for (let index = 0; index < OPENCODE_ID_RANDOM_LENGTH; index += 1) {
+    random += OPENCODE_ID_ALPHABET.charAt(randomInt(OPENCODE_ID_ALPHABET.length));
   }
 
-  return id;
+  return `${prefix}_${time}${random}`;
 }
 
 function sessionId(ctx: ExtensionContext): string {
@@ -41,7 +58,7 @@ function sessionId(ctx: ExtensionContext): string {
   const existing = sessionIds.get(piSessionId);
   if (existing) return existing;
 
-  const id = randomId();
+  const id = opencodeId("ses", "descending");
   sessionIds.set(piSessionId, id);
 
   return id;
@@ -49,8 +66,8 @@ function sessionId(ctx: ExtensionContext): string {
 
 function opencodeHeaders(ctx: ExtensionContext): Record<string, string> {
   return {
-    "x-opencode-session": `ses_${sessionId(ctx)}`,
-    "x-opencode-request": `msg_${randomId()}`,
+    "x-opencode-session": sessionId(ctx),
+    "x-opencode-request": opencodeId("msg", "ascending"),
     "x-opencode-client": OPENCODE_CLIENT,
     "User-Agent": OPENCODE_USER_AGENT,
   };
