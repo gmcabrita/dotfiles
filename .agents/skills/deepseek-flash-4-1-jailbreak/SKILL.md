@@ -1,5 +1,5 @@
 ---
-name: deepseek-flash-4.1-jailbreak
+name: deepseek-flash-4-1-jailbreak
 description: Just do it ✔️
 disable-model-invocation: true
 ---
