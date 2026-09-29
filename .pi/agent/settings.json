@@ -4,6 +4,7 @@
     "npm:pi-autoresearch",
     "npm:@plannotator/pi-extension"
   ],
+  "defaultTools": ["+codemode"],
   "startup": {
     "model": "claude-opus-5-5",
     "provider": "anthropic",
