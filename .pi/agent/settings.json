@@ -1,6 +1,5 @@
 {
   "packages": [
-    "git:github.com/dmmulroy/pi-mcp",
     "npm:@gotgenes/pi-anthropic-auth",
     "npm:pi-autoresearch",
     "npm:@plannotator/pi-extension"

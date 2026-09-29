@@ -1,16 +1,10 @@
 {
-  "mcp": {
-    "toolMode": "proxy",
-    "startup": "lazy",
-    "servers": {
-      "grafana": {
-        "type": "remote",
-        "url": "https://grafana-mcp.gke00.usce1.mgmt.internal.amplemarket.com/mcp"
-      },
-      "pganalyze": {
-        "type": "remote",
-        "url": "https://app.pganalyze.com/mcp"
-      }
+  "mcpServers": {
+    "grafana": {
+      "url": "https://grafana-mcp.gke00.usce1.mgmt.internal.amplemarket.com/mcp"
+    },
+    "pganalyze": {
+      "url": "https://app.pganalyze.com/mcp"
     }
   }
 }
