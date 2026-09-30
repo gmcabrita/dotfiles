@@ -5,6 +5,7 @@ import { type AnthropicUsageResponse, parseAnthropicUsage } from "./providers/an
 import { parseDeepSeekUsage } from "./providers/deepseek.ts";
 import { extractChatGptAccountId, parseOpenAICodexUsage } from "./providers/openai-codex.ts";
 import { parseCodexLbUsage, resolveCodexLbUsageUrl } from "./providers/openai-codex-lb.ts";
+import { parseOpenCodeGoUsage } from "./providers/opencode-go.ts";
 import { parseOpenRouterUsage } from "./providers/openrouter.ts";
 import { scopedProviderIds, selectProviders } from "./index.ts";
 
@@ -121,6 +122,27 @@ describe("parseOpenRouterUsage", () => {
       [["Balance (USD)", "93.08", null]],
     );
     assert.deepEqual(usage.notes, []);
+  });
+});
+
+describe("parseOpenCodeGoUsage", () => {
+  it("renders rolling, weekly, and monthly windows and flags rate limits", () => {
+    const usage = parseOpenCodeGoUsage({
+      usage: {
+        rolling: { status: "rate-limited", percent: 100, resetsAt: "2026-09-14T20:00:00.000Z" },
+        weekly: { status: "ok", percent: 42, resetsAt: "2026-09-21T00:00:00.000Z" },
+        monthly: { status: "ok", percent: 10, resetsAt: "2026-10-01T00:00:00.000Z" },
+      },
+    });
+    assert.deepEqual(
+      usage.rows.map((row) => row.kind === "limit" && [row.label, row.percent, row.severity, row.resetsAt?.toISOString()]),
+      [
+        ["Rolling (5h)", 100, "critical", "2026-09-14T20:00:00.000Z"],
+        ["Weekly", 42, "normal", "2026-09-21T00:00:00.000Z"],
+        ["Monthly", 10, "normal", "2026-10-01T00:00:00.000Z"],
+      ],
+    );
+    assert.deepEqual(usage.notes, ["Rolling (5h): rate limited"]);
   });
 });
 
