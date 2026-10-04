@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "benchmark-checklist": {
+      "source": "cursor/plugins",
+      "sourceType": "github",
+      "skillPath": "pstack/skills/benchmark-checklist/SKILL.md",
+      "computedHash": "6ff67604d60b354b25c69047379776492a41fe99f280bc9d5df3a076580b3853"
+    },
     "fix-merge-conflicts": {
       "source": "cursor/plugins",
       "sourceType": "github",

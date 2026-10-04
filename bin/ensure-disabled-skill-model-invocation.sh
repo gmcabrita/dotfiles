@@ -7,6 +7,7 @@ DISABLED_SKILLS=(
   "audit-fighting-the-frameworks"
   "audit-tree-shake-the-codebase"
   "audit-useless-tests"
+  "benchmark-checklist"
   "bro"
   "clarity-and-grace"
   "deepseek-flash-4-1-jailbreak"
