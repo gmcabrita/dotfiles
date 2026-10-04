@@ -12,6 +12,7 @@ DISABLED_SKILLS=(
   "deepseek-flash-4-1-jailbreak"
   "fix-merge-conflicts"
   "gh-stack"
+  "glm-5-3-jailbreak"
   "hegel"
   "hegel-review"
   "llm-wiki"
