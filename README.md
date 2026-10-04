@@ -144,3 +144,4 @@
   - https://apps.apple.com/pt/app/infuse/id1136220934
   - https://apps.apple.com/pt/app/testflight/id899247664
   - https://apps.apple.com/pt/app/xcode/id497799835
+- removemacai off --keep spatial-photos,photos-clean-up

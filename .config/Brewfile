@@ -4,6 +4,7 @@ tap "orlangure/tap", trusted: true
 tap "ramonvermeulen/whosthere", trusted: true
 tap "tw93/tap", trusted: true
 tap "wader/tap", trusted: true
+tap "omlahore/tap", trusted: true
 
 brew "age"
 brew "asciinema"
@@ -66,6 +67,7 @@ brew "moreutils"
 brew "ncdu"
 brew "neovim"
 brew "nmap"
+brew "omlahore/tap/removemacai"
 brew "orlangure/tap/gocovsh"
 brew "p7zip"
 brew "pg_top"
