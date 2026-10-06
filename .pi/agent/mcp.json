@@ -1,7 +1,11 @@
 {
   "mcpServers": {
     "grafana": {
-      "url": "https://grafana-mcp.gke00.usce1.mgmt.internal.amplemarket.com/mcp"
+      "url": "https://grafana-mcp.gke00.usce1.mgmt.internal.amplemarket.com/mcp",
+      "oauth": {
+        "clientId": "opencode",
+        "callbackUrl": "http://127.0.0.1:19876/mcp/oauth/callback"
+      }
     },
     "pganalyze": {
       "url": "https://app.pganalyze.com/mcp"
