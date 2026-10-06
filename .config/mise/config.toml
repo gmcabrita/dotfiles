@@ -7,6 +7,7 @@
 [tools]
 "aqua:smol-machines/smolvm" = "latest"
 "cargo:hurlfmt" = "latest"
+"cargo:iodyne" = "latest"
 "cargo:oha" = "latest"
 "cargo:pdf-inspector" = "latest"
 "cargo:ree-cli" = "latest"
