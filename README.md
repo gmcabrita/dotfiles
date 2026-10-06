@@ -132,11 +132,6 @@
     - Remove items from the Trash after 30 days
     - Keep folders on top when sorting by name
     - When performing a search: Search the Current Folder
-- https://github.com/D-Berg/crap
-  - `gh repo clone D-Berg/crap`
-  - `gh repo set-default`
-  - `git pull origin`
-  - `zig build install -Doptimize=ReleaseFast --prefix $HOME/.local`
 - Balance Lock
 - App Store
   - https://apps.apple.com/pt/app/actions/id1586435171
@@ -144,4 +139,3 @@
   - https://apps.apple.com/pt/app/infuse/id1136220934
   - https://apps.apple.com/pt/app/testflight/id899247664
   - https://apps.apple.com/pt/app/xcode/id497799835
-- removemacai off --keep spatial-photos,photos-clean-up
