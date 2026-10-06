@@ -40,6 +40,7 @@
   },
   "enabledModels": [
     "openai-codex-lb/gpt-6-astra",
+    "openai-codex-lb/gpt-6.1-sol",
     "openai-codex-lb/gpt-reserve",
     "anthropic/claude-fable-5-1",
     "anthropic/claude-opus-5-5",
