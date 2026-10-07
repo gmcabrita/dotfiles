@@ -22,6 +22,7 @@ const CHILD_ENV = "PI_TMUX_SUBAGENT_CHILD";
 const RESULT_ENV = "PI_TMUX_SUBAGENT_RESULT";
 const RUNS_DIR = "tmux-subagents";
 const POLL_INTERVAL_MS = 500;
+const CHILD_EXIT_GRACE_MS = 5_000;
 const PANE_PREVIEW_LINES = 18;
 const THINKING_LEVELS = ["off", "minimal", "low", "medium", "high", "xhigh", "max"] as const;
 const EXTENSION_PATH = fileURLToPath(import.meta.url);
@@ -52,6 +53,7 @@ interface RunDetails {
 	provider: string;
 	model: string;
 	thinking: string;
+	tools?: string[];
 	pane?: string;
 	output?: string;
 	sessionFile?: string;
@@ -71,6 +73,7 @@ interface RunSpec {
 	provider: string;
 	model: string;
 	thinking: string;
+	tools?: string[];
 	trusted: boolean;
 }
 
@@ -285,6 +288,7 @@ function detailsFor(spec: RunSpec, status: RunStatus, extra: Partial<RunDetails>
 		provider: spec.provider,
 		model: spec.model,
 		thinking: spec.thinking,
+		tools: spec.tools,
 		...extra,
 	};
 }
@@ -310,11 +314,19 @@ function resultText(details: RunDetails): string {
 	const lines = [
 		`Subagent ${details.status}${duration ? ` after ${duration}` : ""}.`,
 		`Model: ${details.provider}/${details.model} (${details.thinking})`,
-		`tmux: ${details.tmuxSession}`,
-		`Attach: ${details.attachCommand}`,
-		`Capture: ${details.captureCommand}`,
-		`Clean up: ${details.killCommand}`,
 	];
+	if (details.tools) lines.push(`Tools: ${details.tools.join(",")}`);
+	// Completed runs have their tmux session killed; failed runs keep it for inspection.
+	if (details.status === "completed") {
+		lines.push(`tmux: ${details.tmuxSession} (closed)`);
+	} else {
+		lines.push(
+			`tmux: ${details.tmuxSession}`,
+			`Attach: ${details.attachCommand}`,
+			`Capture: ${details.captureCommand}`,
+			`Clean up: ${details.killCommand}`,
+		);
+	}
 	if (details.sessionFile) lines.push(`Child session: ${details.sessionFile}`);
 	if (details.output) lines.push("", details.output);
 	return truncateToolText(lines.join("\n"));
@@ -456,6 +468,12 @@ export default function subagentExtension(pi: ExtensionAPI): void {
 					description: "Thinking level override. Defaults to the current thinking level.",
 				}),
 			),
+			tools: Type.Optional(
+				Type.Array(Type.String(), {
+					description:
+						'Tool allowlist for the child, e.g. ["read","grep","find","ls"] for a read-only run. Patterns with * work. MCP tools stay enabled unless an entry starts with mcp__. Defaults to the normal tool set.',
+				}),
+			),
 		}),
 
 		async execute(_toolCallId, params, signal, onUpdate, ctx) {
@@ -463,6 +481,10 @@ export default function subagentExtension(pi: ExtensionAPI): void {
 			const cwd = path.resolve(ctx.cwd, params.cwd?.trim() || ".");
 			const selectedModel = resolveModel(ctx, params.provider, params.model);
 			const thinking = params.thinking ?? pi.getThinkingLevel();
+			const tools = params.tools?.map((tool) => tool.trim());
+			if (tools && (tools.length === 0 || tools.some((tool) => !tool || tool.includes(",")))) {
+				throw new Error("Subagent tools must be a non-empty list of tool names without commas.");
+			}
 			const childSessionId = randomUUID();
 			const runDir = path.join(getAgentDir(), RUNS_DIR, ctx.sessionManager.getSessionId(), childSessionId);
 			const resultPath = path.join(runDir, "result.json");
@@ -480,6 +502,7 @@ export default function subagentExtension(pi: ExtensionAPI): void {
 				provider: selectedModel.provider,
 				model: selectedModel.model,
 				thinking,
+				tools,
 				trusted: isSameOrDescendant(path.resolve(ctx.cwd), cwd) && ctx.isProjectTrusted(),
 			};
 			updateTmuxCommands(spec);
@@ -509,6 +532,7 @@ export default function subagentExtension(pi: ExtensionAPI): void {
 						selectedModel.model,
 						"--thinking",
 						thinking,
+						...(tools ? ["--tools", tools.join(",")] : []),
 						"--session-dir",
 						sessionDir,
 						"--session-id",
@@ -552,10 +576,13 @@ export default function subagentExtension(pi: ExtensionAPI): void {
 						const initialDetails = detailsFor(spec, "running", { startedAt });
 						onUpdate?.({ content: [{ type: "text", text: partialText(initialDetails) }], details: initialDetails });
 
-						const sent = await pi.exec("tmux", tmuxArgs("send-keys", "-t", tmuxTarget, "-l", "--", childCommand));
-						if (sent.code !== 0) throw new Error(sent.stderr.trim() || "Failed to start child Pi.");
-						const entered = await pi.exec("tmux", tmuxArgs("send-keys", "-t", tmuxTarget, "Enter"));
-						if (entered.code !== 0) throw new Error(entered.stderr.trim() || "Failed to submit child command.");
+						// Replace the pane's shell with the child command. Typing the command with send-keys
+						// races with interactive shell startup and can drop the Enter key.
+						const started = await pi.exec(
+							"tmux",
+							tmuxArgs("respawn-pane", "-k", "-c", cwd, "-t", tmuxTarget, childCommand),
+						);
+						if (started.code !== 0) throw new Error(started.stderr.trim() || "Failed to start child Pi.");
 
 						let lastPane = "";
 						let childResult: ChildResult | undefined;
@@ -623,6 +650,18 @@ export default function subagentExtension(pi: ExtensionAPI): void {
 						if (childResult.status === "failed") {
 							throw new Error(resultText(details));
 						}
+						// The output and child session file hold everything needed, so the pane has no further use.
+						// The child writes result.json before it shuts down; wait briefly so its shutdown cleanup finishes.
+						const exitDeadline = Date.now() + CHILD_EXIT_GRACE_MS;
+						while (Date.now() < exitDeadline) {
+							const dead = await pi.exec(
+								"tmux",
+								tmuxArgs("display-message", "-p", "-t", tmuxTarget, "#{pane_dead}"),
+							);
+							if (dead.code !== 0 || dead.stdout.trim() === "1") break;
+							await abortableDelay(100, signal);
+						}
+						await pi.exec("tmux", tmuxArgs("kill-session", "-t", tmuxSession));
 						return {
 							content: [{ type: "text", text: resultText(details) }],
 							details,
@@ -645,7 +684,12 @@ export default function subagentExtension(pi: ExtensionAPI): void {
 			const firstLine = task.split("\n", 1)[0] ?? task;
 			const preview = firstLine.length > 100 ? `${firstLine.slice(0, 100)}…` : firstLine;
 			let text = theme.fg("toolTitle", theme.bold("subagent ")) + theme.fg("dim", preview);
-			const overrides = [args.provider, args.model, args.thinking].filter(Boolean);
+			const overrides = [
+				args.provider,
+				args.model,
+				args.thinking,
+				args.tools?.length ? `tools: ${args.tools.join(",")}` : undefined,
+			].filter(Boolean);
 			if (overrides.length > 0) text += `\n  ${theme.fg("muted", overrides.join(" · "))}`;
 			return new Text(text, 0, 0);
 		},
@@ -666,7 +710,7 @@ export default function subagentExtension(pi: ExtensionAPI): void {
 			const duration = formatDuration(details.startedAt, details.finishedAt);
 			let text = `${icon} ${theme.fg("toolTitle", theme.bold(details.tmuxSession))}`;
 			text += theme.fg("muted", ` · ${details.status}${duration ? ` · ${duration}` : ""}`);
-			text += `\n  ${theme.fg("accent", details.attachCommand)}`;
+			if (details.status !== "completed") text += `\n  ${theme.fg("accent", details.attachCommand)}`;
 			text += `\n  ${theme.fg("dim", `${details.provider}/${details.model} (${details.thinking})`)}`;
 
 			if (running && details.pane) {
@@ -678,8 +722,10 @@ export default function subagentExtension(pi: ExtensionAPI): void {
 				const visible = expanded ? outputLines : outputLines.slice(0, 8);
 				text += `\n\n${visible.map((line) => theme.fg("toolOutput", line)).join("\n")}`;
 				if (!expanded && outputLines.length > visible.length) text += `\n${theme.fg("muted", "(Ctrl+O to expand)")}`;
-				text += `\n\n  ${theme.fg("dim", `capture: ${details.captureCommand}`)}`;
-				text += `\n  ${theme.fg("dim", `cleanup: ${details.killCommand}`)}`;
+				if (details.status !== "completed") {
+					text += `\n\n  ${theme.fg("dim", `capture: ${details.captureCommand}`)}`;
+					text += `\n  ${theme.fg("dim", `cleanup: ${details.killCommand}`)}`;
+				}
 			}
 			return new Text(text, 0, 0);
 		},
