@@ -294,7 +294,7 @@ function profile-zsh() {
 }
 
 function benchmark-zsh() {
-  hyperfine --warmup 10 "zsh -i -c 'exit 0'"
+  hyperfine --warmup 10 "zsh -i -c 'exit 0'" --metrics all
 }
 
 function g() {
