@@ -92,6 +92,7 @@ custom-shader = ~/.config/ghostty/shaders/cursor_zed.glsl
 font-family = JetBrains Mono NL
 font-feature = -calt, -liga, -dlig
 font-size = 17
+font-thicken = true
 keybind = ctrl+left=ignore
 keybind = ctrl+right=ignore
 keybind = cmd+enter=ignore
