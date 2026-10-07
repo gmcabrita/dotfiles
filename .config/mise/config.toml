@@ -17,6 +17,7 @@
 "github:qbdi/qbdi" = "latest"
 "github:rockorager/zigdoc" = "latest"
 "github:rockorager/ziglint" = "latest"
+"github:sharkdp/hyperfine" = { version = "latest", prerelease = true }
 "go:github.com/tailscale/tailcat/cmd/tailcat" = "latest"
 "go:golang.org/x/tools/gopls" = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
