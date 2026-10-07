@@ -44,6 +44,7 @@
     "openai-codex-lb/gpt-reserve",
     "anthropic/claude-fable-5-1",
     "anthropic/claude-opus-5-5",
+    "anthropic/claude-haiku-5-5",
     "deepseek/deepseek-flash",
     "openrouter/deepseek/deepseek-v4.1-flash",
     "openrouter/z-ai/glm-5.3",
