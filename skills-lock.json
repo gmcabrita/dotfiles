@@ -19,6 +19,12 @@
       "skillPath": "skills/gh-stack/SKILL.md",
       "computedHash": "6a5289601eedbeedc2d79c2d8627277afb9b9a3fbd78b4da3399a46dd788ae0a"
     },
+    "good-css": {
+      "source": "vojtaholik/good-css",
+      "sourceType": "github",
+      "skillPath": "skills/good-css/SKILL.md",
+      "computedHash": "64871e84fee8d9f9da1cfc6e8831ad00ef425bccdcc76addcfaa25fbdc131055"
+    },
     "hegel": {
       "source": "hegeldev/hegel-skill",
       "sourceType": "github",
