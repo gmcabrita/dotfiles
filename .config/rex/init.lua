@@ -3,8 +3,12 @@
 -- server passes the key on to the terminal.
 local function ignore() return true end
 
-rex.bind("ctrl+left", ignore)
-rex.bind("ctrl+right", ignore)
+rex.bind("alt+left", "com.superlogical.terminal.write", { data = "\27b" })
+rex.bind("alt+right", "com.superlogical.terminal.write", { data = "\27f" })
+rex.bind("ctrl+left", "com.superlogical.terminal.write", { data = "\27b" })
+rex.bind("ctrl+right", "com.superlogical.terminal.write", { data = "\27f" })
+rex.bind("cmd+left", "com.superlogical.terminal.write", { data = "\1" })
+rex.bind("cmd+right", "com.superlogical.terminal.write", { data = "\5" })
 rex.bind("cmd+enter", ignore)
 
 -- Write raw bytes to the focused terminal (Ghostty "text:").
