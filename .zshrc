@@ -412,7 +412,8 @@ function update-programming-languages() {
     duti -s "$EDITOR_APP_ID" "$uti" all
   done
 
-  duti -s com.mitchellh.ghostty public.unix-executable all
+  # duti -s com.mitchellh.ghostty public.unix-executable all
+  duti -s com.superlogical.rex public.unix-executable all
 }
 
 function timestamps() {
