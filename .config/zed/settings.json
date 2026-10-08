@@ -169,6 +169,7 @@
     "git-firefly": true,
     "html": true,
     "just": true,
+    "lua": true,
     "make": true,
     "proto": true,
     "ruby": true,
