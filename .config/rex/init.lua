@@ -1,5 +1,7 @@
--- Bind to a no-op function so the key does nothing (Ghostty "ignore").
-local function ignore() end
+-- Consume the key so it never reaches the terminal (Ghostty "ignore").
+-- A function binding must return true to consume the key. Otherwise the
+-- server passes the key on to the terminal.
+local function ignore() return true end
 
 rex.bind("ctrl+left", ignore)
 rex.bind("ctrl+right", ignore)
