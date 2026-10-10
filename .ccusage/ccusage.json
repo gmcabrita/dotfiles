@@ -8,8 +8,12 @@
   "pi": {
     "stores": [
       {
-        "name": "pi-subagents",
+        "name": "pi-tmux-subagents",
         "path": "~/.pi/agent/tmux-subagents"
+      },
+      {
+        "name": "pi-subagents",
+        "path": "~/.pi/agent/subagents"
       }
     ]
   }
