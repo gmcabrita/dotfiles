@@ -1,8 +1,9 @@
 // Shared state and Rex helpers for the subagent extension (index.ts) and CLI (cli.ts).
 //
-// Each run lives in ~/.pi/agent/subagents/<handle>/ with metadata.json, the child
-// Pi session.jsonl, and an inbox/ of queued messages. The child Pi process runs in
-// a Rex terminal block; Rex is the only process supervisor.
+// Control state for each run lives in ~/.pi/agent/subagents/runs/<handle>/
+// (metadata.json and an inbox/ of queued messages) and is removed by `subagent stop`.
+// The child's Pi transcript lives in ~/.pi/agent/subagents/sessions/ and is kept.
+// The child Pi process runs in a Rex terminal block; Rex is the only process supervisor.
 
 import { execFile, spawnSync } from "node:child_process";
 import {
@@ -41,7 +42,8 @@ export interface RunMetadata {
 	/** Absent while the run is launching or suspended. */
 	terminal?: RexTerminal;
 	runDir: string;
-	sessionFile: string;
+	/** Path of the child's transcript. Reported by the child at session_start; absent until then. */
+	sessionFile?: string;
 	cwd: string;
 	provider: string;
 	model: string;
@@ -86,7 +88,12 @@ export function getAgentDir(): string {
 }
 
 export function getRunsDir(): string {
-	return join(getAgentDir(), "subagents");
+	return join(getAgentDir(), "subagents", "runs");
+}
+
+/** Where child Pi transcripts are stored. Survives `subagent stop`. */
+export function getSessionsDir(): string {
+	return join(getAgentDir(), "subagents", "sessions");
 }
 
 export function metadataPath(runDir: string): string {
@@ -132,7 +139,7 @@ export function readMetadata(runDir: string): RunMetadata | undefined {
 			typeof metadata.handle !== "string" ||
 			(metadata.name !== undefined && !isValidRunName(metadata.name)) ||
 			(metadata.terminal !== undefined && !isRexTerminal(metadata.terminal)) ||
-			typeof metadata.sessionFile !== "string" ||
+			(metadata.sessionFile !== undefined && typeof metadata.sessionFile !== "string") ||
 			typeof metadata.runDir !== "string"
 		) {
 			return undefined;
@@ -315,8 +322,15 @@ export function renameRexSession(terminal: RexTerminal | undefined, label: strin
  * Start the child pi process for a run in a new Rex session and return its IDs.
  * `initialArgs` are only passed on first spawn. The caller stores the terminal in
  * metadata; the child does not need it.
+ *
+ * First launch lets pi create the transcript in getSessionsDir(); the child reports
+ * the path at session_start. A relaunch resumes that transcript.
  */
 export function launchRun(metadata: RunMetadata, initialArgs: string[] = []): RexTerminal {
+	mkdirSync(getSessionsDir(), { recursive: true, mode: 0o700 });
+	const sessionArgs = metadata.sessionFile
+		? ["--session", metadata.sessionFile]
+		: ["--session-dir", getSessionsDir()];
 	const result = rex([
 		"new",
 		rexSessionLabel(metadata),
@@ -328,8 +342,7 @@ export function launchRun(metadata: RunMetadata, initialArgs: string[] = []): Re
 		"env",
 		`PI_SUBAGENT_RUN_DIR=${metadata.runDir}`,
 		"pi",
-		"--session",
-		metadata.sessionFile,
+		...sessionArgs,
 		"--provider",
 		metadata.provider,
 		"--model",

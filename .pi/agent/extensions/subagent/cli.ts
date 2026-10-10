@@ -164,9 +164,7 @@ function spawnSubagent(args: string[]): void {
 
 	const handle = generateHandle();
 	const runDir = runDirForHandle(handle);
-	const sessionFile = join(runDir, "session.jsonl");
 	mkdirSync(inboxDir(runDir), { recursive: true, mode: 0o700 });
-	writeFileSync(sessionFile, "", { mode: 0o600 });
 
 	const launchArgs: string[] = [];
 	if (tools) launchArgs.push("--tools", tools);
@@ -187,7 +185,6 @@ function spawnSubagent(args: string[]): void {
 		parentSessionId: process.env.PI_SESSION_ID || undefined,
 		parentSessionFile: process.env.PI_SESSION_FILE || undefined,
 		runDir,
-		sessionFile,
 		cwd,
 		provider,
 		model,
@@ -286,7 +283,7 @@ async function waitSubagent(args: string[]): Promise<void> {
 		const state = effectiveRunState(metadata);
 		if (state === "error") fail(metadata.error || `${handle} failed`);
 		if (state === "exited") fail(`${handle} exited before finishing`);
-		if (metadata.hasStarted && state === "idle" && !pending) {
+		if (metadata.hasStarted && state === "idle" && !pending && metadata.sessionFile) {
 			const message = readLatestAssistant(metadata.sessionFile);
 			if (!message) fail(`${handle} finished without an assistant response`);
 			process.stdout.write(`${handle} finished\n\n${assistantText(message)}\n`);
@@ -313,6 +310,7 @@ async function stopSubagent(args: string[]): Promise<void> {
 	}
 	removeRunDir(metadata.runDir);
 	process.stdout.write(`Stopped ${runDisplayName(metadata)}\n`);
+	if (metadata.sessionFile) process.stdout.write(`Transcript kept: ${metadata.sessionFile}\n`);
 }
 
 function listSubagents(args: string[]): void {

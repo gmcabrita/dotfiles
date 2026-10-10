@@ -164,7 +164,7 @@ export default function subagentExtension(pi: ExtensionAPI) {
 			// Relaunch children that were suspended when this session was last quit or switched away from.
 			for (const run of listRuns(ctx.sessionManager.getSessionId())) {
 				if (!run.suspended || childLiveness(run.terminal) !== "exited") continue;
-				if (!existsSync(run.sessionFile)) {
+				if (!run.sessionFile || !existsSync(run.sessionFile)) {
 					removeRunDir(run.runDir);
 					continue;
 				}

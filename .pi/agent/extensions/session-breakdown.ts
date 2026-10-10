@@ -213,7 +213,7 @@ const SESSION_ROOTS = [
 	path.join(os.homedir(), ".pi", "agent", "sessions"),
 	// Children of the old tmux subagent tool. Kept for history.
 	path.join(os.homedir(), ".pi", "agent", "tmux-subagents"),
-	// Children of the rex subagent CLI: <handle>/session.jsonl until `subagent stop` removes the run.
+	// Children of the rex subagent CLI: sessions/ holds transcripts; runs/ holds control state.
 	path.join(os.homedir(), ".pi", "agent", "subagents"),
 ] as const;
 const RANGE_DAYS = [7, 30, 90] as const;
