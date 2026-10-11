@@ -5,7 +5,7 @@
       "source": "cursor/plugins",
       "sourceType": "github",
       "skillPath": "pstack/skills/benchmark-checklist/SKILL.md",
-      "computedHash": "6ff67604d60b354b25c69047379776492a41fe99f280bc9d5df3a076580b3853"
+      "computedHash": "4ed522cb6ea05fedac17edcc92b48462ddd7032595ef5c19eb25ede6654e1a48"
     },
     "fix-merge-conflicts": {
       "source": "cursor/plugins",
@@ -23,7 +23,7 @@
       "source": "vojtaholik/good-css",
       "sourceType": "github",
       "skillPath": "skills/good-css/SKILL.md",
-      "computedHash": "ee63883a1fe94f5a5f52d1fef723fe437fe18b65acd34f284f69d92080d5954b"
+      "computedHash": "882dc3f6cb2ad58b3569af84a8c67668cda0284b156b27f8a8d989bd98063958"
     },
     "hegel": {
       "source": "hegeldev/hegel-skill",
