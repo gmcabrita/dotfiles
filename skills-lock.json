@@ -29,7 +29,7 @@
       "source": "hegeldev/hegel-skill",
       "sourceType": "github",
       "skillPath": "skills/hegel/SKILL.md",
-      "computedHash": "308b07d00bfd19825d4f4a08f19db4660d9cfdfdadcd00798ed51ea7e99120c7"
+      "computedHash": "7ce0c4fe03674728cc0f705c7fe163b22def017f331293add6f5c1fcf9eb0fa9"
     },
     "hegel-review": {
       "source": "hegeldev/hegel-skill",
