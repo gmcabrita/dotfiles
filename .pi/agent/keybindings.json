@@ -1,4 +1,5 @@
 {
+  "$schema": "https://pi.dev/schemas/keybindings.schema.json",
   "tui.editor.deleteWordBackward": ["ctrl+w", "alt+backspace", "ctrl+backspace"],
   "tui.altScreen.pageUp": "ctrl+pageUp",
   "tui.altScreen.pageDown": "ctrl+pageDown"
