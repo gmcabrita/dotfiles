@@ -39,6 +39,9 @@ rsync -a ".ccusage/" "$HOME/.ccusage/"
 mkdir -p "$HOME/.codex"
 rsync -a ".codex/" "$HOME/.codex/"
 
+mkdir -p "$HOME/.claude"
+rsync -a ".claude/" "$HOME/.claude/"
+
 mkdir -p "$HOME/.config"
 rsync -a ".config/" "$HOME/.config/"
 

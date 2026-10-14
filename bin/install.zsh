@@ -249,5 +249,8 @@ mix local.hex --force
 # Codex
 curl -fsSL https://chatgpt.com/codex/install.sh | sh
 
+# Claude
+curl -fsSL https://claude.ai/install.sh | bash
+
 # Cache zoxide init
 zoxide init zsh > ~/.zoxide.zsh

@@ -468,6 +468,7 @@ function update-everything() {
   pi update --models || true
   pi-update-ext
   codex update
+  claude update
   gh extension upgrade --all
   rm -f ~/.cache/macos_sdk_path
   rm -f "$HOME/.zcompdump" "$HOME/.zcompdump.zwc"
@@ -787,16 +788,16 @@ function rst() {
   ree
 }
 
-# function claude() {
-#   "$HOMEBREW_PREFIX/bin/claude" \
-#     --dangerously-skip-permissions \
-#     --system-prompt-file "${CLAUDE_BASIC_PROMPT_FILE:-$HOME/.claude/prompts/minimal-system-prompt.md}" \
-#     --tools "${CLAUDE_BASIC_TOOLS:-Bash,Read,Edit,Write,Skill}" \
-#     --strict-mcp-config \
-#     --mcp-config '{"mcpServers":{}}' \
-#     --settings '{"disableAllHooks":true}' \
-#     "$@"
-# }
+function claude() {
+  "$HOME/.local/bin/claude" \
+    --dangerously-skip-permissions \
+    --system-prompt-file "${CLAUDE_BASIC_PROMPT_FILE:-$HOME/.claude/prompts/minimal-system-prompt.md}" \
+    --tools "${CLAUDE_BASIC_TOOLS:-Bash,Read,Edit,Write,Skill}" \
+    --strict-mcp-config \
+    --mcp-config '{"mcpServers":{}}' \
+    --settings '{"disableAllHooks":true}' \
+    "$@"
+}
 
 function codex() {
   __codex_automatically_trust_the_current_dir
