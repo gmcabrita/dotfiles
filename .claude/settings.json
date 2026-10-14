@@ -60,5 +60,6 @@
     "enabled": false
   },
   "voiceEnabled": false,
-  "outputStyle": "Concise"
+  "outputStyle": "Concise",
+  "theme": "light"
 }
