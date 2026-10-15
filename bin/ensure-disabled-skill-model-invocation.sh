@@ -10,8 +10,6 @@ DISABLED_SKILLS=(
   "benchmark-checklist"
   "bro"
   "clarity-and-grace"
-  "fix-merge-conflicts"
-  "gh-stack"
   "hegel"
   "hegel-review"
   "llm-wiki"
