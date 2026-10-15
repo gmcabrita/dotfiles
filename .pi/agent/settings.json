@@ -22,7 +22,7 @@
     "openai-codex-lb/gpt-reserve",
     "opencode-go/deepseek-v4.1-flash",
     "opencode-go/glm-5.3",
-    "opencode-go/gemini-3.8-flash",
+    "opencode-go/gemini-4-argon-contributor",
     "deepseek/deepseek-flash",
     "openrouter/deepseek/deepseek-v4.1-flash",
     "openrouter/z-ai/glm-5.3"
