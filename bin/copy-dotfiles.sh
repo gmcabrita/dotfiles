@@ -41,6 +41,7 @@ rsync -a ".codex/" "$HOME/.codex/"
 
 mkdir -p "$HOME/.claude"
 rsync -a ".claude/" "$HOME/.claude/"
+ln -sfn "$HOME/.agents/skills" "$HOME/.claude/skills"
 
 mkdir -p "$HOME/.config"
 rsync -a ".config/" "$HOME/.config/"
