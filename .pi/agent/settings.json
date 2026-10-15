@@ -11,48 +11,20 @@
     "provider": "anthropic",
     "thinkingLevel": "medium"
   },
-  "sessionPurposeEnabled": false,
-  "sessionPurpose": {
-    "implement": {
-      "provider": "anthropic",
-      "model": "claude-opus-5-5",
-      "thinkingLevel": "medium"
-    },
-    "reverse": {
-      "provider": "deepseek",
-      "model": "deepseek-flash",
-      "thinkingLevel": "high"
-    },
-    "debug": {
-      "provider": "openai-codex-lb",
-      "model": "gpt-6-astra",
-      "thinkingLevel": "high"
-    },
-    "review": {
-      "provider": "openai-codex-lb",
-      "model": "gpt-6-astra",
-      "thinkingLevel": "high"
-    },
-    "investigate": {
-      "provider": "openai-codex-lb",
-      "model": "gpt-6-astra",
-      "thinkingLevel": "high"
-    }
-  },
   "enabledModels": [
-    "openai-codex-lb/gpt-6-astra",
-    "openai-codex-lb/gpt-6.1-sol",
-    "openai-codex-lb/gpt-reserve",
     "anthropic/claude-fable-5-1",
     "anthropic/claude-opus-5-5",
+    "anthropic/claude-sonnet-5-5",
     "anthropic/claude-haiku-5-5",
+    "openai-codex-lb/gpt-6-astra",
+    "openai-codex-lb/gpt-6.1-sol",
+    "openai-codex-lb/gpt-6-luna",
+    "openai-codex-lb/gpt-reserve",
+    "opencode-go/deepseek-v4.1-flash",
+    "opencode-go/glm-5.3",
     "deepseek/deepseek-flash",
     "openrouter/deepseek/deepseek-v4.1-flash",
-    "openrouter/z-ai/glm-5.3",
-    "openrouter/meta/muse-spark-1.3-contributor",
-    "opencode/muse-spark-1.3-contributor-free",
-    "opencode-go/deepseek-v4.1-flash",
-    "opencode-go/muse-spark-1.3-contributor"
+    "openrouter/z-ai/glm-5.3"
   ],
   "enableInstallTelemetry": false,
   "hideThinkingBlock": true,

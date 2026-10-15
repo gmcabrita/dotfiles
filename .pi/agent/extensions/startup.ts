@@ -2,35 +2,21 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { CONFIG_DIR_NAME, DynamicBorder, getAgentDir, getSelectListTheme } from "@earendil-works/pi-coding-agent";
-import { Container, fuzzyFilter, Input, type SelectItem, SelectList, Text } from "@earendil-works/pi-tui";
+import { CONFIG_DIR_NAME, getAgentDir } from "@earendil-works/pi-coding-agent";
 
 /**
  * Startup model selection.
  *
- * 1. Apply `settings.startup` (default provider/model/thinkingLevel) when no explicit CLI flags were passed.
- * 2. Ask which purpose this session has (implement/review/...) and switch to the model configured for it in
- *    `settings.sessionPurpose`. The prompt cannot be dismissed; a purpose must be chosen.
- *
- * Both steps skip when `--provider` or `--model` is passed on the CLI. The purpose prompt also skips when a
- * session is resumed, because the resumed session already carries its own model history. Project settings
- * are only read when the project is trusted. A project purpose replaces the global purpose with the same name.
- *
- * Set `sessionPurposeEnabled` to false to turn off the purpose prompt. `settings.startup` still applies.
- * A project value overrides the global value. The default is true.
+ * Apply `settings.startup` (default provider/model/thinkingLevel) at startup. The model is skipped when
+ * `--provider` or `--model` is passed on the CLI. An explicit `--thinking` (or `--model ...:level`) wins over
+ * the configured thinking level. Project settings are only read when the project is trusted, and project
+ * values override global values.
  *
  * settings.json shape:
  * {
- *   "startup": { "provider": "anthropic", "model": "claude-fable-5-1", "thinkingLevel": "high" },
- *   "sessionPurposeEnabled": true,
- *   "sessionPurpose": {
- *     "implement": { "provider": "anthropic", "model": "claude-fable-5-1", "thinkingLevel": "high" },
- *     "review": { "provider": "openai-codex-lb", "model": "gpt-6-astra", "thinkingLevel": "xhigh" }
- *   }
+ *   "startup": { "provider": "anthropic", "model": "claude-fable-5-1", "thinkingLevel": "high" }
  * }
  */
-
-const PURPOSE_ENTRY_TYPE = "session-purpose";
 
 type ModelSelection = {
 	provider: string;
@@ -39,11 +25,6 @@ type ModelSelection = {
 };
 
 type StartupConfig = Partial<ModelSelection>;
-
-type PurposeConfig = {
-	name: string;
-	selection: ModelSelection;
-};
 
 function getCliFlag(name: string): string | undefined {
 	const flag = `--${name}`;
@@ -115,25 +96,6 @@ function readModelSelection(value: unknown): StartupConfig {
 	};
 }
 
-function readPurposeConfigs(settings: Record<string, unknown>): Map<string, ModelSelection> {
-	const purposes = new Map<string, ModelSelection>();
-	const raw = settings.sessionPurpose;
-	if (!isRecord(raw)) return purposes;
-
-	for (const [name, value] of Object.entries(raw)) {
-		const selection = readModelSelection(value);
-		// A purpose without provider and model cannot switch models, so it is dropped.
-		if (!selection.provider || !selection.model) continue;
-		purposes.set(name, {
-			provider: selection.provider,
-			model: selection.model,
-			thinkingLevel: selection.thinkingLevel,
-		});
-	}
-
-	return purposes;
-}
-
 function loadSettings(ctx: ExtensionContext): { global: Record<string, unknown>; project: Record<string, unknown> } {
 	return {
 		global: readSettings(join(getAgentDir(), "settings.json")),
@@ -150,29 +112,6 @@ function getStartupConfig(settings: ReturnType<typeof loadSettings>): StartupCon
 		provider: projectStartup.provider ?? globalStartup.provider,
 		thinkingLevel: projectStartup.thinkingLevel ?? globalStartup.thinkingLevel,
 	};
-}
-
-function isSessionPurposeEnabled(settings: ReturnType<typeof loadSettings>): boolean {
-	const projectValue = settings.project.sessionPurposeEnabled;
-	if (typeof projectValue === "boolean") return projectValue;
-	const globalValue = settings.global.sessionPurposeEnabled;
-	if (typeof globalValue === "boolean") return globalValue;
-	return true;
-}
-
-/** Project purposes override global purposes with the same name. Global key order is kept. */
-function getPurposeConfigs(settings: ReturnType<typeof loadSettings>): PurposeConfig[] {
-	const merged = readPurposeConfigs(settings.global);
-	for (const [name, selection] of readPurposeConfigs(settings.project)) {
-		merged.set(name, selection);
-	}
-
-	return [...merged.entries()].map(([name, selection]) => ({ name, selection }));
-}
-
-function formatSelection(selection: ModelSelection): string {
-	const base = `${selection.provider}/${selection.model}`;
-	return selection.thinkingLevel ? `${base} (${selection.thinkingLevel})` : base;
 }
 
 /** Returns true when the model was set (or was already active). */
@@ -203,94 +142,6 @@ function applyThinkingLevel(pi: ExtensionAPI, level: ThinkingLevel | undefined):
 	}
 }
 
-/** A resumed session already has messages or a recorded purpose on any branch; do not ask again. */
-function sessionAlreadyStarted(ctx: ExtensionContext): boolean {
-	return ctx.sessionManager
-		.getEntries()
-		.some(
-			(entry) =>
-				entry.type === "message" || (entry.type === "custom" && entry.customType === PURPOSE_ENTRY_TYPE),
-		);
-}
-
-/** Keys owned by the list; every other key goes to the search input. */
-const SELECT_LIST_KEYBINDINGS = ["tui.select.up", "tui.select.down", "tui.select.confirm"] as const;
-
-/**
- * Select dialog with a fuzzy search input above the list. Resolves with the chosen item value.
- * The dialog cannot be cancelled: escape is swallowed so the user must pick an item.
- */
-function selectWithSearch(ctx: ExtensionContext, title: string, items: SelectItem[]): Promise<string> {
-	return ctx.ui.custom<string>((tui, theme, keybindings, done) => {
-		const border = () => new DynamicBorder((text) => theme.fg("accent", text));
-		const container = new Container();
-		container.addChild(border());
-		container.addChild(new Text(theme.fg("accent", theme.bold(title)), 1, 0));
-
-		const search = new Input({ placeholder: "type to filter", placeholderStyle: (text) => theme.fg("dim", text) });
-		search.focused = true;
-		container.addChild(search);
-
-		// The list is rebuilt on every filter change because SelectList.setFilter only matches value prefixes.
-		const listHolder = new Container();
-		container.addChild(listHolder);
-		let list: SelectList;
-		const rebuildList = () => {
-			const filtered = fuzzyFilter(items, search.getValue(), (item) => `${item.label} ${item.description ?? ""}`);
-			listHolder.clear();
-			list = new SelectList(filtered, Math.min(Math.max(filtered.length, 1), 10), getSelectListTheme());
-			list.onSelect = (item) => done(item.value);
-			list.onCancel = () => {};
-			listHolder.addChild(list);
-		};
-		rebuildList();
-
-		container.addChild(new Text(theme.fg("dim", "type to filter • ↑↓ navigate • enter select"), 1, 0));
-		container.addChild(border());
-
-		return {
-			render: (width) => container.render(width),
-			invalidate: () => container.invalidate(),
-			handleInput: (data) => {
-				if (keybindings.matches(data, "tui.select.cancel")) return;
-				if (SELECT_LIST_KEYBINDINGS.some((id) => keybindings.matches(data, id))) {
-					list.handleInput(data);
-				} else {
-					search.handleInput(data);
-					rebuildList();
-				}
-				tui.requestRender();
-			},
-		};
-	});
-}
-
-async function askSessionPurpose(
-	pi: ExtensionAPI,
-	ctx: ExtensionContext,
-	purposes: PurposeConfig[],
-): Promise<void> {
-	const items = purposes.map((purpose) => ({
-		value: purpose.name,
-		label: purpose.name,
-		description: formatSelection(purpose.selection),
-	}));
-	const choice = await selectWithSearch(ctx, "What is this session for?", items);
-	const purpose = purposes.find((candidate) => candidate.name === choice);
-	if (!purpose) return;
-
-	const applied = await applyModel(pi, ctx, purpose.selection, `Purpose ${purpose.name}`);
-	if (!applied) return;
-
-	applyThinkingLevel(pi, purpose.selection.thinkingLevel);
-	pi.appendEntry(PURPOSE_ENTRY_TYPE, { purpose: purpose.name });
-	// Report the effective level: pi clamps the requested level to what the model supports.
-	ctx.ui.notify(
-		`Purpose: ${purpose.name} → ${formatSelection({ ...purpose.selection, thinkingLevel: pi.getThinkingLevel() })}`,
-		"info",
-	);
-}
-
 export default function startupExtension(pi: ExtensionAPI) {
 	const explicitModel = hasCliFlag("provider") || hasCliFlag("model");
 	const explicitThinking = hasCliFlag("thinking") || modelFlagHasThinkingSuffix();
@@ -300,7 +151,6 @@ export default function startupExtension(pi: ExtensionAPI) {
 
 		const settings = loadSettings(ctx);
 		const startup = getStartupConfig(settings);
-		const resumed = sessionAlreadyStarted(ctx);
 		// pi.setModel() resets the thinking level to the model default, so an explicit --thinking must be restored.
 		const cliThinkingLevel = explicitThinking ? pi.getThinkingLevel() : undefined;
 
@@ -314,13 +164,5 @@ export default function startupExtension(pi: ExtensionAPI) {
 		}
 
 		applyThinkingLevel(pi, cliThinkingLevel ?? startup.thinkingLevel);
-
-		if (!isSessionPurposeEnabled(settings) || explicitModel || resumed || ctx.mode !== "tui") return;
-
-		const purposes = getPurposeConfigs(settings);
-		if (purposes.length === 0) return;
-
-		await askSessionPurpose(pi, ctx, purposes);
-		applyThinkingLevel(pi, cliThinkingLevel);
 	});
 }
