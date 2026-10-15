@@ -2,7 +2,6 @@ tap "blacktop/tap", trusted: true
 tap "lightpanda-io/browser", trusted: true
 tap "orlangure/tap", trusted: true
 tap "ramonvermeulen/whosthere", trusted: true
-tap "tw93/tap", trusted: true
 tap "wader/tap", trusted: true
 
 brew "age"
@@ -61,6 +60,7 @@ brew "lightpanda-io/browser/lightpanda"
 brew "mariadb"
 brew "mdcat"
 brew "mkcert"
+brew "mole"
 brew "moreutils"
 brew "ncdu"
 brew "neovim"
@@ -91,7 +91,6 @@ brew "tmux"
 brew "tokei"
 brew "tree"
 brew "trippy"
-brew "tw93/tap/mole"
 brew "ugrep"
 brew "vegeta"
 brew "vhs"
