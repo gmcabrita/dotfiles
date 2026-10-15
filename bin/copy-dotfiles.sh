@@ -15,6 +15,7 @@ cp .sqliterc "$HOME/"
 cp .iex.exs "$HOME/"
 cp .npmrc "$HOME/"
 cp .bunfig.toml "$HOME/"
+cp .mcp.json "$HOME/"
 
 mkdir -p "$HOME/Developer"
 

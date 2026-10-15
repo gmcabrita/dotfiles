@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "grafana": {
+      "type": "http",
+      "url": "https://grafana-mcp.gke00.usce1.mgmt.internal.amplemarket.com/mcp"
+    },
+    "pganalyze": {
+      "type": "http",
+      "url": "https://app.pganalyze.com/mcp"
+    }
+  }
+}
