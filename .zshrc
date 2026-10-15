@@ -469,6 +469,7 @@ function update-everything() {
   pi-update-ext
   codex update
   claude update
+  amplmkt update
   gh extension upgrade --all
   rm -f ~/.cache/macos_sdk_path
   rm -f "$HOME/.zcompdump" "$HOME/.zcompdump.zwc"

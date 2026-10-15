@@ -4,7 +4,8 @@
       "url": "https://grafana-mcp.gke00.usce1.mgmt.internal.amplemarket.com/mcp",
       "oauth": {
         "clientId": "opencode",
-        "callbackUrl": "http://127.0.0.1:19876/mcp/oauth/callback"
+        "callbackUrl": "http://127.0.0.1:19876/mcp/oauth/callback",
+        "scope": "mcp:grafana offline_access"
       }
     },
     "pganalyze": {
