@@ -3,6 +3,7 @@
 ## On previous machine
 
 - `cp ~/.zsh_history ~/iCloud\ Drive/Software/.zsh_history`
+- `cp ~/Library/Preferences/com.superlogical.rex.plist ~/iCloud\ Drive/Software/com.superlogical.rex.plist`
 - `cp -r ~/Library/Application\ Support/qBittorrent/ ~/iCloud\ Drive/Software/qBittorrent`
 - `rm -rf ~/iCloud\ Drive/Software/net.imput.helium`
 - `cp -r ~/Library/Application\ Support/net.imput.helium/ ~/iCloud\ Drive/Software/net.imput.helium`
@@ -106,6 +107,8 @@
   - Wake for network access: Only on Power Adapter
 - Copy zsh history from iCloud
   - `cp ~/iCloud\ Drive/Software/.zsh_history ~/.zsh_history`
+- Copy Rex preferences from iCloud
+  - `cp ~/iCloud\ Drive/Software/com.superlogical.rex.plist ~/Library/Preferences/com.superlogical.rex.plist`
 - Download and install [qBittorrent](https://www.qbittorrent.org/download)
 - Copy qBittorrent data from icloud
   - `mkdir -p ~/Library/Application\ Support/qBittorrent/`
