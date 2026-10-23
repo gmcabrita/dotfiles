@@ -30,7 +30,7 @@
   "enableInstallTelemetry": false,
   "hideThinkingBlock": true,
   "lastChangelogVersion": "999.999.999",
-  "quietStartup": true,
+  "quietStartup": "header",
   "transport": "websocket-cached",
   "terminal": {
     "showTerminalProgress": true
