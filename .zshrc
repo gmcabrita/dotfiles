@@ -467,8 +467,8 @@ function update-everything() {
   update-programming-languages
   pi update --models || true
   pi-update-ext
-  codex update
-  claude update
+  # codex update
+  # claude update
   amplmkt update
   rex skill setup
   gh extension upgrade --all
@@ -801,35 +801,22 @@ function rst() {
 #     "$@"
 # }
 
-function codex() {
-  __codex_automatically_trust_the_current_dir
+# function codex() {
+#   __codex_automatically_trust_the_current_dir
 
-  command codex "$@"
-}
+#   command codex "$@"
+# }
 
-function __codex_automatically_trust_the_current_dir() {
-  local key
-  key="[projects.\"$(pwd)\"]"
+# function __codex_automatically_trust_the_current_dir() {
+#   local key
+#   key="[projects.\"$(pwd)\"]"
 
-  if rg --quiet -F "${key}" ~/.codex/config.toml; then
-    return
-  fi
+#   if rg --quiet -F "${key}" ~/.codex/config.toml; then
+#     return
+#   fi
 
-  echo "${key}" >> ~/.codex/config.toml
-  echo 'trust_level = "trusted"' >> ~/.codex/config.toml
-}
-
-function astra() {
-  pi --provider openai-codex-lb --model gpt-6-astra --thinking high "$@"
-}
-function fable() {
-  pi --provider anthropic --model claude-fable-5-1 --thinking high "$@"
-}
-function opus() {
-  pi --provider anthropic --model claude-opus-5-5 --thinking  medium "$@"
-}
-function deepseek() {
-  pi --provider deepseek --model deepseek-flash --thinking high "$@"
-}
+#   echo "${key}" >> ~/.codex/config.toml
+#   echo 'trust_level = "trusted"' >> ~/.codex/config.toml
+# }
 
 [[ $ZPROF == 1 ]] && zprof
