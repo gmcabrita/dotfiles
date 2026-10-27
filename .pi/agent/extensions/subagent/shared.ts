@@ -341,6 +341,8 @@ export function launchRun(metadata: RunMetadata, initialArgs: string[] = []): Re
 		"--",
 		"env",
 		`PI_SUBAGENT_RUN_DIR=${metadata.runDir}`,
+		// Disable OSC 7501 program status reports from child pi processes.
+		"PI_PROGRAM_STATUS=0",
 		"pi",
 		...sessionArgs,
 		"--provider",
