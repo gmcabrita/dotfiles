@@ -22,6 +22,7 @@
     "openai-codex-lb/gpt-reserve",
     "opencode-go/deepseek-v4.1-flash",
     "deepseek/deepseek-flash",
+    "openrouter/particle-ai/particle-1",
     "openrouter/deepseek/deepseek-flash-latest",
     "openrouter/moonshotai/kimi-k3.1-pro",
     "openrouter/z-ai/glm-5.3"
