@@ -1,0 +1,23 @@
+default_connection_name = "amplemarket_oauth"
+
+[cli]
+ignore_new_version_warning = false
+air_gapped = false
+auto_upgrade = false
+auto_upgrade_allow_major = false
+
+[cli.logs]
+save_logs = true
+path = "/Users/gmcabrita/Library/Application Support/snowflake/logs"
+level = "info"
+
+[connections.amplemarket_oauth]
+account = "amplemarket-qv69476"
+user = "goncalocabrita"
+database = "AMPLEDASH_INTERNAL"
+schema = "PUBLIC"
+warehouse = "COMPUTE_WH"
+role = "COMPUTE_WH_ACCESS"
+authenticator = "OAUTH_AUTHORIZATION_CODE"
+client_store_temporary_credential = true
+oauth_enable_refresh_tokens = true

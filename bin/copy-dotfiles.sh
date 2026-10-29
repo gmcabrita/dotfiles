@@ -68,3 +68,8 @@ rsync -a "Library/Application Support/go/telemetry/" "$HOME/Library/Application 
 
 mkdir -p "$HOME/Library/Preferences/pnpm"
 rsync -a "Library/Preferences/pnpm/" "$HOME/Library/Preferences/pnpm/"
+
+# Snowflake CLI warns unless config.toml is readable only by the owner.
+mkdir -p "$HOME/Library/Application Support/snowflake"
+cp "Library/Application Support/snowflake/config.toml" "$HOME/Library/Application Support/snowflake/"
+chmod 600 "$HOME/Library/Application Support/snowflake/config.toml"
