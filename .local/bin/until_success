@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# until_fail [...command]
-# runs command 10000 times until it fails
+# until_success [...command]
+# runs command up to 10000 times until it succeeds
 
 for i in {1..10000}; do
   echo "Attempt $i"
