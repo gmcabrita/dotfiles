@@ -28,6 +28,8 @@ sfw pnpm update --prefix .pi/agent --latest &
 pids="$!"
 DISABLE_TELEMETRY=1 skills update --project --yes &
 pids="$pids $!"
+rex skill setup --project --agent pi &
+pids="$pids $!"
 status=0
 for pid in $pids; do
   wait "$pid" || status=1
