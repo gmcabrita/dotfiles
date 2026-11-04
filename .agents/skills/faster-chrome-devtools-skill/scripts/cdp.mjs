@@ -71,15 +71,9 @@ function activePortCandidates() {
 	const home = homedir();
 	if (platform() === "darwin") {
 		return [
-			// Helium (Chromium-based) keeps its profile under its bundle ID.
-			// Checked first because it is the preferred local browser.
 			join(
 				home,
 				"Library/Application Support/net.imput.helium/DevToolsActivePort",
-			),
-			join(
-				home,
-				"Library/Application Support/Google/Chrome/DevToolsActivePort",
 			),
 		];
 	}
