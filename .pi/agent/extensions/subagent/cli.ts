@@ -13,14 +13,14 @@ import {
 	hasStoredTrustDecision,
 	inboxDir,
 	isValidRunName,
-	killRexSession,
+	closeRunWindow,
 	launchRun,
 	listRuns,
 	readLatestAssistant,
 	readMetadata,
 	removeRunDir,
-	renameRexSession,
-	rexSessionLabel,
+	renameRexWindow,
+	rexWindowLabel,
 	runDisplayName,
 	type InboxMessage,
 	type RunMetadata,
@@ -80,8 +80,8 @@ function generateHandle(): string {
 	fail("Could not allocate a unique subagent handle");
 }
 
-function attachHint(metadata: RunMetadata): string {
-	return metadata.terminal ? `Attach: rex attach ${metadata.terminal.session}\n` : "";
+function rexTabHint(metadata: RunMetadata): string {
+	return metadata.terminal ? `Rex tab: ${rexWindowLabel(metadata)}\n` : "";
 }
 
 function spawnSubagent(args: string[]): void {
@@ -200,23 +200,22 @@ function spawnSubagent(args: string[]): void {
 
 	const initialArgs = files.map((file) => `@${file}`);
 	if (prompts.length > 0) initialArgs.push(`Task:\n${prompts.join("\n\n")}`);
-	let terminal;
+	let launched: RunMetadata;
 	try {
-		terminal = launchRun(metadata, initialArgs);
+		launched = launchRun(metadata, initialArgs);
 	} catch (error) {
 		removeRunDir(runDir);
 		throw error;
 	}
-	const launched = updateMetadata(runDir, { terminal }) ?? { ...metadata, terminal };
 
-	process.stdout.write(`Spawned ${runDisplayName(launched)}\nState: busy\n${attachHint(launched)}`);
+	process.stdout.write(`Spawned ${runDisplayName(launched)}\nState: busy\n${rexTabHint(launched)}`);
 }
 
 function statusSubagent(args: string[]): void {
 	if (args.length !== 1) usage();
 	const metadata = getRun(args[0]);
 	process.stdout.write(
-		`${runDisplayName(metadata)}: ${effectiveRunState(metadata)} (${metadata.provider}/${metadata.model}, ${metadata.thinking})\n${attachHint(metadata)}`,
+		`${runDisplayName(metadata)}: ${effectiveRunState(metadata)} (${metadata.provider}/${metadata.model}, ${metadata.thinking})\n${rexTabHint(metadata)}`,
 	);
 }
 
@@ -226,7 +225,7 @@ function renameSubagent(args: string[]): void {
 	const name = normalizeRunName(args[1]);
 	const updated = updateMetadata(metadata.runDir, { name });
 	if (!updated) fail(`Could not rename subagent: ${metadata.handle}`);
-	renameRexSession(updated.terminal, rexSessionLabel(updated));
+	renameRexWindow(updated);
 	process.stdout.write(`Renamed ${runDisplayName(updated)}\n`);
 }
 
@@ -299,11 +298,11 @@ async function stopSubagent(args: string[]): Promise<void> {
 	if (args.length !== 1) usage();
 	const metadata = getRun(args[0]);
 	const wasRunning = childLiveness(metadata.terminal) === "running";
-	if (!killRexSession(metadata.terminal)) {
-		fail(`Could not kill the Rex session of ${runDisplayName(metadata)}. The run was kept.`);
+	if (!closeRunWindow(metadata)) {
+		fail(`Could not close the Rex window of ${runDisplayName(metadata)}. The run was kept.`);
 	}
 	if (wasRunning) await waitForRunShutdown(metadata.runDir);
-	// After a successful kill the session is gone, so anything but "exited" means
+	// After a successful close the window and its block are gone, so anything but "exited" means
 	// Rex is unreachable and the kill may not have taken effect.
 	if (childLiveness(metadata.terminal) !== "exited") {
 		fail(`Could not confirm that ${runDisplayName(metadata)} stopped. The run was kept.`);

@@ -5,7 +5,7 @@ description: Spawn and communicate with observable Pi subagents for second opini
 
 # Subagent
 
-Use the `subagent` CLI to delegate work to a separate Pi process with its own context and Rex session. Managed subagents cannot spawn nested subagents, and this skill is not loaded into their sessions.
+Use the `subagent` CLI to delegate work to a separate Pi process with its own context. Subagents spawned by the same Pi session share one Rex session, one tab each. Managed subagents cannot spawn nested subagents, and this skill is not loaded into their sessions.
 
 ## Spawn
 
@@ -53,7 +53,7 @@ Three additional built-in tools are available but off by default:
 - `--no-prompt-templates` - Disable prompt-template commands. Usually unnecessary, but useful when testing a minimal child environment.
 - `--no-context-files` - Ignore repository instruction files such as `AGENTS.md` and `CLAUDE.md`. Use only when those instructions would bias an independent investigation. Do not use for implementation unless intentionally bypassing repository guidance.
 
-Spawn prints a random handle and the exact `rex attach` command. Keep the handle for later commands. Subagents persist after their current turn completes: `wait`, completion, and becoming idle do not terminate them. They survive `/reload`. When the spawning Pi session quits or is replaced, they are suspended and relaunched idle with their history when that session is resumed. They are only removed by `subagent stop`.
+Spawn prints a random handle and the label of its Rex tab. Keep the handle for later commands. Subagents persist after their current turn completes: `wait`, completion, and becoming idle do not terminate them. They survive `/reload`. When the spawning Pi session quits or is replaced, they are suspended and relaunched idle with their history when that session is resumed. They are only removed by `subagent stop`.
 
 ## Inspect and wait
 
@@ -88,6 +88,5 @@ Names are 1–64 characters and need not be unique. Messages use the subagent ex
 subagent stop <handle>
 ```
 
-Explicitly stop every subagent when it is no longer needed; do not leave completed subagents running idle. This kills the Rex session and removes the run metadata. The transcript is kept under `~/.pi/agent/subagents/sessions/`; `stop` prints its path. Keep an idle subagent alive only when concrete follow-up work is expected, then stop it afterward.
+Explicitly stop every subagent when it is no longer needed; do not leave completed subagents running idle. This closes its Rex tab (and the shared Rex session after the last tab) and removes the run metadata. The transcript is kept under `~/.pi/agent/subagents/sessions/`; `stop` prints its path. Keep an idle subagent alive only when concrete follow-up work is expected, then stop it afterward.
 
-The interactive `/subagent` command lists active subagents spawned by the current Pi session. Selecting one suspends the current Pi TUI and runs `rex attach` on its Rex session; detaching returns to the parent Pi. Runs also appear in the Rex app sidebar as `subagent <name>`.

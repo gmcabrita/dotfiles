@@ -1,19 +1,16 @@
-// Subagent extension. In the parent Pi it provides the /subagent attach picker, the
-// status widget, and suspend/resume of children across parent restarts. In a child
-// Pi (PI_SUBAGENT_RUN_DIR set) it reports state to metadata.json and delivers
+// Subagent extension. In the parent Pi it provides the status widget and
+// suspend/resume of children across parent restarts. In a child Pi
+// (PI_SUBAGENT_RUN_DIR set) it reports state to metadata.json and delivers
 // inbox messages. Children run in Rex terminals; the `subagent` CLI (cli.ts) spawns them.
 
-import { spawn } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
-import { DynamicBorder, type ExtensionAPI, type ExtensionContext, keyHint } from "@earendil-works/pi-coding-agent";
-import { Container, type SelectItem, SelectList, Text, type TUI } from "@earendil-works/pi-tui";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import {
 	childLiveness,
-	effectiveRunState,
 	effectiveRunStateAsync,
 	inboxDir,
-	killRexSession,
+	closeRunWindow,
 	launchRun,
 	listRuns,
 	readMetadata,
@@ -33,89 +30,11 @@ function isInboxMessage(value: unknown): value is InboxMessage {
 	return typeof message.message === "string" && (message.delivery === "auto" || message.delivery === "followUp");
 }
 
-function displayState(metadata: RunMetadata): string {
-	return effectiveRunState(metadata).padEnd(8);
-}
-
 export default function subagentExtension(pi: ExtensionAPI) {
 	const runDir = process.env.PI_SUBAGENT_RUN_DIR;
 	if (!runDir) {
 		pi.on("resources_discover", () => ({ skillPaths: [join(packageDir, "skills")] }));
-	}
 
-	pi.registerCommand("subagent", {
-		description: "Select and attach to a subagent spawned by this session",
-		handler: async (_args, ctx) => {
-			const runs = listRuns(ctx.sessionManager.getSessionId()).filter((run) => effectiveRunState(run) !== "exited");
-			if (runs.length === 0) {
-				ctx.ui.notify("No active subagents spawned by this session", "info");
-				return;
-			}
-
-			const items: SelectItem[] = runs.map((run) => ({
-				value: run.handle,
-				label: `${runDisplayName(run)}  ${displayState(run)}  ${run.provider}/${run.model}  ${run.thinking}`,
-			}));
-			let tui: TUI | undefined;
-			const selected = await ctx.ui.custom<string | undefined>((customTui, theme, _keybindings, done) => {
-				tui = customTui;
-				const list = new SelectList(items, Math.min(items.length, 10), {
-					selectedPrefix: (text) => theme.fg("accent", text),
-					selectedText: (text) => theme.fg("accent", text),
-					description: (text) => theme.fg("muted", text),
-					scrollInfo: (text) => theme.fg("dim", text),
-					noMatch: (text) => theme.fg("warning", text),
-				});
-				list.onSelect = (item) => done(item.value);
-				list.onCancel = () => done(undefined);
-
-				const container = new Container();
-				container.addChild(new DynamicBorder((text: string) => theme.fg("accent", text)));
-				container.addChild(new Text(theme.fg("accent", theme.bold("Attach to subagent")), 1, 0));
-				container.addChild(list);
-				container.addChild(
-					new Text(
-						theme.fg(
-							"dim",
-							`${keyHint("tui.select.confirm", "attach")}  ${keyHint("tui.select.cancel", "cancel")}`,
-						),
-						1,
-						0,
-					),
-				);
-				container.addChild(new DynamicBorder((text: string) => theme.fg("accent", text)));
-
-				return {
-					render: (width) => container.render(width),
-					invalidate: () => container.invalidate(),
-					handleInput: (data) => {
-						list.handleInput(data);
-						customTui.requestRender();
-					},
-				};
-			});
-			if (!selected || !tui) return;
-			const run = runs.find((candidate) => candidate.handle === selected);
-			if (!run?.terminal) return;
-
-			// `rex attach` is a terminal client, like `tmux attach`: suspend the parent TUI
-			// while it owns the terminal, then resume when the user detaches.
-			tui.stop();
-			try {
-				const exitCode = await new Promise<number | null>((resolveExit) => {
-					const child = spawn("rex", ["attach", run.terminal!.session], { stdio: "inherit" });
-					child.on("error", () => resolveExit(null));
-					child.on("close", resolveExit);
-				});
-				if (exitCode !== 0) process.stderr.write(`Could not attach to ${run.handle}\n`);
-			} finally {
-				tui.start();
-				tui.requestRender(true);
-			}
-		},
-	});
-
-	if (!runDir) {
 		let widgetTimer: ReturnType<typeof setInterval> | undefined;
 		let widgetContext: ExtensionContext | undefined;
 		let widgetRefreshing = false;
@@ -170,8 +89,7 @@ export default function subagentExtension(pi: ExtensionAPI) {
 				}
 				const starting = updateMetadata(run.runDir, { state: "starting", error: undefined }) ?? run;
 				try {
-					const terminal = launchRun(starting);
-					updateMetadata(run.runDir, { terminal });
+					launchRun(starting);
 				} catch (error) {
 					const message = error instanceof Error ? error.message : String(error);
 					updateMetadata(run.runDir, { state: "error", error: message });
@@ -197,14 +115,14 @@ export default function subagentExtension(pi: ExtensionAPI) {
 			for (const run of listRuns(ctx.sessionManager.getSessionId())) {
 				const liveness = childLiveness(run.terminal);
 				if (liveness === "exited") {
-					// The Rex session outlives the child (--keep-open); remove it with the run.
-					if (!run.suspended && killRexSession(run.terminal)) removeRunDir(run.runDir);
+					// The Rex window outlives the child (--keep-open); remove it with the run.
+					if (!run.suspended && closeRunWindow(run)) removeRunDir(run.runDir);
 					continue;
 				}
 				// Running, or Rex could not answer. Suspend in both cases: the run and its
 				// transcript stay on disk, and resume relaunches it.
 				updateMetadata(run.runDir, { suspended: true });
-				if (!killRexSession(run.terminal)) continue;
+				if (!closeRunWindow(run)) continue;
 				if (liveness === "running") await waitForRunShutdown(run.runDir);
 				updateMetadata(run.runDir, { terminal: undefined });
 			}

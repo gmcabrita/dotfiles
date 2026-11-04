@@ -4,6 +4,7 @@
 // (metadata.json and an inbox/ of queued messages) and is removed by `subagent stop`.
 // The child's Pi transcript lives in ~/.pi/agent/subagents/sessions/ and is kept.
 // The child Pi process runs in a Rex terminal block; Rex is the only process supervisor.
+// All children of one parent Pi session share a Rex session, one window (tab) per child.
 
 import { execFile, spawnSync } from "node:child_process";
 import {
@@ -19,7 +20,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
@@ -28,7 +29,10 @@ export type RunState = "starting" | "busy" | "idle" | "exited" | "error";
 
 /** Rex IDs of the terminal that hosts the child Pi process. */
 export interface RexTerminal {
+	/** Shared by all runs of the same parent Pi session. */
 	session: string;
+	/** The run's own tab in the session. */
+	window: string;
 	block: string;
 }
 
@@ -118,15 +122,24 @@ export function runDisplayName(metadata: RunMetadata): string {
 	return metadata.name ? `${metadata.name} (${metadata.handle})` : metadata.handle;
 }
 
-/** Label shown in the Rex sidebar for the run's session. */
-export function rexSessionLabel(metadata: RunMetadata): string {
+/** Label of the run's tab in the shared Rex session. */
+export function rexWindowLabel(metadata: RunMetadata): string {
 	return `subagent ${metadata.name ?? metadata.handle}`;
+}
+
+/** Label shown in the Rex sidebar for the session that holds a parent's runs. */
+function rexSessionLabel(metadata: RunMetadata): string {
+	return `subagents ${basename(metadata.cwd)}`;
 }
 
 function isRexTerminal(value: unknown): value is RexTerminal {
 	if (typeof value !== "object" || value === null) return false;
 	const terminal = value as Record<string, unknown>;
-	return typeof terminal.session === "string" && typeof terminal.block === "string";
+	return (
+		typeof terminal.session === "string" &&
+		typeof terminal.window === "string" &&
+		typeof terminal.block === "string"
+	);
 }
 
 export function readMetadata(runDir: string): RunMetadata | undefined {
@@ -166,14 +179,19 @@ function sleepSync(ms: number): void {
 	Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 
+// Rex calls made while the parent session lock is held can each take up to the
+// rex default timeout of 10s, so these limits are longer than the metadata lock's.
+const REX_SESSION_LOCK_WAIT_MS = 30_000;
+const REX_SESSION_LOCK_STALE_MS = 60_000;
+
 /**
- * Serialize read-modify-write of metadata.json across the parent, the child, and
- * the CLI. mkdir is atomic on every platform, so a lock directory is the mutex. A
- * lock older than METADATA_LOCK_STALE_MS belongs to a dead process and is removed.
+ * Run `fn` while holding the lock directory `lockDir`. mkdir is atomic on every
+ * platform, so a lock directory is the mutex. A lock older than `staleMs` belongs
+ * to a dead process and is removed.
  */
-function withMetadataLock<T>(runDir: string, fn: () => T): T {
-	const lockDir = join(runDir, "metadata.lock");
-	const deadline = Date.now() + METADATA_LOCK_WAIT_MS;
+function withLock<T>(lockDir: string, waitMs: number, staleMs: number, fn: () => T): T {
+	mkdirSync(dirname(lockDir), { recursive: true, mode: 0o700 });
+	const deadline = Date.now() + waitMs;
 	for (;;) {
 		try {
 			mkdirSync(lockDir);
@@ -181,7 +199,7 @@ function withMetadataLock<T>(runDir: string, fn: () => T): T {
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
 			try {
-				if (Date.now() - statSync(lockDir).mtimeMs > METADATA_LOCK_STALE_MS) rmdirSync(lockDir);
+				if (Date.now() - statSync(lockDir).mtimeMs > staleMs) rmdirSync(lockDir);
 			} catch {
 				// Another process removed or replaced the lock. Retry.
 			}
@@ -194,6 +212,22 @@ function withMetadataLock<T>(runDir: string, fn: () => T): T {
 	} finally {
 		rmdirSync(lockDir);
 	}
+}
+
+/** Serialize read-modify-write of metadata.json across the parent, the child, and the CLI. */
+function withMetadataLock<T>(runDir: string, fn: () => T): T {
+	return withLock(join(runDir, "metadata.lock"), METADATA_LOCK_WAIT_MS, METADATA_LOCK_STALE_MS, fn);
+}
+
+/**
+ * Serialize creation and removal of the Rex session shared by the runs of one
+ * parent. Without it, concurrent spawns from the same parent each create a session,
+ * and a stop can kill the session while a spawn adds a window to it.
+ */
+function withParentRexSessionLock<T>(metadata: RunMetadata, fn: () => T): T {
+	if (!metadata.parentSessionId) return fn();
+	const lockDir = join(getAgentDir(), "subagents", "locks", `${metadata.parentSessionId}.lock`);
+	return withLock(lockDir, REX_SESSION_LOCK_WAIT_MS, REX_SESSION_LOCK_STALE_MS, fn);
 }
 
 export function updateMetadata(runDir: string, patch: Partial<RunMetadata>): RunMetadata | undefined {
@@ -306,39 +340,131 @@ export async function childLivenessAsync(terminal: RexTerminal | undefined): Pro
 	return livenessFromProcessReport(await rexAsync(processReportArgs(terminal)));
 }
 
-/** Kill the run's Rex session. Returns false when Rex reports a failure other than "already gone". */
-export function killRexSession(terminal: RexTerminal | undefined): boolean {
-	if (!terminal) return true;
-	const result = rex(["kill", terminal.session]);
+function succeededOrTargetGone(result: RexResult): boolean {
 	return result.status === 0 || result.status === REX_EXIT_TARGET_NOT_FOUND;
 }
 
-export function renameRexSession(terminal: RexTerminal | undefined, label: string): void {
-	if (!terminal) return;
-	rex(["session", "rename", terminal.session, label]);
+/** Number of windows in a Rex session, 0 when the session is gone, undefined when Rex cannot answer. */
+function rexWindowCount(session: string): number | undefined {
+	const result = rex(["window", "ls", "-s", session, "--json"]);
+	if (result.status === REX_EXIT_TARGET_NOT_FOUND) return 0;
+	if (result.status !== 0) return undefined;
+	try {
+		const listing = JSON.parse(result.stdout) as { windows?: unknown };
+		return Array.isArray(listing.windows) ? listing.windows.length : undefined;
+	} catch {
+		return undefined;
+	}
 }
 
 /**
- * Start the child pi process for a run in a new Rex session and return its IDs.
- * `initialArgs` are only passed on first spawn. The caller stores the terminal in
- * metadata; the child does not need it.
- *
- * First launch lets pi create the transcript in getSessionsDir(); the child reports
- * the path at session_start. A relaunch resumes that transcript.
+ * Close the run's Rex window, and kill the shared session once its last window is
+ * closed (Rex keeps empty sessions). Returns false when Rex reports a failure other
+ * than "already gone".
  */
-export function launchRun(metadata: RunMetadata, initialArgs: string[] = []): RexTerminal {
-	mkdirSync(getSessionsDir(), { recursive: true, mode: 0o700 });
-	const sessionArgs = metadata.sessionFile
-		? ["--session", metadata.sessionFile]
-		: ["--session-dir", getSessionsDir()];
+export function closeRunWindow(metadata: RunMetadata): boolean {
+	const terminal = metadata.terminal;
+	if (!terminal) return true;
+	return withParentRexSessionLock(metadata, () => {
+		if (!succeededOrTargetGone(rex(["window", "close", "-s", terminal.session, terminal.window]))) return false;
+		if (rexWindowCount(terminal.session) === 0) rex(["kill", terminal.session]);
+		return true;
+	});
+}
+
+export function renameRexWindow(metadata: RunMetadata): void {
+	if (!metadata.terminal) return;
+	rex(["window", "rename", "-s", metadata.terminal.session, metadata.terminal.window, rexWindowLabel(metadata)]);
+}
+
+/** Rex sessions that hold other live runs of the same parent, most recent first. */
+function siblingRexSessions(metadata: RunMetadata): string[] {
+	if (!metadata.parentSessionId) return [];
+	const sessions = listRuns(metadata.parentSessionId)
+		.filter((run) => run.handle !== metadata.handle && run.terminal)
+		.map((run) => run.terminal!.session)
+		.reverse();
+	return [...new Set(sessions)];
+}
+
+function parseJson(result: RexResult, command: string): Record<string, unknown> {
+	try {
+		const value: unknown = JSON.parse(result.stdout);
+		if (typeof value === "object" && value !== null) return value as Record<string, unknown>;
+	} catch {
+		// Reported below.
+	}
+	throw new Error(`Unexpected output from rex ${command}: ${result.stdout.trim()}`);
+}
+
+function firstBlockId(window: Record<string, unknown> | undefined): unknown {
+	return Array.isArray(window?.block_ids) ? window.block_ids[0] : undefined;
+}
+
+/** Open the command in a new tab of `session`. Returns undefined when the session no longer exists. */
+function openRexWindow(session: string, metadata: RunMetadata, command: string[]): RexTerminal | undefined {
+	const result = rex([
+		"window",
+		"new",
+		"-s",
+		session,
+		rexWindowLabel(metadata),
+		"--cwd",
+		metadata.cwd,
+		"--keep-open",
+		"--focus=false",
+		"--json",
+		"--",
+		...command,
+	]);
+	if (result.status === REX_EXIT_TARGET_NOT_FOUND) return undefined;
+	if (result.status !== 0) throw new Error(rexError(result, "Failed to create Rex window"));
+	const created = parseJson(result, "window new");
+	const block = firstBlockId(created);
+	if (typeof created.window_id !== "string" || typeof block !== "string") {
+		throw new Error(`rex window new did not return a window and block ID: ${result.stdout.trim()}`);
+	}
+	return { session, window: created.window_id, block };
+}
+
+function createRexSession(metadata: RunMetadata, command: string[]): RexTerminal {
 	const result = rex([
 		"new",
 		rexSessionLabel(metadata),
+		"--window",
+		rexWindowLabel(metadata),
 		"--cwd",
 		metadata.cwd,
 		"--keep-open",
 		"--json",
 		"--",
+		...command,
+	]);
+	if (result.status !== 0) throw new Error(rexError(result, "Failed to create Rex session"));
+	const created = parseJson(result, "new");
+	const windows = Array.isArray(created.initial_windows) ? created.initial_windows : [];
+	const firstWindow = windows[0] as Record<string, unknown> | undefined;
+	const block = firstBlockId(firstWindow);
+	if (typeof created.session_id !== "string" || typeof firstWindow?.window_id !== "string" || typeof block !== "string") {
+		throw new Error(`rex new did not return session, window, and block IDs: ${result.stdout.trim()}`);
+	}
+	return { session: created.session_id, window: firstWindow.window_id, block };
+}
+
+/**
+ * Start the child pi process for a run in a new tab of its parent's Rex session,
+ * creating the session if needed, and store the terminal in metadata.
+ * `initialArgs` are only passed on first spawn. The child does not need the terminal.
+ *
+ * First launch lets pi create the transcript in getSessionsDir(); the child reports
+ * the path at session_start. A relaunch resumes that transcript.
+ */
+export function launchRun(metadata: RunMetadata, initialArgs: string[] = []): RunMetadata {
+	mkdirSync(getSessionsDir(), { recursive: true, mode: 0o700 });
+	const sessionArgs = metadata.sessionFile
+		? ["--session", metadata.sessionFile]
+		: ["--session-dir", getSessionsDir()];
+	const command = [
 		"env",
 		`PI_SUBAGENT_RUN_DIR=${metadata.runDir}`,
 		// Disable OSC 7501 program status reports from child pi processes.
@@ -353,23 +479,18 @@ export function launchRun(metadata: RunMetadata, initialArgs: string[] = []): Re
 		metadata.thinking,
 		...(metadata.launchArgs ?? []),
 		...initialArgs,
-	]);
-	if (result.status !== 0) throw new Error(rexError(result, "Failed to create Rex session"));
-
-	let created: { session_id?: unknown; initial_windows?: unknown };
-	try {
-		created = JSON.parse(result.stdout);
-	} catch {
-		throw new Error(`Unexpected output from rex new: ${result.stdout.trim()}`);
-	}
-	const windows = Array.isArray(created.initial_windows) ? created.initial_windows : [];
-	const firstWindow = windows[0] as { block_ids?: unknown } | undefined;
-	const blockIds = Array.isArray(firstWindow?.block_ids) ? firstWindow.block_ids : [];
-	const block = blockIds[0];
-	if (typeof created.session_id !== "string" || typeof block !== "string") {
-		throw new Error(`rex new did not return a session and block ID: ${result.stdout.trim()}`);
-	}
-	return { session: created.session_id, block };
+	];
+	// Hold the lock until the terminal is in metadata, so a concurrent spawn from the
+	// same parent finds this run's session in siblingRexSessions().
+	return withParentRexSessionLock(metadata, () => {
+		let terminal: RexTerminal | undefined;
+		for (const session of siblingRexSessions(metadata)) {
+			terminal = openRexWindow(session, metadata, command);
+			if (terminal) break;
+		}
+		terminal ??= createRexSession(metadata, command);
+		return updateMetadata(metadata.runDir, { terminal }) ?? { ...metadata, terminal };
+	});
 }
 
 /** Pure: combine the recorded state with the observed liveness of the child process. */
