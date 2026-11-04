@@ -1,0 +1,19 @@
+Intent: make local CDP auto-discovery on macOS find Helium (a Chromium-based
+browser, bundle ID net.imput.helium). Add Helium's DevToolsActivePort path to
+activePortCandidates() in scripts/cdp.mjs, checked before Google Chrome's path.
+
+--- a/.agents/skills/faster-chrome-devtools-skill/scripts/cdp.mjs
++++ b/.agents/skills/faster-chrome-devtools-skill/scripts/cdp.mjs
+@@ -71,6 +71,12 @@
+ 	const home = homedir();
+ 	if (platform() === "darwin") {
+ 		return [
++			// Helium (Chromium-based) keeps its profile under its bundle ID.
++			// Checked first because it is the preferred local browser.
++			join(
++				home,
++				"Library/Application Support/net.imput.helium/DevToolsActivePort",
++			),
+ 			join(
+ 				home,
+ 				"Library/Application Support/Google/Chrome/DevToolsActivePort",

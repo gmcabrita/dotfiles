@@ -13,6 +13,12 @@
       "skillPath": "pstack/skills/benchmark-checklist/SKILL.md",
       "computedHash": "4ed522cb6ea05fedac17edcc92b48462ddd7032595ef5c19eb25ede6654e1a48"
     },
+    "faster-chrome-devtools-skill": {
+      "source": "zeke/faster-chrome-devtools-skill",
+      "sourceType": "github",
+      "skillPath": "skills/faster-chrome-devtools-skill/SKILL.md",
+      "computedHash": "00feed1bf95b8c05efd3575675b6206258f718d8f2546a2b4bd29ed13c9e9930"
+    },
     "fix-merge-conflicts": {
       "source": "cursor/plugins",
       "sourceType": "github",
