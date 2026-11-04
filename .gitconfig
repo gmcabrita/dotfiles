@@ -1,7 +1,7 @@
 [user]
   email = goncalo.mendes.cabrita@gmail.com
   name = Gonçalo Mendes Cabrita
-  signingkey = ~/.ssh/id_ed25519
+  signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOtPEqfVmndsJ2H2ru3FvciHd5VRxWo+LEjEDBShfT+2
 [commit]
   gpgsign = true
   verbose = true
@@ -10,6 +10,8 @@
   autoupdate = true
 [gpg]
   format = ssh
+[gpg "ssh"]
+  program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
 [credential]
   helper = manager
 [core]

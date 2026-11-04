@@ -87,8 +87,8 @@
     - chrome://flags/#read-anything-immersive-reading-mode
   - https://gitflic.ru/project/magnolia1234/bypass-paywalls-chrome-clean
 - 1Password
+  - Setup SSH Agent
 - `gh auth login`
-  - Add ssh key as gpg key
 - Slack
 - Discord
 - WhatsApp
