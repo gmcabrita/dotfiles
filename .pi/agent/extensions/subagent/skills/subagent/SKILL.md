@@ -12,8 +12,10 @@ Use the `subagent` CLI to delegate work to a separate Pi process with its own co
 Give each child a short, descriptive name. The name appears in the parent UI, while the generated handle remains its stable identifier:
 
 ```sh
-subagent spawn --name implementation --prompt "Complete task"
+subagent spawn --name implementation --group "auth refactor" --prompt "Complete task"
 ```
+
+Always pass `--group` with 2 to 4 words (max 24 characters) that describe your own current task, for example `auth refactor` or `flaky ci fix`. It labels the Rex session that holds all subagents of this Pi session, so the user can tell sessions apart. The first spawn sets the label; later values are ignored.
 
 By default, the child inherits the current Pi provider, model, and reasoning level from the bash environment. Use `--provider`, `--model`, or `--thinking` only when deliberately choosing a different configuration, for example a faster model for simple investigation or a stronger model for difficult review. Never pass `$PI_PROVIDER`, `$PI_MODEL`, or `$PI_REASONING_LEVEL` back to the CLI explicitly.
 

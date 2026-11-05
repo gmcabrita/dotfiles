@@ -12,7 +12,10 @@ import {
 	getRunsDir,
 	hasStoredTrustDecision,
 	inboxDir,
+	existingParentGroup,
+	isValidGroupLabel,
 	isValidRunName,
+	MAX_GROUP_LENGTH,
 	closeRunWindow,
 	launchRun,
 	listRuns,
@@ -37,7 +40,7 @@ function fail(message: string): never {
 
 function usage(): never {
 	fail(`Usage:
-  subagent spawn [--name <name>] [--provider <provider>] [--model <model>] [--thinking <level>]
+  subagent spawn [--name <name>] [--group <label>] [--provider <provider>] [--model <model>] [--thinking <level>]
     [--cwd <dir>] [--tools <names>] [--no-extensions] [--no-skills]
     [--no-prompt-templates] [--no-context-files] (--prompt <text> | --file <path>)...
   subagent status <handle>
@@ -58,6 +61,12 @@ function normalizeRunName(value: string): string {
 	const name = value.trim();
 	if (!isValidRunName(name)) fail("Subagent name must be a single line of 1 to 64 characters");
 	return name;
+}
+
+function normalizeGroupLabel(value: string): string {
+	const group = value.trim();
+	if (!isValidGroupLabel(group)) fail(`Subagent group must be a single line of 1 to ${MAX_GROUP_LENGTH} characters`);
+	return group;
 }
 
 function runDirForHandle(handle: string): string {
@@ -87,6 +96,7 @@ function rexTabHint(metadata: RunMetadata): string {
 function spawnSubagent(args: string[]): void {
 	if (process.env.PI_SUBAGENT_RUN_DIR) fail("Nested subagents are disabled");
 	let name: string | undefined;
+	let group: string | undefined;
 	let provider = process.env.PI_PROVIDER;
 	let model = process.env.PI_MODEL;
 	let thinking = process.env.PI_REASONING_LEVEL || "medium";
@@ -104,6 +114,10 @@ function spawnSubagent(args: string[]): void {
 		switch (arg) {
 			case "--name":
 				name = normalizeRunName(valueAfter(args, i, arg));
+				i++;
+				break;
+			case "--group":
+				group = normalizeGroupLabel(valueAfter(args, i, arg));
 				i++;
 				break;
 			case "--provider":
@@ -177,12 +191,15 @@ function spawnSubagent(args: string[]): void {
 	// only for its session (or via --approve) leaves no stored decision either.
 	if (!hasStoredTrustDecision(cwd)) launchArgs.push("--no-approve");
 
+	const parentSessionId = process.env.PI_SESSION_ID || undefined;
 	const now = new Date().toISOString();
 	const metadata: RunMetadata = {
 		version: 2,
 		handle,
 		name,
-		parentSessionId: process.env.PI_SESSION_ID || undefined,
+		// The first spawn of a parent sets the group; later values are ignored.
+		group: existingParentGroup(parentSessionId) ?? group,
+		parentSessionId,
 		parentSessionFile: process.env.PI_SESSION_FILE || undefined,
 		runDir,
 		cwd,

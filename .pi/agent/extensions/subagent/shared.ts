@@ -40,6 +40,8 @@ export interface RunMetadata {
 	version: 2;
 	handle: string;
 	name?: string;
+	/** Short label for the parent's task. Shown in the Rex session label. */
+	group?: string;
 	parentSessionId?: string;
 	parentSessionFile?: string;
 	childSessionId?: string;
@@ -118,6 +120,21 @@ export function isValidRunName(value: unknown): value is string {
 	);
 }
 
+export const MAX_GROUP_LENGTH = 24;
+
+export function isValidGroupLabel(value: unknown): value is string {
+	return isValidRunName(value) && value.length <= MAX_GROUP_LENGTH;
+}
+
+/**
+ * Group label of the earliest run of the same parent. All runs of one parent share
+ * one Rex session, so the first spawn sets the label and later spawns reuse it.
+ */
+export function existingParentGroup(parentSessionId: string | undefined): string | undefined {
+	if (!parentSessionId) return undefined;
+	return listRuns(parentSessionId).find((run) => run.group)?.group;
+}
+
 export function runDisplayName(metadata: RunMetadata): string {
 	return metadata.name ? `${metadata.name} (${metadata.handle})` : metadata.handle;
 }
@@ -129,7 +146,9 @@ export function rexWindowLabel(metadata: RunMetadata): string {
 
 /** Label shown in the Rex sidebar for the session that holds a parent's runs. */
 function rexSessionLabel(metadata: RunMetadata): string {
-	return `subagents ${basename(metadata.cwd)}`;
+	const base = `subagents ${basename(metadata.cwd)}`;
+	const parentLabel = metadata.group ?? metadata.parentSessionId?.slice(0, 6);
+	return parentLabel ? `${base} · ${parentLabel}` : base;
 }
 
 function isRexTerminal(value: unknown): value is RexTerminal {
@@ -151,6 +170,7 @@ export function readMetadata(runDir: string): RunMetadata | undefined {
 			metadata.version !== 2 ||
 			typeof metadata.handle !== "string" ||
 			(metadata.name !== undefined && !isValidRunName(metadata.name)) ||
+			(metadata.group !== undefined && !isValidGroupLabel(metadata.group)) ||
 			(metadata.terminal !== undefined && !isRexTerminal(metadata.terminal)) ||
 			(metadata.sessionFile !== undefined && typeof metadata.sessionFile !== "string") ||
 			typeof metadata.runDir !== "string"
