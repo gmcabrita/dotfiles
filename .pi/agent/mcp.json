@@ -10,6 +10,9 @@
     },
     "pganalyze": {
       "url": "https://app.pganalyze.com/mcp"
+    },
+    "linear": {
+      "url": "https://mcp.linear.app/mcp"
     }
   }
 }
