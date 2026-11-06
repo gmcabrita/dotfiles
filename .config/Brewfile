@@ -3,7 +3,6 @@ tap "blacktop/tap", trusted: true
 tap "lightpanda-io/browser", trusted: true
 tap "orlangure/tap", trusted: true
 tap "ramonvermeulen/whosthere", trusted: true
-tap "vmfunc/sif", trusted: true
 tap "wader/tap", trusted: true
 
 brew "age"
