@@ -96,7 +96,7 @@ brew "trippy"
 brew "ugrep"
 brew "vegeta"
 brew "vhs"
-brew "vmfunc/sif/sif"
+brew "vmfunc/sif/sif", trusted: true
 brew "wader/tap/fq"
 brew "websocat"
 brew "wget"
