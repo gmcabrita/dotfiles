@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!--
+    Keeps Apple's duetexpertd (Siri Suggestions / app prediction model training)
+    paused with SIGSTOP. SIP blocks `launchctl disable` and `bootout` for it, and
+    launchd relaunches it on demand after a kill. A stopped process stays alive,
+    so launchd does not relaunch it. Polls because a new copy can start after a
+    login or a watchdog kill. Undo: launchctl bootout this agent, then
+    `killall -CONT duetexpertd`.
+  -->
+  <key>Label</key><string>com.gmcabrita.stop-duetexpertd</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/pkill</string>
+    <string>-STOP</string>
+    <string>-x</string>
+    <string>duetexpertd</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>StartInterval</key><integer>30</integer>
+  <key>ProcessType</key><string>Background</string>
+</dict>
+</plist>

@@ -66,6 +66,13 @@ rsync -a ".raycast-scripts/" "$HOME/.raycast-scripts/"
 mkdir -p "$HOME/Library/Application Support/go/telemetry"
 rsync -a "Library/Application Support/go/telemetry/" "$HOME/Library/Application Support/go/telemetry/"
 
+# Keeps duetexpertd paused. See the comment in the plist for the reason.
+mkdir -p "$HOME/Library/LaunchAgents"
+cp Library/LaunchAgents/com.gmcabrita.stop-duetexpertd.plist "$HOME/Library/LaunchAgents/"
+if ! launchctl print "gui/$(id -u)/com.gmcabrita.stop-duetexpertd" >/dev/null 2>&1; then
+  launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/com.gmcabrita.stop-duetexpertd.plist"
+fi
+
 mkdir -p "$HOME/Library/Preferences/pnpm"
 rsync -a "Library/Preferences/pnpm/" "$HOME/Library/Preferences/pnpm/"
 
