@@ -169,74 +169,74 @@ bindkey '^_' undo
 autoload -Uz add-zsh-hook
 setopt PROMPT_SUBST
 
-typeset -g __prompt_git_pwd=""
-typeset -g __prompt_git_dirty=1
+# typeset -g __prompt_git_pwd=""
+# typeset -g __prompt_git_dirty=1
 
-function __prompt_find_git_dir() {
-  local dir=$PWD dotgit line gitdir
+# function __prompt_find_git_dir() {
+#   local dir=$PWD dotgit line gitdir
 
-  while true; do
-    dotgit="$dir/.git"
-    if [[ -d "$dotgit" ]]; then
-      print -r -- "$dotgit"
-      return 0
-    fi
-    if [[ -f "$dotgit" ]]; then
-      line="$(<"$dotgit")"
-      if [[ "$line" == gitdir:\ * ]]; then
-        gitdir="${line#gitdir: }"
-        if [[ "$gitdir" != /* ]]; then
-          gitdir="$dir/$gitdir"
-        fi
-        print -r -- "$gitdir"
-        return 0
-      fi
-    fi
-    if [[ "$dir" == "/" ]]; then
-      return 1
-    fi
-    dir="${dir:h}"
-  done
-}
+#   while true; do
+#     dotgit="$dir/.git"
+#     if [[ -d "$dotgit" ]]; then
+#       print -r -- "$dotgit"
+#       return 0
+#     fi
+#     if [[ -f "$dotgit" ]]; then
+#       line="$(<"$dotgit")"
+#       if [[ "$line" == gitdir:\ * ]]; then
+#         gitdir="${line#gitdir: }"
+#         if [[ "$gitdir" != /* ]]; then
+#           gitdir="$dir/$gitdir"
+#         fi
+#         print -r -- "$gitdir"
+#         return 0
+#       fi
+#     fi
+#     if [[ "$dir" == "/" ]]; then
+#       return 1
+#     fi
+#     dir="${dir:h}"
+#   done
+# }
 
-function __prompt_mark_git_dirty() {
-  __prompt_git_dirty=1
-}
+# function __prompt_mark_git_dirty() {
+#   __prompt_git_dirty=1
+# }
 
-function __prompt_refresh_git() {
-  local gitdir head branch
+# function __prompt_refresh_git() {
+#   local gitdir head branch
 
-  if (( ! __prompt_git_dirty )) && [[ "$PWD" == "$__prompt_git_pwd" ]]; then
-    return
-  fi
+#   if (( ! __prompt_git_dirty )) && [[ "$PWD" == "$__prompt_git_pwd" ]]; then
+#     return
+#   fi
 
-  __prompt_git_pwd="$PWD"
-  __prompt_git_dirty=0
-  gitdir="$(__prompt_find_git_dir)" || {
-    RPROMPT=""
-    return
-  }
+#   __prompt_git_pwd="$PWD"
+#   __prompt_git_dirty=0
+#   gitdir="$(__prompt_find_git_dir)" || {
+#     RPROMPT=""
+#     return
+#   }
 
-  if [[ ! -r "$gitdir/HEAD" ]]; then
-    RPROMPT=""
-    return
-  fi
+#   if [[ ! -r "$gitdir/HEAD" ]]; then
+#     RPROMPT=""
+#     return
+#   fi
 
-  head="$(<"$gitdir/HEAD")"
-  if [[ "$head" == ref:\ refs/heads/* ]]; then
-    branch="${head#ref: refs/heads/}"
-  elif [[ "$head" == ref:\ * ]]; then
-    branch="${head#ref: }"
-  else
-    branch="${head[1,7]}"
-  fi
+#   head="$(<"$gitdir/HEAD")"
+#   if [[ "$head" == ref:\ refs/heads/* ]]; then
+#     branch="${head#ref: refs/heads/}"
+#   elif [[ "$head" == ref:\ * ]]; then
+#     branch="${head#ref: }"
+#   else
+#     branch="${head[1,7]}"
+#   fi
 
-  RPROMPT="%F{yellow}git:${branch//\%/%%}%f"
-}
+#   RPROMPT="%F{yellow}git:${branch//\%/%%}%f"
+# }
 
-add-zsh-hook preexec __prompt_mark_git_dirty
-add-zsh-hook chpwd __prompt_mark_git_dirty
-add-zsh-hook precmd __prompt_refresh_git
+# add-zsh-hook preexec __prompt_mark_git_dirty
+# add-zsh-hook chpwd __prompt_mark_git_dirty
+# add-zsh-hook precmd __prompt_refresh_git
 
 PS1='%F{green}%~%f %# '
 RPROMPT=""
