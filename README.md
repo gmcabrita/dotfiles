@@ -86,6 +86,7 @@
     - chrome://flags/#vertical-tabs
     - chrome://flags/#read-anything-immersive-reading-mode
   - https://gitflic.ru/project/magnolia1234/bypass-paywalls-chrome-clean
+  - [browse](https://opencode.ai/product/browse) extension, then `browse pair` and enter the code in the extension's Options
 - 1Password
   - Setup SSH Agent
 - `gh auth login`
