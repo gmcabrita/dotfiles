@@ -14,7 +14,7 @@ import { CONFIG_DIR_NAME, getAgentDir } from "@earendil-works/pi-coding-agent";
  *
  * settings.json shape:
  * {
- *   "startup": { "provider": "anthropic", "model": "claude-fable-5-1", "thinkingLevel": "high" }
+ *   "startup": { "provider": "anthropic", "model": "claude-fable-5-2", "thinkingLevel": "high" }
  * }
  */
 
