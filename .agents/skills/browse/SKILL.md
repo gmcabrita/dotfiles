@@ -54,9 +54,16 @@ MCP: `session_adopt` with `tabId` or `targetUrl`. Prefer adoption for
 authenticated browser state rather than reproducing a login in a fresh page.
 `targetUrl` and `targetIndex` select existing pages; they never navigate.
 
-Each relay drives one browser/profile at a time. A second extension connection
-cannot replace a healthy active connection; switch browsers by disconnecting the
-incumbent extension first.
+One relay can have several browsers connected at once, each with an id like
+`chrome-macbook`. New sessions use the default browser, the first connected and
+ready, unless `session_new` or the first `execute` that creates it gets
+`browser: "<id>"`. `status` lists the connected browsers (`browse status --json`
+on the CLI). A session stays in its browser, so start a new one to use another.
+
+The `browse` CLI cannot pick a browser: `session new` takes only `--read-only`
+and `--allow-origin`, so CLI sessions use the default browser. `session_adopt`
+has no `browser` either; to adopt a tab in another browser, run `session_new`
+with `browser` first, then `session_adopt` in that session.
 
 ## Inspect, act, verify
 
@@ -207,6 +214,12 @@ values between calls on `state`. A single run without an `await` is stopped afte
 about 2 seconds; split heavy loops with
 `await new Promise(r => setTimeout(r, 0))` or do the work in the page.
 
+Await promises: a rejection with no handler never stops the relay. A running call
+gets the error; a later one resets the realm and warns on the next call (a
+one-shot `--rm` session is already gone). Full Node mode has no realm to reset.
+`await files.write(...)` and `await page.goto(...)` put the error in the call
+that caused it.
+
 It runs in a restricted JavaScript realm, not a sandbox. It shares the relay's
 process, so it is not a security boundary: treat code as running as you. There
 is no `process`, `require`, `import()`, `eval`, `fs`, `os`,
@@ -214,13 +227,19 @@ is no `process`, `require`, `import()`, `eval`, `fs`, `os`,
 `page.request`, `context.request` and `browser.browserType()` are unavailable.
 Files go through `files` and Playwright file options, which accept absolute paths
 inside the execute file roots (the temp directory, `/tmp`, and directories in
-`OPENCODE_BROWSER_FILE_ROOTS`):
+`OPENCODE_BROWSER_FILE_ROOTS`); raw CDP commands that name local files are
+checked the same way:
 
 ```js
 const saved = await files.write("report.csv", csvText)
 const bytes = await files.read(saved) // Buffer; files.read(p, "utf8") for text
 await page.screenshot({ path: files.path("page.png") })
 ```
+
+Setting `Browser.setDownloadBehavior` (or `Page.setDownloadBehavior`) replaces
+Playwright's own download handling, so keep its folder inside the file roots.
+After that, `page.on("download")` and `download.saveAs()` stop working for the
+context.
 
 Use `page.evaluate` for `window`, `document`, storage and same-origin `fetch`
 with page cookies. It runs in an isolated world whose `fetch` skips the page's
@@ -331,15 +350,19 @@ viewport, state and interaction path actually tested.
 ## Tabs and settings
 
 Tabs agents open close by themselves after about 10 minutes without use (the
-user can choose 30 or 60 minutes, or never). When a task is done, tidy up right
-away:
+user can choose 30 or 60 minutes, or never). When a task is done, reset or
+delete your own session:
 
 ```bash
-browse tabs cleanup --idle-minutes 0   # MCP: tabs_cleanup { idleMinutes: 0 }
+browse session reset <name>    # MCP: session_reset
+browse session delete <name>   # MCP: session_delete
 ```
 
-Reset or delete session-owned pages when no follow-up work is expected. Keep a
-session only when you will continue with it.
+`browse tabs cleanup` closes idle agent tabs from every session sharing the
+browser, not just yours, and `--idle-minutes 0` (`tabs_cleanup` with
+`idleMinutes: 0`) would close other sessions' pages between their calls, so
+only run it when the user asks. Keep a session only when you will continue with
+it.
 
 Use the `settings` tool (CLI: `browse settings get` / `settings set key=value …`)
 only when the user asks to change how browse behaves: where tabs open (`window`),
@@ -380,8 +403,10 @@ Common diagnoses:
   page. Running setup again does not reload older workers.
 - `Target not found`: attach the intended tab, then select or adopt it by a
   unique URL substring or explicit index.
-- All targets disappeared: dismissing Chromium's debugging banner detaches every
-  tab. Ask the user to click the toolbar button on it again.
+- Dismissing Chromium's debugging bar (Cancel in Chrome, OK in some browsers)
+  detaches every tab: browse no longer controls them. Tabs an agent opened stay
+  open and close when idle; ask the user to lend the tab again with the toolbar
+  button, or continue in a new tab. `execute` says when this happened.
 - Repeated execution-context errors: run one short follow-up so browse can
   health-check the page. A live page is reconnected and re-resolved once; a
   crashed or `chrome-error://` relay-owned page is recreated. It never replaces
