@@ -21,8 +21,10 @@ it is needed, so do not start `browse serve` first.
 
 ## Sessions
 
-MCP keeps one implicit process session; omit `session` for the normal path, or
-call `session_new` and pass an explicit id when one MCP process needs several.
+Over MCP, each agent has its own current session, so omit `session` for the
+normal path; other agents' calls never land on your page. `session_new` and
+`session_use` change only your current session. Pass an explicit `session` id
+to work in several sessions, or to share one with another agent on purpose.
 
 CLI sessions are named, and a named session keeps its default page across short
 commands and relay restarts:
@@ -201,9 +203,9 @@ adds a loud warning, so set one first.
 Execute code can use `page`, `context`, `browser`, persistent `state`, the
 `files` helper, compute-only Node modules through `modules` (plus `path`, `url`,
 `util`, `crypto`, `buffer`, `zlib`, `events`, `stream`), and the browse helpers
-above. Timers, `URL`, `TextEncoder`, `Buffer`, `structuredClone` and
-`crypto.randomUUID()` are available. `execute` returns the value of `return`; a
-single expression returns automatically. Use `--file` for longer scripts:
+above. Timers, `URL`, `TextEncoder`, `Buffer` and `crypto.randomUUID()` are
+available. `execute` returns the value of `return`; a single expression returns
+automatically. Use `--file` for longer scripts:
 
 ```bash
 browse execute --session github --file ./perform-flow.js
@@ -273,13 +275,28 @@ return { tools, result }
 
 ## Safety
 
-For inspect-only work, use a read-only session. Read-only rejects `Input.*`, so
-it cannot click or type through Playwright:
+For inspect-only work, use a read-only session. It cannot open a page of its
+own, so adopt a tab the user has already lent you before executing; a bare
+`execute` with no page fails when it tries to open its default page:
 
 ```bash
 browse session new inspect-prod --read-only
-browse execute --session inspect-prod 'await page.goto("https://example.com"); return page.title()'
+browse session adopt --session inspect-prod --tab-id 123   # tab= in browse status
+browse execute --session inspect-prod 'return await snapshot()'
 ```
+
+MCP: `session_new` with `readOnly: true`, then `session_adopt` with `tabId`
+(it uses the current, read-only session), `targetUrl` or `targetIndex`.
+`targetUrl` matches an attached page; adoption never navigates.
+
+Read-only is a CDP allowlist: snapshots, screenshots, page information, cookie
+reads for the session's pages, `page.evaluate` and event subscriptions are
+allowed. Everything else is refused, including `Input.*` (no click, type or
+hover through Playwright), `Page.navigate` (`page.goto`), new pages
+(`Target.createTarget`), closing tabs (`Target.closeTarget`) and cookie writes
+(`Network.setCookie`, `Storage.setCookies`). Use a writable session to open
+pages or interact. Read-only guards CDP, not page script: `page.evaluate` can
+still change the page, so use it to read, not to work around these refusals.
 
 For destructive UI work, use a two-phase **read, confirm, verify** flow: read
 candidates and return exact stable identifiers, get user approval for those
@@ -358,11 +375,11 @@ browse session reset <name>    # MCP: session_reset
 browse session delete <name>   # MCP: session_delete
 ```
 
-`browse tabs cleanup` closes idle agent tabs from every session sharing the
-browser, not just yours, and `--idle-minutes 0` (`tabs_cleanup` with
-`idleMinutes: 0`) would close other sessions' pages between their calls, so
-only run it when the user asks. Keep a session only when you will continue with
-it.
+`tabs_cleanup` with `idleMinutes: 0` closes your own sessions' idle tabs at
+once; other agents' tabs close only after the user's idle setting. The CLI's
+`browse tabs cleanup --idle-minutes 0` has no agent to scope to and closes every
+agent tab, so only run it when the user asks. Keep a session only when you will
+continue with it.
 
 Use the `settings` tool (CLI: `browse settings get` / `settings set key=value …`)
 only when the user asks to change how browse behaves: where tabs open (`window`),

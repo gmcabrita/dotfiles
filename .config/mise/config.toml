@@ -14,6 +14,7 @@
 "cargo:rustdoc-text" = "latest"
 "github:AmanVarshney01/tcut" = "latest"
 "github:duckdb/duckdb" = "latest"
+"github:LalitMaganti/buildprof" = "latest"
 "github:lexiforest/curl-impersonate" = { version = "latest", prerelease = true }
 "github:qbdi/qbdi" = "latest"
 "github:rockorager/zigdoc" = "latest"
