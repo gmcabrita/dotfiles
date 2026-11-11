@@ -5,7 +5,7 @@
       "source": "vercel-labs/agent-desktop",
       "sourceType": "github",
       "skillPath": "skills/agent-desktop/SKILL.md",
-      "computedHash": "955e547adbe0a83f95459ac82fc613dc1e0fe3d1bf171b67b05e38a3e781a632"
+      "computedHash": "7c604d271c260a11311d5480f08b1c18ac53b5b791fe49de37f75423631a1ca9"
     },
     "benchmark-checklist": {
       "source": "cursor/plugins",
