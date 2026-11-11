@@ -37,14 +37,6 @@ rsync -a ".codiff/" "$HOME/.codiff/"
 mkdir -p "$HOME/.ccusage"
 rsync -a ".ccusage/" "$HOME/.ccusage/"
 
-mkdir -p "$HOME/.codex"
-rsync -a ".codex/" "$HOME/.codex/"
-
-# mkdir -p "$HOME/.claude"
-# rsync -a ".claude/" "$HOME/.claude/"
-# ln -sfn "$HOME/.agents/skills" "$HOME/.claude/skills"
-# cp .AGENTS-Claude.md "$HOME/.claude/AGENTS.md"
-
 mkdir -p "$HOME/.config"
 rsync -a ".config/" "$HOME/.config/"
 
