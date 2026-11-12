@@ -160,10 +160,29 @@ zle -N edit-command-line
 # zmv -i -W '*.log' '*.txt'
 autoload zmv
 
+# Ctrl-G: replace the buffer with a cantrip command. The result stays editable; it never runs.
+# A high-danger command shows the review card first. Quit (exit 2) or an error keeps the buffer.
+__cantrip_widget() {
+  [[ -z $BUFFER ]] && return
+  zle -M "cantrip: asking pi…"
+  zle -R
+  local result code
+  # stdin and stderr go to the terminal so cantrip can show the card; stdout carries the command.
+  result=$(cantrip --widget -- "$BUFFER" </dev/tty 2>/dev/tty)
+  code=$?
+  zle -M ""
+  # cantrip may have written below the prompt; redraw the prompt under that output.
+  zle -I
+  (( code == 0 )) && { BUFFER=$result; CURSOR=${#BUFFER}; }
+  zle reset-prompt
+}
+zle -N __cantrip_widget
+
 #### Keybinds
 
 bindkey '^x^e' edit-command-line
 bindkey '^_' undo
+bindkey '^g' __cantrip_widget  # replaces send-break; Ctrl-C does the same
 
 #### Prompt
 
