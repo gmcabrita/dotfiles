@@ -55,6 +55,12 @@
       "skillPath": "plugins/show-me/skills/show-me/SKILL.md",
       "computedHash": "0904362ca0f13fc69d88822bb1e7a72f27fd80b992b57ef89ef8a12c3fecce35"
     },
+    "socratic-tutor": {
+      "source": "janestreet/agent_skills",
+      "sourceType": "github",
+      "skillPath": "socratic-tutor/SKILL.md",
+      "computedHash": "a472e23a8edf96c9a28b6e4ddb07ccab849a223231b05068dd9d276991776fc4"
+    },
     "thermo-nuclear-code-quality-review": {
       "source": "cursor/plugins",
       "sourceType": "github",

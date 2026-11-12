@@ -17,6 +17,7 @@ DISABLED_SKILLS=(
   "readback"
   "security-audit"
   "show-me"
+  "socratic-tutor"
   "thermo-nuclear-code-quality-review"
   "weekly-review"
   "what-did-i-get-done"
