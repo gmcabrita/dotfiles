@@ -1,83 +1,83 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
     "agent-desktop": {
       "source": "vercel-labs/agent-desktop",
       "sourceType": "github",
       "skillPath": "skills/agent-desktop/SKILL.md",
-      "computedHash": "7c604d271c260a11311d5480f08b1c18ac53b5b791fe49de37f75423631a1ca9"
+      "computedHash": "47c7927d5b8ce6392cde9d1e3cf02fef903fe55c16a0d9f07d1104a07d910234"
     },
     "benchmark-checklist": {
       "source": "cursor/plugins",
       "sourceType": "github",
       "skillPath": "pstack/skills/benchmark-checklist/SKILL.md",
-      "computedHash": "4ed522cb6ea05fedac17edcc92b48462ddd7032595ef5c19eb25ede6654e1a48"
+      "computedHash": "2eaf797ecf11c132329a252ab286cdebbd4c83277910eecf260cc6b28f2a3162"
     },
     "fix-merge-conflicts": {
       "source": "cursor/plugins",
       "sourceType": "github",
       "skillPath": "cursor-team-kit/skills/fix-merge-conflicts/SKILL.md",
-      "computedHash": "8404e1b711c7da7a35049ecb6e722af7da64af849ff61d6b1ebcaac046f3f35e"
+      "computedHash": "45612c4b50cfd2e7325261b2d8170c70dfe8aeacdc71985a93b215f9a36006d1"
     },
     "gh-stack": {
       "source": "github/gh-stack",
       "sourceType": "github",
       "skillPath": "skills/gh-stack/SKILL.md",
-      "computedHash": "e54bf50370987f13ca2803b3be829f36350b68a79dc36ffd3b27350bc6d2fde1"
+      "computedHash": "4ff26e30a0103af77552e5eebbabfbf80734fd23b1485f0c513a0b35a3126613"
     },
     "good-css": {
       "source": "vojtaholik/good-css",
       "sourceType": "github",
       "skillPath": "skills/good-css/SKILL.md",
-      "computedHash": "882dc3f6cb2ad58b3569af84a8c67668cda0284b156b27f8a8d989bd98063958"
+      "computedHash": "4326cc3d040bfaa919b1c74c1f28bac4f6850c49af9b016478fcb6dcc9713c02"
     },
     "hegel": {
       "source": "hegeldev/hegel-skill",
       "sourceType": "github",
       "skillPath": "skills/hegel/SKILL.md",
-      "computedHash": "7ce0c4fe03674728cc0f705c7fe163b22def017f331293add6f5c1fcf9eb0fa9"
+      "computedHash": "bf02f5df5ef3554b6a464759c9c599d4f866b651710e60e265b459511e1fafa6"
     },
     "hegel-review": {
       "source": "hegeldev/hegel-skill",
       "sourceType": "github",
       "skillPath": "skills/hegel-review/SKILL.md",
-      "computedHash": "67b091f91961ea1f80608f72681fc30ac60f3e7f4aa6bb50eea89e745a72b104"
+      "computedHash": "3c56457a16ab1a4a3ff85ff2dddc3e33238dfe97de59843d106ccc057f8dffd2"
     },
     "security-audit": {
       "source": "cloudflare/security-audit-skill",
       "sourceType": "github",
       "skillPath": "skills/security-audit/SKILL.md",
-      "computedHash": "98b97aad2873b3b9a8e064007c25e7827b493ba27fda8bfbdb41dab586767973"
+      "computedHash": "8513eb3b2c39b8d05ef4f47b32ef4d18280b93a5efb91d8df6272f7435034af5"
     },
     "show-me": {
       "source": "humanlayer/skills",
       "sourceType": "github",
       "skillPath": "plugins/show-me/skills/show-me/SKILL.md",
-      "computedHash": "43766f53afe7eb9feba0bb7716590c35cbb8d39d4a91eddef50e9566a6f6ae19"
+      "computedHash": "0904362ca0f13fc69d88822bb1e7a72f27fd80b992b57ef89ef8a12c3fecce35"
     },
     "thermo-nuclear-code-quality-review": {
       "source": "cursor/plugins",
       "sourceType": "github",
       "skillPath": "cursor-team-kit/skills/thermo-nuclear-code-quality-review/SKILL.md",
-      "computedHash": "9052b01b46b1d8dbf94c45f9313ec1983443f9a460e83d49cdc7fe0f640ca476"
+      "computedHash": "705eb32106f0fec9c9e9b4afccb6156f17f6e8829368e54cd5b53f10e4374340"
     },
     "weekly-review": {
       "source": "cursor/plugins",
       "sourceType": "github",
       "skillPath": "cursor-team-kit/skills/weekly-review/SKILL.md",
-      "computedHash": "44758e8294c79fc6906253b319a18fb76e318fd2c99d697b39b94848cc8494da"
+      "computedHash": "e19f126aa3096264224c7d792edb23d994123020063aa24c5234d79350d04e6f"
     },
     "what-did-i-get-done": {
       "source": "cursor/plugins",
       "sourceType": "github",
       "skillPath": "cursor-team-kit/skills/what-did-i-get-done/SKILL.md",
-      "computedHash": "c2b206c90991d42a771bb5250fabe2a0b4e9a5ffb5b59856512ebbcdb4e43be9"
+      "computedHash": "d4c421903b43074f6d5f75e7055a06c2476735b2bb691285e3217504cd038627"
     },
     "write-discoverable-code": {
       "source": "modem-dev/skills",
       "sourceType": "github",
       "skillPath": "write-discoverable-code/SKILL.md",
-      "computedHash": "6402f2e0718be1665ab52620b81cd8c7abfbdfadd127b64bb3b368fcbe49259c"
+      "computedHash": "67dba2ebb8990a59e30d56f6602e754465c4ce6ee781ccd0265f4d81112a9343"
     }
   }
 }
