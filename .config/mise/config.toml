@@ -63,7 +63,7 @@ auto_update = true
 auto_update_check_duration = "1d"
 experimental = true
 idiomatic_version_file_enable_tools = ["rust", "go"]
-minimum_release_age = "12h"
+minimum_release_age = "2h"
 
 [settings.status]
 show_env = true
