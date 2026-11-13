@@ -88,8 +88,12 @@
   - https://gitflic.ru/project/magnolia1234/bypass-paywalls-chrome-clean
   - [browse](https://opencode.ai/product/browse) extension, then `browse pair` and enter the code in the extension's Options
 - 1Password
-  - Setup SSH Agent
 - `gh auth login`
+- Secretive
+  - Create key
+  - `gh auth refresh -h github.com -s admin:public_key,admin:ssh_signing_key`
+  - `gh ssh-key add ~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys/<file>.pub --title "Secretive $(hostname -s)" --type authentication`
+  - `gh ssh-key add ~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys/<file>.pub --title "Secretive $(hostname -s) signing" --type signing`
 - Slack
 - Discord
 - WhatsApp

@@ -8,7 +8,7 @@ auto_upgrade_allow_major = false
 
 [cli.logs]
 save_logs = true
-path = "/Users/gmcabrita/Library/Application Support/snowflake/logs"
+path = "~/Library/Application Support/snowflake/logs"
 level = "info"
 
 [connections.amplemarket_oauth]
