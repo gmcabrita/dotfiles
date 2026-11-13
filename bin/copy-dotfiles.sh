@@ -4,7 +4,6 @@
 
 cp .hushlogin "$HOME/"
 cp .gitconfig "$HOME/"
-cp .gitallowedsigners "$HOME/"
 cp .gitignore "$HOME/"
 cp .worktreeinclude "$HOME/"
 cp .githelpers "$HOME/"

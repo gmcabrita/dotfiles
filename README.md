@@ -89,11 +89,11 @@
   - [browse](https://opencode.ai/product/browse) extension, then `browse pair` and enter the code in the extension's Options
 - 1Password
 - `gh auth login`
-- Secretive
-  - Create key
+- SSH key (with passphrase, loaded into Apple's ssh-agent for 8 hours)
+  - `ssh-keygen -t ed25519 -C "goncalo.mendes.cabrita@gmail.com" -f ~/.ssh/id_ed25519`
   - `gh auth refresh -h github.com -s admin:public_key,admin:ssh_signing_key`
-  - `gh ssh-key add ~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys/<file>.pub --title "Secretive $(hostname -s)" --type authentication`
-  - `gh ssh-key add ~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys/<file>.pub --title "Secretive $(hostname -s) signing" --type signing`
+  - `gh ssh-key add ~/.ssh/id_ed25519.pub --title "$(hostname -s)" --type authentication`
+  - `gh ssh-key add ~/.ssh/id_ed25519.pub --title "$(hostname -s) signing" --type signing`
 - Slack
 - Discord
 - WhatsApp

@@ -1,7 +1,7 @@
 [user]
   email = goncalo.mendes.cabrita@gmail.com
   name = Gonçalo Mendes Cabrita
-  signingkey = ~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys/c136ab02c28c3cc5e3d331ae08d51182.pub
+  signingkey = ~/.ssh/id_ed25519.pub
 [commit]
   gpgsign = true
   verbose = true
@@ -10,8 +10,6 @@
   autoupdate = true
 [gpg]
   format = ssh
-[gpg "ssh"]
-  allowedSignersFile = ~/.gitallowedsigners
 [credential]
   helper = manager
 [core]
