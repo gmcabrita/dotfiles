@@ -25,7 +25,9 @@
     "openrouter/particle-ai/particle-1",
     "openrouter/deepseek/deepseek-flash-latest",
     "openrouter/moonshotai/kimi-k3.1-pro",
-    "openrouter/z-ai/glm-5.3"
+    "openrouter/z-ai/glm-5.3",
+    "abliteration/abliterated-model-large-v2",
+    "abliteration/abliterated-model-large-flash"
   ],
   "enableInstallTelemetry": false,
   "hideThinkingBlock": true,
