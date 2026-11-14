@@ -23,6 +23,7 @@
     "opencode-go/deepseek-v4.1-flash",
     "opencode-go/muse-spark-1.3-contributor",
     "openrouter/particle-ai/particle-1",
+    "openrouter/google/gemini-4-hydrogen",
     "openrouter/deepseek/deepseek-flash-latest",
     "openrouter/moonshotai/kimi-k3.1-pro",
     "openrouter/z-ai/glm-5.3",
