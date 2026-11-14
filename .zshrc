@@ -396,7 +396,7 @@ function update-programming-languages() {
   mise cache clear
   mise plugins up
   mise up --bump
-  mise prune
+  mise prune --yes
   mise reshim
   rustup component add rust-analyzer rust-src clippy rustfmt rust-docs llvm-tools
   mise reshim
