@@ -1,0 +1,65 @@
+#!/usr/bin/env swift
+// Opens the AirDrop share sheet for the given files or URLs.
+// macOS has no public API to choose the recipient, so the user picks it in the sheet.
+import AppKit
+
+func die(_ msg: String) -> Never {
+  fputs("\(msg)\n", stderr)
+  exit(1)
+}
+
+let args = CommandLine.arguments.dropFirst()
+if args.isEmpty || args.contains("-h") || args.contains("--help") {
+  die("usage: airdrop <file|url>...")
+}
+
+let items: [URL] = args.map { arg in
+  if let url = URL(string: arg), let scheme = url.scheme, ["http", "https"].contains(scheme) {
+    return url
+  }
+  let fileURL = URL(fileURLWithPath: arg).standardizedFileURL
+  guard FileManager.default.fileExists(atPath: fileURL.path) else {
+    die("airdrop: no such file: \(arg)")
+  }
+  return fileURL
+}
+
+// The share sheet needs a running NSApplication. The delegate exits the
+// process when the transfer finishes or the user cancels.
+final class Delegate: NSObject, NSApplicationDelegate, NSSharingServiceDelegate {
+  let items: [URL]
+  init(items: [URL]) { self.items = items }
+
+  func applicationDidFinishLaunching(_ notification: Notification) {
+    guard let service = NSSharingService(named: .sendViaAirDrop) else {
+      die("airdrop: AirDrop service not available")
+    }
+    guard service.canPerform(withItems: items) else {
+      die("airdrop: AirDrop cannot share these items")
+    }
+    service.delegate = self
+    NSApp.activate(ignoringOtherApps: true)
+    service.perform(withItems: items)
+  }
+
+  func sharingService(_ sharingService: NSSharingService, didShareItems items: [Any]) {
+    exit(0)
+  }
+
+  func sharingService(
+    _ sharingService: NSSharingService, didFailToShareItems items: [Any], error: Error
+  ) {
+    // Cancelling the sheet also arrives here as a user-cancelled error.
+    let nsError = error as NSError
+    if nsError.domain == NSCocoaErrorDomain && nsError.code == NSUserCancelledError {
+      die("airdrop: cancelled")
+    }
+    die("airdrop: \(error.localizedDescription)")
+  }
+}
+
+let app = NSApplication.shared
+app.setActivationPolicy(.accessory)
+let delegate = Delegate(items: items)
+app.delegate = delegate
+app.run()
