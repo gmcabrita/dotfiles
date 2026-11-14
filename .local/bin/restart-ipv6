@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Restart IPv6 on a macOS network service (off, then automatic), picked with gum.
+# Usage: restart-ipv6 [service]
+set -eo pipefail
+
+service=${1:-$(networksetup -listallnetworkservices | tail -n +2 | sed 's/^\*//' | gum choose --header "Restart IPv6 on")}
+
+sudo networksetup -setv6off "$service"
+sleep 1
+sudo networksetup -setv6automatic "$service"
+
+networksetup -getinfo "$service" | grep '^IPv6'
