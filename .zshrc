@@ -479,6 +479,10 @@ function pi-update-ext() {
   return "$exitcode"
 }
 
+function ue() {
+  update-everything
+}
+
 function update-everything() {
   brew update
   brew bundle install --force-cleanup --file=~/.config/Brewfile
