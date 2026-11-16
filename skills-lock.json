@@ -12,8 +12,8 @@
       "source": "cursor/plugins",
       "sourceType": "github",
       "skillPath": "pstack/skills/benchmark-checklist/SKILL.md",
-      "computedHash": "2eaf797ecf11c132329a252ab286cdebbd4c83277910eecf260cc6b28f2a3162",
-      "commit": "bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7"
+      "computedHash": "adc8a48e433402b97a9b6f9393496ee0c02ae437cfc1aba709411c56fd6fb778",
+      "commit": "2f87c854fe3e2fcda44ca86b46ede35aad3c46b7"
     },
     "fix-merge-conflicts": {
       "source": "cursor/plugins",
