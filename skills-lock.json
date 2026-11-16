@@ -5,85 +5,99 @@
       "source": "vercel-labs/agent-desktop",
       "sourceType": "github",
       "skillPath": "skills/agent-desktop/SKILL.md",
-      "computedHash": "241993fe8465bd04f7ed582387b5f0d7ef1795355907c588ad553a8e98a88386"
+      "computedHash": "241993fe8465bd04f7ed582387b5f0d7ef1795355907c588ad553a8e98a88386",
+      "commit": "8ffecc1d3d088727f8d84baf4dde0224aab2e8ad"
     },
     "benchmark-checklist": {
       "source": "cursor/plugins",
       "sourceType": "github",
       "skillPath": "pstack/skills/benchmark-checklist/SKILL.md",
-      "computedHash": "2eaf797ecf11c132329a252ab286cdebbd4c83277910eecf260cc6b28f2a3162"
+      "computedHash": "2eaf797ecf11c132329a252ab286cdebbd4c83277910eecf260cc6b28f2a3162",
+      "commit": "bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7"
     },
     "fix-merge-conflicts": {
       "source": "cursor/plugins",
       "sourceType": "github",
       "skillPath": "cursor-team-kit/skills/fix-merge-conflicts/SKILL.md",
-      "computedHash": "45612c4b50cfd2e7325261b2d8170c70dfe8aeacdc71985a93b215f9a36006d1"
+      "computedHash": "45612c4b50cfd2e7325261b2d8170c70dfe8aeacdc71985a93b215f9a36006d1",
+      "commit": "bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7"
     },
     "gh-stack": {
       "source": "github/gh-stack",
       "sourceType": "github",
       "skillPath": "skills/gh-stack/SKILL.md",
-      "computedHash": "4ff26e30a0103af77552e5eebbabfbf80734fd23b1485f0c513a0b35a3126613"
+      "computedHash": "4ff26e30a0103af77552e5eebbabfbf80734fd23b1485f0c513a0b35a3126613",
+      "commit": "80b6d6e910cc1b7eaa26b961d7721ade21084fed"
     },
     "good-css": {
       "source": "vojtaholik/good-css",
       "sourceType": "github",
       "skillPath": "skills/good-css/SKILL.md",
-      "computedHash": "4326cc3d040bfaa919b1c74c1f28bac4f6850c49af9b016478fcb6dcc9713c02"
+      "computedHash": "4326cc3d040bfaa919b1c74c1f28bac4f6850c49af9b016478fcb6dcc9713c02",
+      "commit": "35e0e8c673854ca34d8e1879038e44834c855dfb"
     },
     "hegel": {
       "source": "hegeldev/hegel-skill",
       "sourceType": "github",
       "skillPath": "skills/hegel/SKILL.md",
-      "computedHash": "bf02f5df5ef3554b6a464759c9c599d4f866b651710e60e265b459511e1fafa6"
+      "computedHash": "bf02f5df5ef3554b6a464759c9c599d4f866b651710e60e265b459511e1fafa6",
+      "commit": "88dc42e0751539d8c68208a8210f70f34f3e275d"
     },
     "hegel-review": {
       "source": "hegeldev/hegel-skill",
       "sourceType": "github",
       "skillPath": "skills/hegel-review/SKILL.md",
-      "computedHash": "3c56457a16ab1a4a3ff85ff2dddc3e33238dfe97de59843d106ccc057f8dffd2"
+      "computedHash": "3c56457a16ab1a4a3ff85ff2dddc3e33238dfe97de59843d106ccc057f8dffd2",
+      "commit": "88dc42e0751539d8c68208a8210f70f34f3e275d"
     },
     "security-audit": {
       "source": "cloudflare/security-audit-skill",
       "sourceType": "github",
       "skillPath": "skills/security-audit/SKILL.md",
-      "computedHash": "8513eb3b2c39b8d05ef4f47b32ef4d18280b93a5efb91d8df6272f7435034af5"
+      "computedHash": "8513eb3b2c39b8d05ef4f47b32ef4d18280b93a5efb91d8df6272f7435034af5",
+      "commit": "c1c8a8c1471069fb0e188eeaff69b8e8db6564a8"
     },
     "show-me": {
       "source": "humanlayer/skills",
       "sourceType": "github",
       "skillPath": "plugins/show-me/skills/show-me/SKILL.md",
-      "computedHash": "0904362ca0f13fc69d88822bb1e7a72f27fd80b992b57ef89ef8a12c3fecce35"
+      "computedHash": "0904362ca0f13fc69d88822bb1e7a72f27fd80b992b57ef89ef8a12c3fecce35",
+      "commit": "4d69d20f6e9b57b4fcf0d501ccfb1be961f0f329"
     },
     "socratic-tutor": {
       "source": "janestreet/agent_skills",
       "sourceType": "github",
       "skillPath": "socratic-tutor/SKILL.md",
-      "computedHash": "a472e23a8edf96c9a28b6e4ddb07ccab849a223231b05068dd9d276991776fc4"
+      "computedHash": "a472e23a8edf96c9a28b6e4ddb07ccab849a223231b05068dd9d276991776fc4",
+      "commit": "7c6715c29548a3b39d4a9545c698ee4fd17a7213"
     },
     "thermo-nuclear-code-quality-review": {
       "source": "cursor/plugins",
       "sourceType": "github",
       "skillPath": "cursor-team-kit/skills/thermo-nuclear-code-quality-review/SKILL.md",
-      "computedHash": "705eb32106f0fec9c9e9b4afccb6156f17f6e8829368e54cd5b53f10e4374340"
+      "computedHash": "705eb32106f0fec9c9e9b4afccb6156f17f6e8829368e54cd5b53f10e4374340",
+      "commit": "bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7"
     },
     "weekly-review": {
       "source": "cursor/plugins",
       "sourceType": "github",
       "skillPath": "cursor-team-kit/skills/weekly-review/SKILL.md",
-      "computedHash": "e19f126aa3096264224c7d792edb23d994123020063aa24c5234d79350d04e6f"
+      "computedHash": "e19f126aa3096264224c7d792edb23d994123020063aa24c5234d79350d04e6f",
+      "commit": "bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7"
     },
     "what-did-i-get-done": {
       "source": "cursor/plugins",
       "sourceType": "github",
       "skillPath": "cursor-team-kit/skills/what-did-i-get-done/SKILL.md",
-      "computedHash": "d4c421903b43074f6d5f75e7055a06c2476735b2bb691285e3217504cd038627"
+      "computedHash": "d4c421903b43074f6d5f75e7055a06c2476735b2bb691285e3217504cd038627",
+      "commit": "bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7"
     },
     "write-discoverable-code": {
       "source": "modem-dev/skills",
       "sourceType": "github",
       "skillPath": "write-discoverable-code/SKILL.md",
-      "computedHash": "67dba2ebb8990a59e30d56f6602e754465c4ce6ee781ccd0265f4d81112a9343"
+      "computedHash": "67dba2ebb8990a59e30d56f6602e754465c4ce6ee781ccd0265f4d81112a9343",
+      "commit": "edcdedb38a545f67c065f4084b3627517f0d79cf"
     }
   }
 }
