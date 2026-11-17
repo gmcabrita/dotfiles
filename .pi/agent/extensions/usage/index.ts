@@ -4,7 +4,7 @@
  *
  * Subscription providers (anthropic, openai-codex, openai-codex-lb, opencode-go) render
  * percent bars per rate limit window. Pay-as-you-go providers (openrouter,
- * deepseek) render dollar balances. Without an argument, only providers of
+ * deepseek, abliteration) render dollar balances. Without an argument, only providers of
  * the session's scoped models (`enabledModels` / `--models`) are queried;
  * `/usage <provider>` queries that provider regardless of scope. Providers
  * without stored auth are skipped; opencode (Zen) has no usage API and is not listed.
@@ -21,6 +21,7 @@ import {
   type UsageSeverity,
   type UsageStyle,
 } from "./model.ts";
+import { abliterationUsageProvider } from "./providers/abliteration.ts";
 import { anthropicUsageProvider } from "./providers/anthropic.ts";
 import { deepSeekUsageProvider } from "./providers/deepseek.ts";
 import { openAICodexUsageProvider } from "./providers/openai-codex.ts";
@@ -35,6 +36,7 @@ const USAGE_PROVIDERS: UsageProvider[] = [
   openCodeGoUsageProvider,
   openRouterUsageProvider,
   deepSeekUsageProvider,
+  abliterationUsageProvider,
 ];
 
 async function resolveAuth(ctx: ExtensionContext, providerId: string): Promise<ProviderAuth | undefined> {
@@ -103,7 +105,7 @@ function themeStyle(theme: Theme): UsageStyle {
 
 export default function usageExtension(pi: ExtensionAPI) {
   pi.registerCommand("usage", {
-    description: "Show remaining quota / balance per provider (anthropic, openai-codex, openai-codex-lb, opencode-go, openrouter, deepseek)",
+    description: "Show remaining quota / balance per provider (anthropic, openai-codex, openai-codex-lb, opencode-go, openrouter, deepseek, abliteration)",
     getArgumentCompletions: (prefix) => {
       const matches = USAGE_PROVIDERS.filter((provider) => provider.id.startsWith(prefix.toLowerCase()));
       return matches.length > 0 ? matches.map((provider) => ({ value: provider.id, label: provider.label })) : null;
