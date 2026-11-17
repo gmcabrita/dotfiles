@@ -60,22 +60,7 @@
   "extend_comment_on_newline": false,
   "agent": {
     "enabled": false,
-    "tool_permissions": {
-      "default": "allow",
-    },
     "button": false,
-    "inline_assistant_model": {
-      "provider": "openai",
-      "model": "gpt-6-astra",
-      "effort": "high",
-      "speed": "fast",
-    },
-    "default_model": {
-      "provider": "openai",
-      "model": "gpt-6-astra",
-      "effort": "high",
-      "speed": "fast",
-    },
   },
   "terminal": {
     "font_weight": 400.0,
