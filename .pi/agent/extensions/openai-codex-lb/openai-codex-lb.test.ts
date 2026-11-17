@@ -1,13 +1,15 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { test } from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import type { Api, Context, Model } from "@earendil-works/pi-ai";
 import { loadOpenAICodexLbAdapter, resolveCodexAdapterUrl } from "./clone.ts";
 import { API_ID, findCodexLbApiKey, normalizeBaseUrl, PROVIDER_ID, resolveApiKeyConfig } from "./index.ts";
-import { loadOpenAICodexModels, parseCodexModelCatalog } from "./models.ts";
+import { loadOpenAICodexModels, parseCodexModelCatalog, parseStoredCodexModels } from "./models.ts";
 import { CODEX_LB_PATCH_MARKER, patchOpenAICodexAdapter } from "./patch.ts";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -63,7 +65,7 @@ test("loads the upstream Codex catalog plus gpt-reserve with gpt-5.6-luna settin
 	const adapterUrl = resolveCodexAdapterUrl();
 	const modelModuleUrl = new URL("../providers/openai-codex.models.js", adapterUrl);
 	const moduleValue: unknown = await import(modelModuleUrl.href);
-	const models = await loadOpenAICodexModels(adapterUrl);
+	const models = await loadOpenAICodexModels(adapterUrl, join(tmpdir(), "codex-lb-missing", "models-store.json"));
 
 	assert.ok(models.length > 0);
 	assert.ok(models.every((model) => model.reasoning));
@@ -74,6 +76,47 @@ test("loads the upstream Codex catalog plus gpt-reserve with gpt-5.6-luna settin
 	assert.deepEqual(models.filter((model) => model.id === "gpt-reserve"), [
 		{ ...luna, id: "gpt-reserve", name: "gpt-reserve" },
 	]);
+});
+
+test("applies refreshed openai-codex models from models-store.json", async () => {
+	const adapterUrl = resolveCodexAdapterUrl();
+	const bundled = await loadOpenAICodexModels(adapterUrl, join(tmpdir(), "codex-lb-missing", "models-store.json"));
+	const luna = bundled.find((model) => model.id === "gpt-5.6-luna");
+	assert.ok(luna);
+
+	const refreshedLuna = { ...luna, name: "Refreshed Luna", provider: "openai-codex", type: "chat" };
+	const newModel = { ...luna, id: "gpt-new", name: "GPT New", provider: "openai-codex" };
+	const storeFile = {
+		"openai-codex": {
+			models: [
+				refreshedLuna,
+				newModel,
+				{ ...luna, id: "gpt-image", provider: "openai-codex", type: "image" },
+				{ ...luna, id: "gpt-other", provider: "openai" },
+			],
+		},
+	};
+	const dir = mkdtempSync(join(tmpdir(), "codex-lb-store-"));
+	try {
+		const storePath = join(dir, "models-store.json");
+		writeFileSync(storePath, JSON.stringify(storeFile));
+		const models = await loadOpenAICodexModels(adapterUrl, storePath);
+
+		const ids = models.map((model) => model.id);
+		assert.ok(ids.includes("gpt-new"));
+		assert.ok(!ids.includes("gpt-image"));
+		assert.ok(!ids.includes("gpt-other"));
+		assert.equal(ids.filter((id) => id === "gpt-5.6-luna").length, 1);
+		assert.equal(models.find((model) => model.id === "gpt-5.6-luna")?.name, "Refreshed Luna");
+		assert.equal(models.find((model) => model.id === "gpt-reserve")?.name, "gpt-reserve");
+	} finally {
+		rmSync(dir, { recursive: true, force: true });
+	}
+});
+
+test("ignores a models store without an openai-codex entry and rejects malformed entries", () => {
+	assert.deepEqual(parseStoredCodexModels({ openai: { models: [] } }), []);
+	assert.throws(() => parseStoredCodexModels({ "openai-codex": { models: "bad" } }), /invalid openai-codex entry/);
 });
 
 test("uses the codex-lb bearer key without a ChatGPT account header", { timeout: 10_000 }, async () => {

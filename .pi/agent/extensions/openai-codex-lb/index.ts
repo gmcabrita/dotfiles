@@ -74,7 +74,7 @@ export default async function openAICodexLbExtension(pi: ExtensionAPI) {
 	const adapterUrl = resolveCodexAdapterUrl();
 	const [adapter, models] = await Promise.all([
 		loadOpenAICodexLbAdapter({ sourceUrl: adapterUrl }),
-		loadOpenAICodexModels(adapterUrl),
+		loadOpenAICodexModels(adapterUrl, join(getAgentDir(), "models-store.json")),
 	]);
 	const baseUrl = normalizeBaseUrl(process.env[BASE_URL_ENV] ?? DEFAULT_BASE_URL);
 

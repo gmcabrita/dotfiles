@@ -1,4 +1,8 @@
+import { readFileSync } from "node:fs";
+
 const MODEL_EXPORT = "OPENAI_CODEX_MODELS";
+// `pi update --models` writes refreshed catalogs to models-store.json under the built-in provider ID.
+const STORED_PROVIDER_ID = "openai-codex";
 const THINKING_LEVELS = ["off", "minimal", "low", "medium", "high", "xhigh", "max"] as const;
 
 type ThinkingLevel = (typeof THINKING_LEVELS)[number];
@@ -153,11 +157,51 @@ export function parseCodexModelCatalog(moduleValue: unknown): CodexLbModel[] {
 	return models;
 }
 
-/** Loads the upstream Codex catalog and copies gpt-5.6-luna settings for gpt-reserve. */
-export async function loadOpenAICodexModels(adapterUrl: URL): Promise<CodexLbModel[]> {
+/** Returns the refreshed openai-codex chat models from a parsed models-store.json. */
+export function parseStoredCodexModels(storeFile: unknown): CodexLbModel[] {
+	if (!isRecord(storeFile)) throw new Error("models-store.json must contain an object");
+	const entry = storeFile[STORED_PROVIDER_ID];
+	if (entry === undefined) return [];
+	if (!isRecord(entry) || !Array.isArray(entry.models)) {
+		throw new Error(`models-store.json has an invalid ${STORED_PROVIDER_ID} entry`);
+	}
+
+	// Same filter as pi-ai's store restore: own provider only, chat models only (a missing type means chat).
+	return entry.models
+		.filter((value) => isRecord(value) && value.provider === STORED_PROVIDER_ID && (value.type ?? "chat") === "chat")
+		.map(parseModel);
+}
+
+function readStoredCodexModels(storePath: string): CodexLbModel[] {
+	let content: string;
+	try {
+		content = readFileSync(storePath, "utf8");
+	} catch (error) {
+		if (isRecord(error) && error.code === "ENOENT") return [];
+		throw error;
+	}
+	return parseStoredCodexModels(JSON.parse(content));
+}
+
+/** Applies refreshed models over the bundled catalog, matching pi-ai's baseline/dynamic merge. */
+export function mergeCodexModels(bundled: CodexLbModel[], stored: CodexLbModel[]): CodexLbModel[] {
+	const merged = [...bundled];
+	for (const model of stored) {
+		const index = merged.findIndex((entry) => entry.id === model.id);
+		if (index >= 0) merged[index] = model;
+		else merged.push(model);
+	}
+	return merged;
+}
+
+/**
+ * Loads the bundled Codex catalog, applies the refreshed catalog from models-store.json,
+ * and copies gpt-5.6-luna settings for gpt-reserve.
+ */
+export async function loadOpenAICodexModels(adapterUrl: URL, storePath: string): Promise<CodexLbModel[]> {
 	const modelModuleUrl = new URL("../providers/openai-codex.models.js", adapterUrl);
 	const moduleValue: unknown = await import(modelModuleUrl.href);
-	const models = parseCodexModelCatalog(moduleValue);
+	const models = mergeCodexModels(parseCodexModelCatalog(moduleValue), readStoredCodexModels(storePath));
 	const luna = models.find((model) => model.id === "gpt-5.6-luna");
 	if (!luna) throw new Error("Codex LB gpt-reserve requires gpt-5.6-luna in the upstream catalog");
 	return [...models, { ...luna, id: "gpt-reserve", name: "gpt-reserve" }];
