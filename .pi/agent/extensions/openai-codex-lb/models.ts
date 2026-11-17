@@ -153,12 +153,25 @@ export function parseCodexModelCatalog(moduleValue: unknown): CodexLbModel[] {
 	return models;
 }
 
-/** Loads the upstream Codex catalog and copies gpt-5.6-luna settings for gpt-reserve. */
+// Models that codex-lb serves before the upstream catalog lists them. Each alias copies the
+// settings of its source model. Temporary: an alias is skipped once upstream defines its id.
+const MODEL_ALIASES: ReadonlyArray<Readonly<{ id: string; source: string }>> = [
+	{ id: "gpt-reserve", source: "gpt-5.6-luna" },
+	{ id: "gpt-6.2-astra", source: "gpt-6-astra" },
+	{ id: "gpt-6.2-sol", source: "gpt-6.1-sol" },
+];
+
+/** Loads the upstream Codex catalog and appends MODEL_ALIASES entries that upstream lacks. */
 export async function loadOpenAICodexModels(adapterUrl: URL): Promise<CodexLbModel[]> {
 	const modelModuleUrl = new URL("../providers/openai-codex.models.js", adapterUrl);
 	const moduleValue: unknown = await import(modelModuleUrl.href);
 	const models = parseCodexModelCatalog(moduleValue);
-	const luna = models.find((model) => model.id === "gpt-5.6-luna");
-	if (!luna) throw new Error("Codex LB gpt-reserve requires gpt-5.6-luna in the upstream catalog");
-	return [...models, { ...luna, id: "gpt-reserve", name: "gpt-reserve" }];
+	const aliases: CodexLbModel[] = [];
+	for (const alias of MODEL_ALIASES) {
+		if (models.some((model) => model.id === alias.id)) continue;
+		const source = models.find((model) => model.id === alias.source);
+		if (!source) throw new Error(`Codex LB ${alias.id} requires ${alias.source} in the upstream catalog`);
+		aliases.push({ ...source, id: alias.id, name: alias.id });
+	}
+	return [...models, ...aliases];
 }
