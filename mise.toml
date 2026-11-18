@@ -30,6 +30,8 @@ DISABLE_TELEMETRY=1 skills update --project --yes &
 pids="$pids $!"
 rex skill setup --project --agent pi &
 pids="$pids $!"
+(mkdir -p .agents/skills/git-twig && git twig skill > .agents/skills/git-twig/SKILL.md.tmp && mv .agents/skills/git-twig/SKILL.md.tmp .agents/skills/git-twig/SKILL.md) &
+pids="$pids $!"
 status=0
 for pid in $pids; do
   wait "$pid" || status=1
