@@ -6,7 +6,6 @@ tap "orlangure/tap", trusted: true
 tap "ramonvermeulen/whosthere", trusted: true
 tap "wader/tap", trusted: true
 
-
 brew "age"
 brew "asciinema"
 brew "ast-grep"
