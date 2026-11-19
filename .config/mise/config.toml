@@ -45,7 +45,7 @@ pkl = "latest"
 pnpm = "latest"
 pulumi = "latest"
 python = "latest"
-ruby = "latest"
+ruby = { version = "latest", postinstall = "gem install benchmark-ips debug gem-why memory_profiler openssl profile-viewer ruby-lsp stackprof tty-prompt gum vernier" }
 rust = { version = "latest", mr_boxington = true }
 shellcheck = "latest"
 sops = "latest"
