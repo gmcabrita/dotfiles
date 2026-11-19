@@ -168,7 +168,7 @@
   cleanup = "!f() { git remote prune origin; git for-each-ref --format '%(refname:short)' 'refs/heads' | grep -v \"master\\|main\\|develop\" | xargs git branch -D; }; f"
 
   gcaf = gc --aggressive --prune=now
-  gcafall = "!f(){ find \"$HOME/Developer\" \\( -type d -name .git -o -type f -name .git \\) -prune -exec dirname {} \\; | while IFS= read -r repo; do echo \"==> $repo\"; git -C \"$repo\" gcaf; echo \"\"; done; }; f"
+  gcafall = "!f(){ find \"$HOME/Developer\" -type d -name .git -prune -exec dirname {} \\; | while IFS= read -r repo; do echo \"==> $repo\"; git -C \"$repo\" gcaf; echo \"\"; done; }; f"
 
   cleantags = !git tag -l | xargs git tag -d && git fetch -t
 
@@ -194,6 +194,8 @@
   prune = true
   pruneTags = true
   all = true
+[gc]
+  worktreePruneExpire = 7.days.ago
 [pull]
   rebase = false
 [rebase]
