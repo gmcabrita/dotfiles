@@ -25,7 +25,7 @@ help() {
   echo "Options:"
   echo "  -h, --help  Show this help"
   echo ""
-  echo "Output: CSV: database,tbl,idx,bloat_size_pretty,bloat_pct,real_size"
+  echo "Output: CSV: instance,database,tbl,idx,bloat_size_pretty,bloat_pct,real_size"
   exit "${1:-1}"
 }
 
@@ -79,7 +79,7 @@ run_query() {
       -v ON_ERROR_STOP=1 \
       -c "set application_name = 'btree_reindex_candidates'" \
       -f "${SQL_FILE}" \
-    | awk -v db="${db_name}" '
+    | awk -v instance="${instance}" -v db="${db_name}" '
         BEGIN { FS = "," }
         function unquote(value) {
           if (substr(value, 1, 1) == "\"" && substr(value, length(value), 1) == "\"")
@@ -87,7 +87,7 @@ run_query() {
           return value
         }
         NF >= 8 {
-          printf "%s,%s,%s,%s,%s,%s\n", db, unquote($1), unquote($2), unquote($7), unquote($8), unquote($3)
+          printf "%s,%s,%s,%s,%s,%s,%s\n", instance, db, unquote($1), unquote($2), unquote($7), unquote($8), unquote($3)
         }'
 }
 
@@ -128,7 +128,7 @@ if [ "${#TARGETS[@]}" -eq 0 ]; then
   exit 1
 fi
 
-echo "database,tbl,idx,bloat_size_pretty,bloat_pct,real_size"
+echo "instance,database,tbl,idx,bloat_size_pretty,bloat_pct,real_size"
 
 for target in "${TARGETS[@]}"; do
   IFS='|' read -r instance db_name <<< "${target}"
