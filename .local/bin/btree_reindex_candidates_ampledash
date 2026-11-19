@@ -25,7 +25,8 @@ help() {
   echo "Options:"
   echo "  -h, --help  Show this help"
   echo ""
-  echo "Output: CSV: instance,database,tbl,idx,bloat_size_pretty,bloat_pct,real_size"
+  echo "Output: one block per candidate index, with the amplmkt reindex command,"
+  echo "        table, bloat size, bloat percentage and real size."
   exit "${1:-1}"
 }
 
@@ -87,7 +88,11 @@ run_query() {
           return value
         }
         NF >= 8 {
-          printf "%s,%s,%s,%s,%s,%s,%s\n", instance, db, unquote($1), unquote($2), unquote($7), unquote($8), unquote($3)
+          printf "amplmkt db reindex --instance %s --database %s --index %s\n", instance, db, unquote($2)
+          printf "  table:            %s\n", unquote($1)
+          printf "  bloat size:       %s\n", unquote($7)
+          printf "  bloat percentage: %s%%\n", unquote($8)
+          printf "  real size:        %s\n\n", unquote($3)
         }'
 }
 
@@ -127,8 +132,6 @@ if [ "${#TARGETS[@]}" -eq 0 ]; then
   echo "Error: no targets provided" >&2
   exit 1
 fi
-
-echo "instance,database,tbl,idx,bloat_size_pretty,bloat_pct,real_size"
 
 for target in "${TARGETS[@]}"; do
   IFS='|' read -r instance db_name <<< "${target}"
