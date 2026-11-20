@@ -4,7 +4,7 @@
   af                    index new or changed pages, then open the fzf search
   af index [--rebuild]  update the index only
   af search QUERY       print matching pages as fzf rows (used by fzf reload)
-  af preview KEY QUERY  render a page, or its matching sections (fzf preview)
+  af preview KEY QUERY  render a page with matches highlighted (fzf preview)
   af open KEY...        open pages in Helium
 
 The index lives in ~/.cache/af: each page converted to Markdown, plus
@@ -33,6 +33,8 @@ INDEX_FILE = CACHE / "index.json"
 # Bump when the extracted format changes, to re-extract every page.
 INDEX_VERSION = 5
 BROWSER = "Helium"
+# Lines the preview prints before the page body: title, facts, URL, and a blank line.
+HEADER_LINES = 4
 
 SKIPPED_TAGS = {"script", "style", "noscript", "svg", "template", "nav", "button", "select"}
 BLOCK_TAGS = {
@@ -288,11 +290,16 @@ def query_terms(query):
     return [t.lower() for t in query.split()]
 
 
-def row(key, entry, hits=None):
+def terms_pattern(terms):
+    return re.compile("|".join(map(re.escape, terms)), re.I) if terms else None
+
+
+def row(key, entry, hits=None, first_match=0):
+    """An fzf row: key, the visible text, and the preview line to scroll to."""
     meta = " · ".join(filter(None, [entry["domain"], entry["saved"]]))
     if hits is not None:
         meta += f" · {hits} hit{'s' if hits != 1 else ''}"
-    return f"{key}\t{entry['title']}  {DIM}{meta}{RESET}"
+    return f"{key}\t{entry['title']}  {DIM}{meta}{RESET}\t{first_match}"
 
 
 def search(query):
@@ -302,19 +309,22 @@ def search(query):
         entries = sorted(index.items(), key=lambda kv: kv[1]["saved"], reverse=True)
         return [row(k, e) for k, e in entries]
 
+    pattern = terms_pattern(terms)
+    width = preview_columns()
     matches = []
     for key, entry in index.items():
         try:
-            text = page_file(key).read_text(encoding="utf-8").lower()
+            markdown = page_file(key).read_text(encoding="utf-8")
         except FileNotFoundError:
             continue
-        title = entry["title"].lower()
+        text, title = markdown.lower(), entry["title"].lower()
         counts = [text.count(t) + title.count(t) for t in terms]
         if all(counts):
             title_bonus = sum(t in title for t in terms) * 1000
-            matches.append((title_bonus + sum(counts), sum(counts), key, entry))
+            first = first_match_line(markdown, pattern, width)
+            matches.append((title_bonus + sum(counts), sum(counts), first, key, entry))
     matches.sort(key=lambda m: m[0], reverse=True)
-    return [row(key, entry, hits) for _, hits, key, entry in matches]
+    return [row(key, entry, hits, first) for _, hits, first, key, entry in matches]
 
 
 def fenced_lines(markdown):
@@ -335,61 +345,6 @@ def fenced_lines(markdown):
             yield line, "code" if open_fence else "text"
 
 
-def markdown_blocks(markdown):
-    """Splits Markdown on blank lines, keeping fenced code blocks whole."""
-    blocks, current = [], []
-    for line, kind in fenced_lines(markdown):
-        if not line and kind == "text":
-            if current:
-                blocks.append("\n".join(current))
-                current = []
-        else:
-            current.append(line)
-    if current:
-        blocks.append("\n".join(current))
-    return blocks
-
-
-def trim_block(block, pattern, width=220, max_length=700):
-    """Shortens a long paragraph to the text around its matches."""
-    if len(block) <= max_length or block.startswith("```"):
-        return block
-    windows = []
-    for m in pattern.finditer(block):
-        start, end = max(0, m.start() - width), min(len(block), m.end() + width)
-        if windows and start <= windows[-1][1]:
-            windows[-1][1] = end
-        else:
-            windows.append([start, end])
-    return " … ".join(block[s:e].strip() for s, e in windows[:4])
-
-
-def matching_sections(markdown, pattern, max_matches=40):
-    """The blocks that match, each under its nearest heading, with gaps marked."""
-    blocks = markdown_blocks(markdown)
-    shown, last_heading = [], None
-    picked = set()
-    for i, block in enumerate(blocks):
-        if block.startswith("#"):
-            last_heading = i
-            if pattern.search(block):
-                picked.add(i)
-            continue
-        if pattern.search(block):
-            if last_heading is not None:
-                picked.add(last_heading)
-            picked.add(i)
-        if len(picked) >= max_matches:
-            break
-    previous = None
-    for i in sorted(picked):
-        if previous is not None and i != previous + 1:
-            shown.append("⋯")
-        shown.append(trim_block(blocks[i], pattern) if not blocks[i].startswith("#") else blocks[i])
-        previous = i
-    return "\n\n".join(shown)
-
-
 def preview_columns():
     # One column narrower than fzf reports, or wide lines spill past the border.
     return max(20, int(os.environ.get("FZF_PREVIEW_COLUMNS", "80")) - 1)
@@ -399,12 +354,11 @@ def fit(text, width):
     return text if len(text) <= width else text[: width - 1] + "…"
 
 
-def render_plain(markdown, width):
-    """Markdown as plain text: bold headings, indented code, no other markup."""
-    lines = []
+def plain_lines(markdown, width):
+    """Markdown as plain text lines: bold headings, indented code, no other markup."""
     for line, kind in fenced_lines(markdown):
         if kind == "code":
-            lines.append("    " + line)
+            yield "    " + line
             continue
         if kind != "text":
             continue
@@ -417,8 +371,15 @@ def render_plain(markdown, width):
         ) or [""]
         if heading:
             wrapped = [f"{BOLD}{w}{RESET}" for w in wrapped]
-        lines.extend(wrapped)
-    return "\n".join(lines)
+        yield from wrapped
+
+
+def first_match_line(markdown, pattern, width):
+    """The 1-based line of the rendered body where the first match appears, or 0."""
+    for number, line in enumerate(plain_lines(markdown, width), start=1):
+        if pattern.search(line):
+            return number
+    return 0
 
 
 def highlight(text, pattern):
@@ -431,12 +392,12 @@ def highlight(text, pattern):
     return "".join(parts)
 
 
-def preview(key, query, max_chars=80_000):
+def preview(key, query):
     entry = load_index().get(key)
     if entry is None:
         return
     terms = query_terms(query)
-    pattern = re.compile("|".join(map(re.escape, terms)), re.I) if terms else None
+    pattern = terms_pattern(terms)
     markdown = page_file(key).read_text(encoding="utf-8")
 
     minutes = max(1, round(entry.get("words", 0) / 230))
@@ -444,15 +405,15 @@ def preview(key, query, max_chars=80_000):
     if pattern:
         lowered = (entry["title"] + "\n" + markdown).lower()
         facts.insert(0, " ".join(f"{t}×{lowered.count(t)}" for t in terms))
-    # These three lines stay pinned by --preview-window's ~3, so each must fit on one line.
+    # These three lines stay pinned by --preview-window's ~3, so each must fit on one
+    # line. With the blank line after them, the body starts at line HEADER_LINES + 1.
     width = preview_columns()
     print(highlight(f"{BOLD}{fit(entry['title'], width)}{RESET}", pattern))
     print(f"{DIM}{fit(' · '.join(filter(None, facts)), width)}{RESET}")
     print(f"{DIM}{fit(entry['url'] or entry['path'], width)}{RESET}")
     print()
 
-    body = (matching_sections(markdown, pattern) if pattern else "") or markdown
-    print(highlight(render_plain(body[:max_chars], width), pattern))
+    print(highlight("\n".join(plain_lines(markdown, width)), pattern))
 
 
 def open_pages(keys):
@@ -481,7 +442,8 @@ def run_fzf():
         f"--bind=change:reload:{me} search {{q}}",
         f"--bind=enter:become:{me} open {{+1}}",
         f"--preview={me} preview {{1}} {{q}}",
-        "--preview-window=right,60%,wrap,~3",
+        # Field 3 is the body line of the first match; scroll it to a third of the way down.
+        f"--preview-window=right,60%,wrap,~3,+{{3}}+{HEADER_LINES}/3",
     ])
 
 
