@@ -1,0 +1,275 @@
+#!/usr/bin/env python3
+"""Live full-text search over the SingleFile web archive, using fzf.
+
+  af                    index new or changed pages, then open the fzf search
+  af index [--rebuild]  update the plain-text index only
+  af search QUERY       print matching pages as fzf rows (used by fzf reload)
+  af preview KEY QUERY  print a page's details and matching lines (fzf preview)
+  af open KEY...        open pages in Helium
+
+The index lives in ~/.cache/af: one plain-text file per page plus index.json.
+Searching extracted text, not raw HTML, keeps inlined CSS, JS, and base64
+from matching almost every query.
+"""
+
+import concurrent.futures
+import hashlib
+import html.parser
+import json
+import os
+import re
+import shlex
+import subprocess
+import sys
+from datetime import datetime
+from pathlib import Path
+from urllib.parse import urlparse
+
+ARCHIVE = Path.home() / "iCloud Drive" / "Web Archive"
+CACHE = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "af"
+TEXT_DIR = CACHE / "text"
+INDEX_FILE = CACHE / "index.json"
+BROWSER = "Helium"
+
+SKIPPED_TAGS = {"script", "style", "noscript", "svg", "template"}
+BLOCK_TAGS = {
+    "p", "div", "br", "li", "tr", "pre", "blockquote", "section", "article",
+    "header", "footer", "h1", "h2", "h3", "h4", "h5", "h6", "dt", "dd", "td",
+}
+SINGLEFILE_URL = re.compile(r"^\s*url:\s*(\S+)", re.M)
+SINGLEFILE_DATE = re.compile(r"^\s*saved date:\s*\w{3} (\w{3} \d{1,2} \d{4})", re.M)
+ARCHIVED_URL = re.compile(
+    r"^https?://(?:web\.archive\.org/web|archive\.(?:is|ph|today|li|md|vn))/[^/]+/(https?://.+)$"
+)
+
+DIM = "\033[2m"
+BOLD_YELLOW = "\033[1;33m"
+RESET = "\033[0m"
+
+
+class TextExtractor(html.parser.HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.title = ""
+        self.url = ""
+        self.canonical = ""
+        self.saved = ""
+        self._chunks = []
+        self._skip_depth = 0
+        self._in_title = False
+        self._title_done = False
+
+    def handle_comment(self, data):
+        if not self.url and (m := SINGLEFILE_URL.search(data)):
+            self.url = m.group(1)
+        if not self.saved and (m := SINGLEFILE_DATE.search(data)):
+            self.saved = datetime.strptime(m.group(1), "%b %d %Y").date().isoformat()
+
+    def handle_starttag(self, tag, attrs):
+        # Only the document title counts; SVG icons carry their own <title>.
+        if tag == "title" and self._skip_depth == 0 and not self._title_done:
+            self._in_title = True
+        elif tag == "link" and not self.canonical:
+            attrs = dict(attrs)
+            if attrs.get("rel") == "canonical":
+                self.canonical = attrs.get("href") or ""
+        elif tag in SKIPPED_TAGS:
+            self._skip_depth += 1
+        elif tag in BLOCK_TAGS:
+            self._chunks.append("\n")
+
+    def handle_endtag(self, tag):
+        if tag == "title" and self._in_title:
+            self._in_title = False
+            self._title_done = True
+        elif tag in SKIPPED_TAGS:
+            self._skip_depth = max(0, self._skip_depth - 1)
+        elif tag in BLOCK_TAGS:
+            self._chunks.append("\n")
+
+    def handle_data(self, data):
+        if self._in_title:
+            self.title += data
+        elif self._skip_depth == 0:
+            self._chunks.append(data)
+
+    def text(self):
+        lines = (" ".join(line.split()) for line in "".join(self._chunks).splitlines())
+        return "\n".join(line for line in lines if line)
+
+
+def original_url(saved_url, canonical):
+    """The page's own URL when it was saved from web.archive.org or archive.today."""
+    for candidate in (saved_url, canonical):
+        if m := ARCHIVED_URL.match(candidate):
+            return m.group(1)
+    return saved_url
+
+
+def page_title(parsed_title, path):
+    title = " ".join(parsed_title.split())
+    # X titles every saved post just "X"; the file name says more.
+    return title if len(title) > 2 else path.stem
+
+
+def page_key(path):
+    return hashlib.sha1(str(path.relative_to(ARCHIVE)).encode()).hexdigest()[:16]
+
+
+def extract(path):
+    parser = TextExtractor()
+    parser.feed(path.read_text(encoding="utf-8", errors="replace"))
+    parser.close()
+    key = page_key(path)
+    (TEXT_DIR / f"{key}.txt").write_text(parser.text(), encoding="utf-8")
+    mtime = path.stat().st_mtime
+    url = original_url(parser.url, parser.canonical)
+    return key, {
+        "path": str(path),
+        "mtime": mtime,
+        "title": page_title(parser.title, path),
+        "domain": urlparse(url).netloc.removeprefix("www."),
+        "url": url,
+        "saved": parser.saved or datetime.fromtimestamp(mtime).date().isoformat(),
+    }
+
+
+def load_index():
+    try:
+        return json.loads(INDEX_FILE.read_text())
+    except FileNotFoundError:
+        return {}
+
+
+def update_index(rebuild=False):
+    TEXT_DIR.mkdir(parents=True, exist_ok=True)
+    index = {} if rebuild else load_index()
+    pages = {page_key(p): p for p in ARCHIVE.rglob("*.html")}
+
+    for key in index.keys() - pages.keys():
+        del index[key]
+        (TEXT_DIR / f"{key}.txt").unlink(missing_ok=True)
+
+    stale = [p for k, p in pages.items() if k not in index or index[k]["mtime"] != p.stat().st_mtime]
+    if stale:
+        print(f"af: indexing {len(stale)} page(s)…", file=sys.stderr)
+        with concurrent.futures.ProcessPoolExecutor() as pool:
+            for key, entry in pool.map(extract, stale, chunksize=4):
+                index[key] = entry
+
+    tmp = INDEX_FILE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(index))
+    tmp.replace(INDEX_FILE)
+    return index
+
+
+def query_terms(query):
+    return [t.lower() for t in query.split()]
+
+
+def row(key, entry, hits=None):
+    meta = " · ".join(filter(None, [entry["domain"], entry["saved"]]))
+    if hits is not None:
+        meta += f" · {hits} hit{'s' if hits != 1 else ''}"
+    return f"{key}\t{entry['title']}  {DIM}{meta}{RESET}"
+
+
+def search(query):
+    index = load_index()
+    terms = query_terms(query)
+    if not terms:
+        entries = sorted(index.items(), key=lambda kv: kv[1]["saved"], reverse=True)
+        return [row(k, e) for k, e in entries]
+
+    matches = []
+    for key, entry in index.items():
+        try:
+            text = (TEXT_DIR / f"{key}.txt").read_text(encoding="utf-8").lower()
+        except FileNotFoundError:
+            continue
+        title = entry["title"].lower()
+        counts = [text.count(t) + title.count(t) for t in terms]
+        if all(counts):
+            title_bonus = sum(t in title for t in terms) * 1000
+            matches.append((title_bonus + sum(counts), sum(counts), key, entry))
+    matches.sort(key=lambda m: m[0], reverse=True)
+    return [row(key, entry, hits) for _, hits, key, entry in matches]
+
+
+def highlight(line, pattern):
+    return pattern.sub(lambda m: f"{BOLD_YELLOW}{m.group(0)}{RESET}", line) if pattern else line
+
+
+def preview(key, query, max_lines=200):
+    entry = load_index().get(key)
+    if entry is None:
+        return
+    terms = query_terms(query)
+    pattern = re.compile("|".join(map(re.escape, terms)), re.I) if terms else None
+
+    print(highlight(entry["title"], pattern))
+    print(f"{DIM}{entry['url'] or entry['path']}{RESET}")
+    print(f"{DIM}saved {entry['saved']}{RESET}\n")
+
+    lines = (TEXT_DIR / f"{key}.txt").read_text(encoding="utf-8").splitlines()
+    if pattern:
+        lines = [line for line in lines if pattern.search(line)] or lines
+    for line in lines[:max_lines]:
+        print(highlight(line, pattern))
+
+
+def open_pages(keys):
+    index = load_index()
+    paths = [index[k]["path"] for k in keys if k in index]
+    if not paths:
+        return
+    subprocess.run(["/usr/bin/xattr", "-dr", "com.apple.quarantine", *paths], check=False)
+    subprocess.run(["open", "-a", BROWSER, *paths], check=True)
+    subprocess.run(["osascript", "-e", f'tell application "{BROWSER}" to activate'], check=False)
+
+
+def run_fzf():
+    update_index()
+    me = shlex.quote(os.path.abspath(sys.argv[0]))
+    os.execvp("fzf", [
+        "fzf",
+        "--disabled",
+        "--ansi",
+        "--multi",
+        "--delimiter=\t",
+        "--with-nth=2",
+        "--prompt=archive> ",
+        "--header=all words must match · tab selects · enter opens",
+        f"--bind=start:reload:{me} search {{q}}",
+        f"--bind=change:reload:{me} search {{q}}",
+        f"--bind=enter:become:{me} open {{+1}}",
+        f"--preview={me} preview {{1}} {{q}}",
+        "--preview-window=right,55%,wrap",
+    ])
+
+
+def main(argv):
+    match argv:
+        case []:
+            run_fzf()
+        case ["index"]:
+            update_index()
+        case ["index", "--rebuild"]:
+            update_index(rebuild=True)
+        case ["search", *query]:
+            print("\n".join(search(" ".join(query))))
+        case ["preview", key, *query]:
+            preview(key, " ".join(query))
+        case ["open", *keys]:
+            open_pages(keys)
+        case _:
+            print(__doc__.strip(), file=sys.stderr)
+            return 2
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except BrokenPipeError:
+        sys.exit(0)

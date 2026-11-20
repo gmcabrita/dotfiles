@@ -785,20 +785,6 @@ function gwrd() {
   rm -f "$state/$key"
 }
 
-function af() {
-  local root="$HOME/iCloud Drive/Web Archive"
-
-  fzf \
-    --disabled \
-    --bind "start:reload:rg -li -g '*.html' {q} \"$root\" || true" \
-    --bind "change:reload:rg -li -g '*.html' {q} \"$root\" || true" \
-    --bind 'enter:become(sh -c '"'"'
-      /usr/bin/xattr -dr com.apple.quarantine "$1"
-      open -a "Helium" "$1"
-      osascript -e "tell application \"Helium\" to activate"
-    '"'"' sh {})'
-}
-
 function reset() {
   ree
 }
