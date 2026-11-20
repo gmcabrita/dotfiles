@@ -1,0 +1,2 @@
+#!/bin/sh
+exec java -cp "$(mise where tlaplus 2>/dev/null)/tla2tools.jar" pcal.trans "$@"

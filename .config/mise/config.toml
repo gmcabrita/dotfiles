@@ -4,6 +4,9 @@
 
 [bootstrap.packages]
 
+[tool_alias]
+tlaplus = "github:tlaplus/tlaplus"
+
 [tools]
 "aqua:smol-machines/smolvm" = "latest"
 "cargo:hurlfmt" = "latest"
@@ -38,6 +41,7 @@ go = "latest"
 helm = "latest"
 hk = "latest"
 jactionlint = "latest"
+java = "latest"
 mr-boxington = "latest"
 node = "latest"
 pitchfork = "latest"
@@ -50,6 +54,7 @@ rust = { version = "latest", mr_boxington = true }
 shellcheck = "latest"
 sops = "latest"
 tak = "latest"
+tlaplus = { version = "latest", asset_pattern = "tla2tools.jar", format = "raw", bin = "tla2tools.jar" }
 tree-sitter = "latest"
 trufflehog = "latest"
 uv = "latest"
