@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# fzf-like picker that shows stdin lines in the Rex command palette.
+# Needs the fzf_pick action from ~/.config/rex/init.lua.
+#
+#   git branch --format='%(refname:short)' | rex-fzf --header 'git switch' | xargs git switch
+#
+# Exit status follows fzf: 0 selected, 1 nothing selected, 2 error, 130 cancelled.
+set -euo pipefail
+
+# rex.ui.pick refuses larger lists.
+readonly max_items=2000
+
+usage() {
+  cat <<'EOF'
+usage: rex-fzf [-m|--multi] [-q|--query QUERY] [--header TEXT] [--prompt TEXT]
+
+Reads one item per line from stdin and prints the chosen lines.
+Falls back to fzf outside Rex or when given flags it does not support.
+EOF
+}
+
+original_args=("$@")
+fall_back_to_fzf() {
+  exec fzf "${original_args[@]}"
+}
+
+[[ -n "${REX_SESSION:-}" ]] || fall_back_to_fzf
+
+title="fzf"
+query=""
+multi=false
+while (($#)); do
+  case "$1" in
+    -m | --multi) multi=true ;;
+    +m | --no-multi) multi=false ;;
+    -q | --query) query="${2-}"; shift ;;
+    --query=*) query="${1#*=}" ;;
+    --header | --prompt) title="${2-}"; shift ;;
+    --header=* | --prompt=*) title="${1#*=}" ;;
+    -h | --help) usage; exit 0 ;;
+    *) fall_back_to_fzf ;;
+  esac
+  shift
+done
+
+if [[ -t 0 ]]; then
+  echo "rex-fzf: pipe items on stdin" >&2
+  exit 2
+fi
+
+# The palette needs unique ids, so drop duplicate and empty lines.
+items_json=$(awk 'NF && !seen[$0]++' | jq -R . | jq -s .)
+count=$(jq length <<<"$items_json")
+if ((count == 0)); then
+  exit 1
+fi
+if ((count > max_items)); then
+  echo "rex-fzf: showing the first $max_items of $count items" >&2
+  items_json=$(jq ".[:$max_items]" <<<"$items_json")
+fi
+
+args_json=$(jq -n \
+  --argjson items "$items_json" \
+  --arg title "$title" \
+  --arg query "$query" \
+  --argjson multi "$multi" \
+  '{items: $items, title: $title, multi: $multi} + (if $query == "" then {} else {query: $query} end)')
+
+result=$(rex "do" fzf_pick --args - <<<"$args_json") || exit 2
+
+case "$(jq -r '.status' <<<"$result")" in
+  ok) ;;
+  cancelled) exit 130 ;;
+  *)
+    echo "rex-fzf: $(jq -r '[.status, .detail // empty] | join(": ")' <<<"$result")" >&2
+    exit 2
+    ;;
+esac
+
+selected=$(jq -r '(.selected // [])[]?' <<<"$result")
+[[ -n "$selected" ]] || exit 1
+printf '%s\n' "$selected"

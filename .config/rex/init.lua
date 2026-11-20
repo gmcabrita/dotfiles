@@ -17,3 +17,37 @@ rex.bind("shift+enter", "com.superlogical.terminal.write", { data = "\27\r" })
 rex.bind("alt+backspace", "com.superlogical.terminal.write", { data = "\27\127" })
 
 rex.bind("cmd+r", "client.config.reload")
+
+-- Backend for ~/.local/bin/rex-fzf: shows stdin lines in the command palette.
+rex.action{
+  name = "fzf_pick",
+  title = "fzf Pick",
+  args = {
+    type = "object",
+    properties = {
+      items = { type = "array", items = { type = "string" } },
+      title = { type = "string" },
+      query = { type = "string" },
+      multi = { type = "boolean" },
+    },
+    required = { "items" },
+    additionalProperties = false,
+  },
+  run = function(ctx, args)
+    local result, why, detail = rex.ui.pick{
+      title = args.title or "fzf",
+      placeholder = "Filter",
+      value = args.query,
+      items = args.items,
+      multiple = args.multi or false,
+      timeout = 3600,
+    }
+    if result == nil then
+      return { status = why, detail = detail }
+    end
+    if type(result) == "string" then
+      result = { result }
+    end
+    return { status = "ok", selected = result }
+  end,
+}

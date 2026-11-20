@@ -3,5 +3,5 @@ set -eo pipefail
 
 go list ./... |
   sed "s;$(go list);.;g;s;$;/...;" |
-  fzf |
+  rex-fzf |
   xargs go test -cover -race -timeout=10s -v

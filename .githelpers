@@ -19,9 +19,9 @@ remove_untracked_files() {
 }
 
 git_fsw() {
-  git branch --no-color --sort=-committerdate --format='%(refname:short)' | fzf --header 'git switch' | xargs git switch
+  git branch --no-color --sort=-committerdate --format='%(refname:short)' | rex-fzf --header 'git switch' | xargs git switch
 }
 
 git_prsw() {
-  gh pr list --author "@me" | fzf --header 'git switch to PR' | awk '{print $(NF-5)}' | xargs git switch
+  gh pr list --author "@me" | rex-fzf --header 'git switch to PR' | awk '{print $(NF-5)}' | xargs git switch
 }
