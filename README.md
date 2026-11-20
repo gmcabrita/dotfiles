@@ -7,6 +7,7 @@
 - `cp -r ~/Library/Application\ Support/qBittorrent/ ~/iCloud\ Drive/Software/qBittorrent`
 - `rm -rf ~/iCloud\ Drive/Software/net.imput.helium`
 - `cp -r ~/Library/Application\ Support/net.imput.helium/ ~/iCloud\ Drive/Software/net.imput.helium`
+- `defaults export pl.maketheweb.cleanshotx ~/iCloud\ Drive/Software/cleanshot-settings.plist`
 - Export Raycast settings
 - Export uBlock Origin Lite settings
 
@@ -106,8 +107,8 @@
   - Import config from iCloud Drive
 - Zoom
 - [Tailscale](https://pkgs.tailscale.com/stable/#macos)
-- SetApp
-  - CleanShot X
+- Cleanshot X
+  - `defaults import pl.maketheweb.cleanshotx ~/iCloud\ Drive/Software/cleanshot-settings.plist && killall cfprefsd`
 - https://twitter.com/thorstenball/status/1736679960784310775
   - Wake for network access: Only on Power Adapter
 - Copy zsh history from iCloud
