@@ -2,14 +2,14 @@
 """Live full-text search over the SingleFile web archive, using fzf.
 
   af                    index new or changed pages, then open the fzf search
-  af index [--rebuild]  update the plain-text index only
+  af index [--rebuild]  update the index only
   af search QUERY       print matching pages as fzf rows (used by fzf reload)
-  af preview KEY QUERY  print a page's details and matching lines (fzf preview)
+  af preview KEY QUERY  render a page, or its matching sections (fzf preview)
   af open KEY...        open pages in Helium
 
-The index lives in ~/.cache/af: one plain-text file per page plus index.json.
-Searching extracted text, not raw HTML, keeps inlined CSS, JS, and base64
-from matching almost every query.
+The index lives in ~/.cache/af: each page converted to Markdown, plus
+index.json. Searching the Markdown, not raw HTML, keeps inlined CSS, JS, and
+base64 from matching almost every query. Previews show it as plain text.
 """
 
 import concurrent.futures
@@ -21,41 +21,59 @@ import re
 import shlex
 import subprocess
 import sys
+import textwrap
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
 ARCHIVE = Path.home() / "iCloud Drive" / "Web Archive"
 CACHE = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "af"
-TEXT_DIR = CACHE / "text"
+PAGES_DIR = CACHE / "pages"
 INDEX_FILE = CACHE / "index.json"
+# Bump when the extracted format changes, to re-extract every page.
+INDEX_VERSION = 5
 BROWSER = "Helium"
 
-SKIPPED_TAGS = {"script", "style", "noscript", "svg", "template"}
+SKIPPED_TAGS = {"script", "style", "noscript", "svg", "template", "nav", "button", "select"}
 BLOCK_TAGS = {
-    "p", "div", "br", "li", "tr", "pre", "blockquote", "section", "article",
-    "header", "footer", "h1", "h2", "h3", "h4", "h5", "h6", "dt", "dd", "td",
+    "p", "div", "section", "article", "header", "footer", "main", "aside", "figure",
+    "figcaption", "table", "dl", "dt", "dd", "details", "summary", "hr",
 }
+HEADING_TAGS = {"h1": 1, "h2": 2, "h3": 3, "h4": 4, "h5": 5, "h6": 6}
 SINGLEFILE_URL = re.compile(r"^\s*url:\s*(\S+)", re.M)
 SINGLEFILE_DATE = re.compile(r"^\s*saved date:\s*\w{3} (\w{3} \d{1,2} \d{4})", re.M)
 ARCHIVED_URL = re.compile(
     r"^https?://(?:web\.archive\.org/web|archive\.(?:is|ph|today|li|md|vn))/[^/]+/(https?://.+)$"
 )
+# Marks list indentation, so whitespace cleanup can't strip it.
+INDENT = "\x00"
 
 DIM = "\033[2m"
-BOLD_YELLOW = "\033[1;33m"
+BOLD = "\033[1m"
+# Reverse video toggles off on its own, keeping bold headings bold around a match.
+HIGHLIGHT_ON = "\033[7m"
+HIGHLIGHT_OFF = "\033[27m"
 RESET = "\033[0m"
+ANSI_ESCAPE = re.compile(r"(\x1b\[[0-9;]*m)")
+FENCE = re.compile(r"^([ \t]*(?:>[ \t]*)*)(`{3,})(.*)$")
 
 
-class TextExtractor(html.parser.HTMLParser):
+class MarkdownExtractor(html.parser.HTMLParser):
+    """Converts a saved page to Markdown: headings, paragraphs, lists, quotes, and code."""
+
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.title = ""
         self.url = ""
         self.canonical = ""
         self.saved = ""
-        self._chunks = []
+        # Each frame is a list of ("text" | "raw", str) segments. Blockquotes and
+        # <pre> open a frame so their content can be prefixed or kept verbatim.
+        self._frames = [[]]
+        self._frame_tags = [None]
+        self._lists = []
         self._skip_depth = 0
+        self._heading = False
         self._in_title = False
         self._title_done = False
 
@@ -66,36 +84,130 @@ class TextExtractor(html.parser.HTMLParser):
             self.saved = datetime.strptime(m.group(1), "%b %d %Y").date().isoformat()
 
     def handle_starttag(self, tag, attrs):
+        if self._skip_depth:
+            self._skip_depth += tag in SKIPPED_TAGS
+            return
         # Only the document title counts; SVG icons carry their own <title>.
-        if tag == "title" and self._skip_depth == 0 and not self._title_done:
+        if tag == "title" and not self._title_done:
             self._in_title = True
         elif tag == "link" and not self.canonical:
             attrs = dict(attrs)
             if attrs.get("rel") == "canonical":
                 self.canonical = attrs.get("href") or ""
         elif tag in SKIPPED_TAGS:
-            self._skip_depth += 1
+            self._skip_depth = 1
+        elif tag in HEADING_TAGS and not self._in_pre():
+            self._heading = True
+            self._emit("\n\n" + "#" * HEADING_TAGS[tag] + " ")
+        elif self._heading:
+            return
+        elif tag == "pre":
+            self._push_frame("pre")
+        elif tag == "code" and not self._in_pre():
+            self._emit("`")
+        elif tag == "blockquote":
+            self._push_frame("blockquote")
+        elif tag in ("ul", "ol"):
+            self._lists.append([tag == "ol", 0])
+            self._emit("\n")
+        elif tag == "li":
+            indent = INDENT * 2 * max(0, len(self._lists) - 1)
+            marker = "- "
+            if self._lists and self._lists[-1][0]:
+                self._lists[-1][1] += 1
+                marker = f"{self._lists[-1][1]}. "
+            self._emit("\n" + indent + marker)
+        elif tag == "br":
+            self._emit("\n")
+        elif tag == "tr":
+            self._emit("\n")
+        elif tag in ("td", "th"):
+            self._emit(" ")
         elif tag in BLOCK_TAGS:
-            self._chunks.append("\n")
+            self._emit("\n\n")
 
     def handle_endtag(self, tag):
+        if self._skip_depth:
+            self._skip_depth -= tag in SKIPPED_TAGS
+            return
         if tag == "title" and self._in_title:
             self._in_title = False
             self._title_done = True
-        elif tag in SKIPPED_TAGS:
-            self._skip_depth = max(0, self._skip_depth - 1)
+        elif tag in HEADING_TAGS and self._heading:
+            self._heading = False
+            self._emit("\n\n")
+        elif self._heading:
+            return
+        elif tag == "pre" and self._frame_tags[-1] == "pre":
+            code = "".join(text for _, text in self._pop_frame()).strip("\n")
+            if code.strip():
+                # A fence longer than any backtick run inside, so code that shows Markdown stays whole.
+                fence = "`" * max(3, 1 + max(map(len, re.findall(r"`+", code)), default=0))
+                self._raw(f"{fence}\n{code}\n{fence}")
+        elif tag == "code" and not self._in_pre():
+            self._emit("`")
+        elif tag == "blockquote" and self._frame_tags[-1] == "blockquote":
+            quoted = render_segments(self._pop_frame())
+            if quoted:
+                self._raw("\n".join(f"> {line}" if line else ">" for line in quoted.splitlines()))
+        elif tag in ("ul", "ol") and self._lists:
+            self._lists.pop()
+            self._emit("\n")
         elif tag in BLOCK_TAGS:
-            self._chunks.append("\n")
+            self._emit("\n\n")
 
     def handle_data(self, data):
         if self._in_title:
             self.title += data
-        elif self._skip_depth == 0:
-            self._chunks.append(data)
+        elif self._skip_depth:
+            return
+        elif self._in_pre():
+            self._frames[-1].append(("raw", data))
+        else:
+            self._emit(re.sub(r"\s+", " ", data))
 
-    def text(self):
-        lines = (" ".join(line.split()) for line in "".join(self._chunks).splitlines())
-        return "\n".join(line for line in lines if line)
+    def markdown(self):
+        while len(self._frames) > 1:
+            segments = self._pop_frame()
+            self._frames[-1].extend(segments)
+        return render_segments(self._frames[0])
+
+    def _in_pre(self):
+        return self._frame_tags[-1] == "pre"
+
+    def _emit(self, text):
+        frame = self._frames[-1]
+        if frame and frame[-1][0] == "text":
+            frame[-1] = ("text", frame[-1][1] + text)
+        else:
+            frame.append(("text", text))
+
+    def _raw(self, text):
+        self._frames[-1].append(("raw", text))
+
+    def _push_frame(self, tag):
+        self._frames.append([])
+        self._frame_tags.append(tag)
+
+    def _pop_frame(self):
+        self._frame_tags.pop()
+        return self._frames.pop()
+
+
+def tidy_text(text):
+    lines = []
+    for line in text.splitlines():
+        line = line.strip().replace(INDENT, " ")
+        if re.fullmatch(r"#+|[-*]|\d+\.", line.strip()):
+            continue
+        if line or (lines and lines[-1]):
+            lines.append(line)
+    return "\n".join(lines).strip()
+
+
+def render_segments(segments):
+    blocks = (tidy_text(text) if kind == "text" else text for kind, text in segments)
+    return "\n\n".join(block for block in blocks if block.strip())
 
 
 def original_url(saved_url, canonical):
@@ -116,12 +228,17 @@ def page_key(path):
     return hashlib.sha1(str(path.relative_to(ARCHIVE)).encode()).hexdigest()[:16]
 
 
+def page_file(key):
+    return PAGES_DIR / f"{key}.md"
+
+
 def extract(path):
-    parser = TextExtractor()
+    parser = MarkdownExtractor()
     parser.feed(path.read_text(encoding="utf-8", errors="replace"))
     parser.close()
+    markdown = parser.markdown()
     key = page_key(path)
-    (TEXT_DIR / f"{key}.txt").write_text(parser.text(), encoding="utf-8")
+    page_file(key).write_text(markdown, encoding="utf-8")
     mtime = path.stat().st_mtime
     url = original_url(parser.url, parser.canonical)
     return key, {
@@ -131,24 +248,23 @@ def extract(path):
         "domain": urlparse(url).netloc.removeprefix("www."),
         "url": url,
         "saved": parser.saved or datetime.fromtimestamp(mtime).date().isoformat(),
+        "words": len(markdown.split()),
     }
 
 
 def load_index():
     try:
-        return json.loads(INDEX_FILE.read_text())
+        index = json.loads(INDEX_FILE.read_text())
     except FileNotFoundError:
         return {}
+    return index["pages"] if index.get("version") == INDEX_VERSION else {}
 
 
 def update_index(rebuild=False):
-    TEXT_DIR.mkdir(parents=True, exist_ok=True)
+    PAGES_DIR.mkdir(parents=True, exist_ok=True)
     index = {} if rebuild else load_index()
     pages = {page_key(p): p for p in ARCHIVE.rglob("*.html")}
-
-    for key in index.keys() - pages.keys():
-        del index[key]
-        (TEXT_DIR / f"{key}.txt").unlink(missing_ok=True)
+    index = {k: e for k, e in index.items() if k in pages}
 
     stale = [p for k, p in pages.items() if k not in index or index[k]["mtime"] != p.stat().st_mtime]
     if stale:
@@ -157,8 +273,13 @@ def update_index(rebuild=False):
             for key, entry in pool.map(extract, stale, chunksize=4):
                 index[key] = entry
 
+    current = {page_file(k).name for k in index}
+    for f in PAGES_DIR.iterdir():
+        if f.name not in current:
+            f.unlink()
+
     tmp = INDEX_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(index))
+    tmp.write_text(json.dumps({"version": INDEX_VERSION, "pages": index}))
     tmp.replace(INDEX_FILE)
     return index
 
@@ -184,7 +305,7 @@ def search(query):
     matches = []
     for key, entry in index.items():
         try:
-            text = (TEXT_DIR / f"{key}.txt").read_text(encoding="utf-8").lower()
+            text = page_file(key).read_text(encoding="utf-8").lower()
         except FileNotFoundError:
             continue
         title = entry["title"].lower()
@@ -196,26 +317,142 @@ def search(query):
     return [row(key, entry, hits) for _, hits, key, entry in matches]
 
 
-def highlight(line, pattern):
-    return pattern.sub(lambda m: f"{BOLD_YELLOW}{m.group(0)}{RESET}", line) if pattern else line
+def fenced_lines(markdown):
+    """Yields (line, kind) for each line, where kind is "fence", "code", or "text"."""
+    open_fence = 0
+    for line in markdown.splitlines():
+        m = FENCE.match(line)
+        # Per CommonMark, a backtick fence's info string has no backticks; this is inline code.
+        if m and "`" in m.group(3):
+            yield line, "code" if open_fence else "text"
+        elif m and not open_fence:
+            open_fence = len(m.group(2))
+            yield line, "fence"
+        elif m and open_fence and len(m.group(2)) >= open_fence and not m.group(3).strip():
+            open_fence = 0
+            yield line, "fence"
+        else:
+            yield line, "code" if open_fence else "text"
 
 
-def preview(key, query, max_lines=200):
+def markdown_blocks(markdown):
+    """Splits Markdown on blank lines, keeping fenced code blocks whole."""
+    blocks, current = [], []
+    for line, kind in fenced_lines(markdown):
+        if not line and kind == "text":
+            if current:
+                blocks.append("\n".join(current))
+                current = []
+        else:
+            current.append(line)
+    if current:
+        blocks.append("\n".join(current))
+    return blocks
+
+
+def trim_block(block, pattern, width=220, max_length=700):
+    """Shortens a long paragraph to the text around its matches."""
+    if len(block) <= max_length or block.startswith("```"):
+        return block
+    windows = []
+    for m in pattern.finditer(block):
+        start, end = max(0, m.start() - width), min(len(block), m.end() + width)
+        if windows and start <= windows[-1][1]:
+            windows[-1][1] = end
+        else:
+            windows.append([start, end])
+    return " … ".join(block[s:e].strip() for s, e in windows[:4])
+
+
+def matching_sections(markdown, pattern, max_matches=40):
+    """The blocks that match, each under its nearest heading, with gaps marked."""
+    blocks = markdown_blocks(markdown)
+    shown, last_heading = [], None
+    picked = set()
+    for i, block in enumerate(blocks):
+        if block.startswith("#"):
+            last_heading = i
+            if pattern.search(block):
+                picked.add(i)
+            continue
+        if pattern.search(block):
+            if last_heading is not None:
+                picked.add(last_heading)
+            picked.add(i)
+        if len(picked) >= max_matches:
+            break
+    previous = None
+    for i in sorted(picked):
+        if previous is not None and i != previous + 1:
+            shown.append("⋯")
+        shown.append(trim_block(blocks[i], pattern) if not blocks[i].startswith("#") else blocks[i])
+        previous = i
+    return "\n\n".join(shown)
+
+
+def preview_columns():
+    # One column narrower than fzf reports, or wide lines spill past the border.
+    return max(20, int(os.environ.get("FZF_PREVIEW_COLUMNS", "80")) - 1)
+
+
+def fit(text, width):
+    return text if len(text) <= width else text[: width - 1] + "…"
+
+
+def render_plain(markdown, width):
+    """Markdown as plain text: bold headings, indented code, no other markup."""
+    lines = []
+    for line, kind in fenced_lines(markdown):
+        if kind == "code":
+            lines.append("    " + line)
+            continue
+        if kind != "text":
+            continue
+        heading = re.match(r"#{1,6} (.*)", line)
+        text = heading.group(1) if heading else line.replace("`", "")
+        indent = re.match(r"(\s*(?:[-*>]|\d+\.)?\s*)", text).group(1)
+        wrapped = textwrap.wrap(
+            text, width, subsequent_indent=" " * len(indent),
+            break_long_words=False, break_on_hyphens=False,
+        ) or [""]
+        if heading:
+            wrapped = [f"{BOLD}{w}{RESET}" for w in wrapped]
+        lines.extend(wrapped)
+    return "\n".join(lines)
+
+
+def highlight(text, pattern):
+    """Highlights matches in text that may already contain ANSI styling."""
+    if not pattern:
+        return text
+    parts = ANSI_ESCAPE.split(text)
+    for i in range(0, len(parts), 2):
+        parts[i] = pattern.sub(lambda m: f"{HIGHLIGHT_ON}{m.group(0)}{HIGHLIGHT_OFF}", parts[i])
+    return "".join(parts)
+
+
+def preview(key, query, max_chars=80_000):
     entry = load_index().get(key)
     if entry is None:
         return
     terms = query_terms(query)
     pattern = re.compile("|".join(map(re.escape, terms)), re.I) if terms else None
+    markdown = page_file(key).read_text(encoding="utf-8")
 
-    print(highlight(entry["title"], pattern))
-    print(f"{DIM}{entry['url'] or entry['path']}{RESET}")
-    print(f"{DIM}saved {entry['saved']}{RESET}\n")
-
-    lines = (TEXT_DIR / f"{key}.txt").read_text(encoding="utf-8").splitlines()
+    minutes = max(1, round(entry.get("words", 0) / 230))
+    facts = [entry["domain"], entry["saved"], f"{minutes} min read"]
     if pattern:
-        lines = [line for line in lines if pattern.search(line)] or lines
-    for line in lines[:max_lines]:
-        print(highlight(line, pattern))
+        lowered = (entry["title"] + "\n" + markdown).lower()
+        facts.insert(0, " ".join(f"{t}×{lowered.count(t)}" for t in terms))
+    # These three lines stay pinned by --preview-window's ~3, so each must fit on one line.
+    width = preview_columns()
+    print(highlight(f"{BOLD}{fit(entry['title'], width)}{RESET}", pattern))
+    print(f"{DIM}{fit(' · '.join(filter(None, facts)), width)}{RESET}")
+    print(f"{DIM}{fit(entry['url'] or entry['path'], width)}{RESET}")
+    print()
+
+    body = (matching_sections(markdown, pattern) if pattern else "") or markdown
+    print(highlight(render_plain(body[:max_chars], width), pattern))
 
 
 def open_pages(keys):
@@ -239,12 +476,12 @@ def run_fzf():
         "--delimiter=\t",
         "--with-nth=2",
         "--prompt=archive> ",
-        "--header=all words must match · tab selects · enter opens",
+        "--header=all words must match · tab selects · enter opens · shift-↑↓ scrolls preview",
         f"--bind=start:reload:{me} search {{q}}",
         f"--bind=change:reload:{me} search {{q}}",
         f"--bind=enter:become:{me} open {{+1}}",
         f"--preview={me} preview {{1}} {{q}}",
-        "--preview-window=right,55%,wrap",
+        "--preview-window=right,60%,wrap,~3",
     ])
 
 
