@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# Remove agent worktrees under /tmp/worktrees/<repo>/<name> that have not been
+# touched within gc.worktreePruneExpire. The Mac rarely reboots, so /tmp alone
+# never clears them. Branches and commits stay in the main repository, but
+# uncommitted and untracked files are deleted. Lock a worktree to keep it.
+#
+# Usage: git-prune-tmp-worktrees [--dry-run]
+set -euo pipefail
+
+root="${GIT_TMP_WORKTREES_ROOT:-/tmp/worktrees}"
+dry_run=0
+[[ "${1:-}" == "--dry-run" ]] && dry_run=1
+
+[[ -d "$root" ]] || exit 0
+
+expire="$(git config --global --get gc.worktreePruneExpire || echo 3.months.ago)"
+[[ "$expire" == "never" ]] && exit 0
+
+# git rev-parse --since parses git's approxidate formats into --max-age=<epoch>.
+cutoff="$(git rev-parse --since="$expire")"
+cutoff="${cutoff#--max-age=}"
+
+ref="$(mktemp)"
+status="$(mktemp)"
+trap 'rm -f "$ref" "$status"' EXIT
+touch -t "$(date -r "$cutoff" +%Y%m%d%H%M.%S)" "$ref"
+
+shopt -s nullglob
+for wt in "$root"/*/*/; do
+  wt="$(cd "$wt" && pwd -P)"
+
+  top="$(git -C "$wt" rev-parse --show-toplevel 2>/dev/null)" || {
+    echo "skip $wt: not a git worktree" >&2
+    continue
+  }
+  [[ "$top" == "$wt" ]] || {
+    echo "skip $wt: not a worktree root" >&2
+    continue
+  }
+
+  admin="$(git -C "$wt" rev-parse --absolute-git-dir)"
+  common="$(git -C "$wt" rev-parse --path-format=absolute --git-common-dir)"
+  [[ "$admin" != "$common" ]] || {
+    echo "skip $wt: main worktree, not a linked one" >&2
+    continue
+  }
+
+  if [[ -f "$admin/locked" ]]; then
+    echo "skip $wt: locked" >&2
+    continue
+  fi
+
+  # The HEAD reflog records creation, commits, checkouts, resets and rebases.
+  reflog_on=1
+  if [[ "$(git -C "$wt" config --get core.logAllRefUpdates || echo true)" != "always" ]] &&
+    [[ "$(git -C "$wt" config --type=bool --get core.logAllRefUpdates || echo true)" == "false" ]]; then
+    reflog_on=0
+  fi
+  if (( reflog_on )) && [[ -f "$admin/logs/HEAD" ]]; then
+    [[ "$admin/logs/HEAD" -nt "$ref" ]] && continue
+  # Without a reflog, fall back to any write in the admin dir. The fsmonitor
+  # daemon writes cookies there on its own, so they do not count as activity.
+  elif [[ -n "$(find "$admin" -path "$admin/fsmonitor--daemon" -prune -o -newer "$ref" -print -quit)" ]]; then
+    continue
+  fi
+
+  # Only uncommitted work is lost on removal, so only its files decide.
+  # --no-optional-locks keeps status from rewriting the index, which would
+  # make the admin dir look touched, and core.fsmonitor=false avoids starting
+  # a watcher daemon for a worktree about to be removed. Deleted paths have no
+  # mtime to check.
+  git -C "$wt" -c core.fsmonitor=false --no-optional-locks status --porcelain -z --no-renames --untracked-files=all > "$status" || {
+    echo "skip $wt: git status failed" >&2
+    continue
+  }
+  recent=0
+  while IFS= read -r -d '' entry; do
+    if [[ "$wt/${entry:3}" -nt "$ref" ]]; then
+      recent=1
+      break
+    fi
+  done < "$status"
+  (( recent )) && continue
+
+  if (( dry_run )); then
+    echo "would remove $wt"
+    continue
+  fi
+
+  # A single --force discards modified and untracked files; the check above
+  # proved none were touched since the cutoff.
+  if git --git-dir="$common" worktree remove --force "$wt"; then
+    echo "removed $wt"
+  else
+    echo "skip $wt: git worktree remove refused" >&2
+  fi
+done
+
+if (( ! dry_run )); then
+  for repo_dir in "$root"/*/; do
+    rmdir "$repo_dir" 2>/dev/null || true
+  done
+fi

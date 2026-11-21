@@ -493,6 +493,7 @@ function update-everything() {
   pi-update-ext
   amplmkt update
   gh extension upgrade --all
+  git-prune-tmp-worktrees
   rm -f ~/.cache/macos_sdk_path
   rm -f "$HOME/.zcompdump" "$HOME/.zcompdump.zwc"
 
