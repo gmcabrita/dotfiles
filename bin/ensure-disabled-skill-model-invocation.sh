@@ -13,6 +13,7 @@ DISABLED_SKILLS=(
   "hegel"
   "hegel-review"
   "llm-wiki"
+  "mitmproxy"
   "napkin-math"
   "readback"
   "security-audit"
