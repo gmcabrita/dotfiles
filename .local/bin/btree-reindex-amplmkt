@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 // Finds bloated btree indexes on every production PostgreSQL primary and reindexes them with amplmkt.
-// Mirrors ~/.pi/agent/prompts/btree_reindex_candidates.md, with a TUI to follow progress and retry failed starts.
+// Shows progress in a TUI and lets failed or queued reindexes be started from it.
+import { BunRuntime, BunServices } from "@effect/platform-bun@4.1.5";
 import {
   BoxRenderable,
   RGBA,
@@ -8,12 +9,31 @@ import {
   TextAttributes,
   TextRenderable,
   createCliRenderer,
-  type KeyEvent,
 } from "@opentui/core@0.9.7";
+import type { KeyEvent } from "@opentui/core@0.9.7";
+import {
+  Clock,
+  Config,
+  Console,
+  Context,
+  Deferred,
+  Duration,
+  Effect,
+  FiberSet,
+  FileSystem,
+  Layer,
+  Predicate,
+  Queue,
+  Ref,
+  Schedule,
+  Schema,
+  Stream,
+} from "effect@4.1.5";
+import { Command, Flag } from "effect@4.1.5/cli";
+import { ChildProcess, ChildProcessSpawner } from "effect@4.1.5/process";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-const AMPLMKT = process.env.AMPLMKT_BIN ?? "amplmkt";
 const CANDIDATES_SQL = join(homedir(), ".psql/queries/btree_reindex_candidates.sql");
 const MAX_REINDEXES_PER_INSTANCE = 3;
 const SKIPPED_INSTANCE_PREFIX = "amplmkt-gcp-prod-usce1-cluster";
@@ -26,90 +46,167 @@ const LIST_DATABASES_SQL =
 
 type ReindexState =
   // `manualOrder` is set when started from the TUI; those entries go first, in the order they were picked.
-  | { kind: "queued"; manualOrder?: number }
-  | { kind: "starting" }
-  | { kind: "running"; id: string; serverStatus: string; startedAt: number; pollError?: string }
-  | { kind: "succeeded"; id: string; startedAt: number; finishedAt: number }
-  | { kind: "failed"; id: string; startedAt: number; finishedAt: number }
-  | { kind: "start_failed"; error: string };
+  | { readonly kind: "queued"; readonly manualOrder?: number }
+  | { readonly kind: "starting" }
+  | {
+      readonly id: string;
+      readonly kind: "running";
+      readonly pollError?: string;
+      readonly serverStatus: string;
+      readonly startedAt: number;
+    }
+  | {
+      readonly finishedAt: number;
+      readonly id: string;
+      readonly kind: "succeeded";
+      readonly startedAt: number;
+    }
+  | {
+      readonly finishedAt: number;
+      readonly id: string;
+      readonly kind: "failed";
+      readonly startedAt: number;
+    }
+  | { readonly error: string; readonly kind: "start_failed" };
 
-type Entry = {
-  key: string;
-  instance: string;
-  database: string;
-  schema: string;
-  table: string;
-  index: string;
-  realSize: string;
-  bloatSize: string;
-  bloatPct: string;
-  state: ReindexState;
-};
-
-type Candidate = { table: string; index: string; realSize: string; bloatSize: string; bloatPct: string };
-
-type Problem = { where: string; message: string };
-
-type Phase = { label: string; mark: "active" | "done" | "skipped" | "error"; since: number };
-
-const SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
-const PHASE_MARKS = { done: "✓", skipped: "–", error: "✗" } as const;
-
-function selectPrimaryInstances(instances: { name: string; kind: string }[]): string[] {
-  return instances
-    .filter((i) => i.kind === "cloudsql")
-    .filter((i) => !i.name.startsWith(SKIPPED_INSTANCE_PREFIX))
-    .filter((i) => !i.name.includes("replica"))
-    .map((i) => i.name);
+interface Candidate {
+  readonly bloatPct: string;
+  readonly bloatSize: string;
+  readonly index: string;
+  readonly realSize: string;
+  readonly table: string;
 }
 
-function nonEmptyLines(text: string): string[] {
-  return text.split("\n").map((l) => l.trim()).filter((l) => l !== "");
+interface Entry extends Candidate {
+  readonly database: string;
+  readonly instance: string;
+  readonly key: string;
+  readonly schema: string;
+  readonly state: ReindexState;
+}
+
+interface Problem {
+  readonly message: string;
+  readonly where: string;
+}
+
+interface Phase {
+  readonly label: string;
+  readonly mark: "active" | "done" | "skipped" | "error";
+  readonly since: number;
+}
+
+interface AppState {
+  readonly authFailing: boolean;
+  readonly databaseScans: { readonly done: number; readonly total: number };
+  readonly dryRun: boolean;
+  readonly entries: ReadonlyArray<Entry>;
+  readonly instances: ReadonlyArray<string>;
+  readonly nextManualOrder: number;
+  readonly notice: string;
+  readonly phases: Readonly<Record<string, Phase>>;
+  readonly problems: ReadonlyArray<Problem>;
+  readonly quitRequested: boolean;
+  readonly startupStep: string | undefined;
+}
+
+const initialState = (dryRun: boolean): AppState => ({
+  authFailing: false,
+  databaseScans: { done: 0, total: 0 },
+  dryRun,
+  entries: [],
+  instances: [],
+  nextManualOrder: 0,
+  notice: "",
+  phases: {},
+  problems: [],
+  quitRequested: false,
+  startupStep: "Checking amplmkt session…",
+});
+
+function selectPrimaryInstances(
+  instances: ReadonlyArray<{ readonly kind: string; readonly name: string }>,
+): Array<string> {
+  return instances.flatMap((i) =>
+    i.kind === "cloudsql" &&
+    !i.name.startsWith(SKIPPED_INSTANCE_PREFIX) &&
+    !i.name.includes("replica")
+      ? [i.name]
+      : [],
+  );
+}
+
+function nonEmptyLines(text: string): Array<string> {
+  return text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l !== "");
+}
+
+type InstanceCheck =
+  | { readonly kind: "replica" }
+  | { readonly databases: ReadonlyArray<string>; readonly kind: "primary" };
+
+// Output of `select pg_is_in_recovery()` followed by the database list.
+function parseInstanceCheck(stdout: string): InstanceCheck {
+  const [inRecovery, ...databases] = nonEmptyLines(stdout);
+  return inRecovery === "t" ? { kind: "replica" } : { databases, kind: "primary" };
 }
 
 // Column order of btree_reindex_candidates.sql:
 // tbl, idx, real_size, extra_size, extra_pct, fillfactor, bloat_size_pretty, bloat_pct
-function parseCandidates(stdout: string): Candidate[] {
-  return nonEmptyLines(stdout)
-    .map((line) => line.split("\t"))
-    .filter((cols) => cols.length >= 8)
-    .map((cols) => ({ table: cols[0], index: cols[1], realSize: cols[2], bloatSize: cols[6], bloatPct: cols[7] }));
+function parseCandidates(stdout: string): Array<Candidate> {
+  return nonEmptyLines(stdout).flatMap((line) => {
+    const [table, index, realSize, , , , bloatSize, bloatPct] = line.split("\t");
+    return table && index && realSize && bloatSize && bloatPct
+      ? [{ bloatPct, bloatSize, index, realSize, table }]
+      : [];
+  });
 }
 
 function sqlLiteral(value: string): string {
   return `'${value.replaceAll("'", "''")}'`;
 }
 
-function schemaLookupSql(candidates: Candidate[]): string {
-  const pairs = candidates.map((c) => `(${sqlLiteral(c.table)}, ${sqlLiteral(c.index)})`).join(", ");
+function schemaLookupSql(candidates: ReadonlyArray<Candidate>): string {
+  const pairs = candidates
+    .map((c) => `(${sqlLiteral(c.table)}, ${sqlLiteral(c.index)})`)
+    .join(", ");
   return `select tablename, indexname, schemaname from pg_indexes where (tablename::text, indexname::text) in (values ${pairs})`;
 }
 
-function parseSchemaLookup(stdout: string): Map<string, string[]> {
-  const schemas = new Map<string, string[]>();
-  for (const [table, index, schema] of nonEmptyLines(stdout).map((l) => l.split("\t"))) {
-    const key = `${table}\t${index}`;
-    schemas.set(key, [...(schemas.get(key) ?? []), schema]);
+function parseSchemaLookup(stdout: string): Map<string, Array<string>> {
+  const schemas = new Map<string, Array<string>>();
+  for (const line of nonEmptyLines(stdout)) {
+    const [table, index, schema] = line.split("\t");
+    if (table && index && schema) {
+      const key = `${table}\t${index}`;
+      schemas.set(key, [...(schemas.get(key) ?? []), schema]);
+    }
   }
   return schemas;
 }
 
 const isInFlight = (e: Entry) => e.state.kind === "starting" || e.state.kind === "running";
 const tableKey = (e: Entry) => `${e.database}\t${e.schema}\t${e.table}`;
-
-const queueOrder = (e: Entry) => (e.state.kind === "queued" ? (e.state.manualOrder ?? Infinity) : Infinity);
+const queueOrder = (e: Entry) =>
+  e.state.kind === "queued" ? (e.state.manualOrder ?? Infinity) : Infinity;
 
 // Per instance: at most `maxPerInstance` reindexes in flight, never two on the same table.
-function pickReindexesToStart(entries: Entry[], maxPerInstance: number): Entry[] {
-  const picked: Entry[] = [];
+function pickReindexesToStart(entries: ReadonlyArray<Entry>, maxPerInstance: number): Array<Entry> {
+  const picked: Array<Entry> = [];
   const byInstance = Map.groupBy(entries, (e) => e.instance);
   for (const instanceEntries of byInstance.values()) {
     const inFlight = instanceEntries.filter(isInFlight);
     const busyTables = new Set(inFlight.map(tableKey));
     let slots = maxPerInstance - inFlight.length;
     for (const entry of instanceEntries.toSorted((a, b) => queueOrder(a) - queueOrder(b))) {
-      if (slots <= 0) break;
-      if (entry.state.kind !== "queued" || busyTables.has(tableKey(entry))) continue;
+      if (slots <= 0) {
+        break;
+      }
+      if (entry.state.kind !== "queued" || busyTables.has(tableKey(entry))) {
+        continue;
+      }
       picked.push(entry);
       busyTables.add(tableKey(entry));
       slots--;
@@ -118,27 +215,195 @@ function pickReindexesToStart(entries: Entry[], maxPerInstance: number): Entry[]
   return picked;
 }
 
-function describeQueued(entry: Entry, entries: Entry[], maxPerInstance: number): string {
-  const inFlight = entries.filter((e) => e.instance === entry.instance && isInFlight(e));
-  const label = entry.state.kind === "queued" && entry.state.manualOrder !== undefined ? "queued (next)" : "queued";
-  if (inFlight.some((e) => tableKey(e) === tableKey(entry))) return `${label}, table busy`;
-  if (inFlight.length >= maxPerInstance) return `${label}, instance at ${inFlight.length}/${maxPerInstance}`;
-  return label;
+const isAuthError = (message: string) => message.includes("amplmkt auth login");
+
+function updateEntry(state: AppState, key: string, f: (entry: Entry) => Entry): AppState {
+  return { ...state, entries: state.entries.map((e) => (e.key === key ? f(e) : e)) };
 }
+
+function noteAmplmktResult(state: AppState, error?: string): AppState {
+  return { ...state, authFailing: error !== undefined && isAuthError(error) };
+}
+
+function addProblem(state: AppState, where: string, message: string): AppState {
+  return noteAmplmktResult(
+    { ...state, problems: [...state.problems, { message, where }] },
+    message,
+  );
+}
+
+function setPhase(
+  state: AppState,
+  instance: string,
+  label: string,
+  mark: Phase["mark"],
+  now: number,
+): AppState {
+  return { ...state, phases: { ...state.phases, [instance]: { label, mark, since: now } } };
+}
+
+function startScanning(state: AppState, instances: ReadonlyArray<string>, now: number): AppState {
+  return instances.reduce<AppState>(
+    (s, instance) => setPhase(s, instance, "waiting", "active", now),
+    {
+      ...state,
+      instances,
+      startupStep: undefined,
+    },
+  );
+}
+
+function countDatabaseScans(state: AppState, change: { done?: number; total?: number }): AppState {
+  const { done, total } = state.databaseScans;
+  return {
+    ...state,
+    databaseScans: { done: done + (change.done ?? 0), total: total + (change.total ?? 0) },
+  };
+}
+
+function addCandidates(
+  state: AppState,
+  instance: string,
+  database: string,
+  candidates: ReadonlyArray<Candidate>,
+  schemas: Map<string, Array<string>>,
+): AppState {
+  let next = state;
+  const entries: Array<Entry> = [];
+  for (const c of candidates) {
+    const matches = schemas.get(`${c.table}\t${c.index}`) ?? [];
+    const [schema] = matches;
+    if (schema === undefined || matches.length > 1) {
+      const reason =
+        matches.length === 0 ? "schema not found" : `ambiguous schema (${matches.join(", ")})`;
+      next = addProblem(
+        next,
+        `${instance}/${database}`,
+        `skipped ${c.table}.${c.index}: ${reason}`,
+      );
+      continue;
+    }
+    entries.push({
+      database,
+      instance,
+      key: `${instance}\t${database}\t${schema}\t${c.index}`,
+      schema,
+      ...c,
+      state: { kind: "queued" },
+    });
+  }
+  return { ...next, entries: [...next.entries, ...entries] };
+}
+
+// Marks the reindexes allowed to start as `starting` in the same update, so concurrent callers never claim one twice.
+function claimReindexes(state: AppState, maxPerInstance: number): [ReadonlyArray<Entry>, AppState] {
+  if (state.dryRun || state.quitRequested) {
+    return [[], state];
+  }
+  const picked = pickReindexesToStart(state.entries, maxPerInstance);
+  const keys = new Set(picked.map((e) => e.key));
+  const entries = state.entries.map((e): Entry =>
+    keys.has(e.key) ? { ...e, state: { kind: "starting" } } : e,
+  );
+  return [picked, { ...state, entries }];
+}
+
+function applyServerStatus(
+  entry: Entry,
+  id: string,
+  status: string,
+  startedAt: number,
+  now: number,
+): Entry {
+  if (status === "succeeded" || status === "failed") {
+    return { ...entry, state: { finishedAt: now, id, kind: status, startedAt } };
+  }
+  return { ...entry, state: { id, kind: "running", serverStatus: status, startedAt } };
+}
+
+function retryFailedStarts(state: AppState, keys: ReadonlySet<string>): AppState {
+  return {
+    ...state,
+    entries: state.entries.map((e): Entry =>
+      keys.has(e.key) && e.state.kind === "start_failed" ? { ...e, state: { kind: "queued" } } : e,
+    ),
+  };
+}
+
+// Moves the entry to the front of its instance's queue; claimReindexes still enforces the limits.
+function startNext(state: AppState, key: string): AppState {
+  const entry = state.entries.find((e) => e.key === key);
+  if (
+    state.dryRun ||
+    !entry ||
+    (entry.state.kind !== "queued" && entry.state.kind !== "start_failed")
+  ) {
+    return state;
+  }
+  const prioritized = updateEntry(state, key, (e) => ({
+    ...e,
+    state: { kind: "queued", manualOrder: state.nextManualOrder },
+  }));
+  return { ...prioritized, nextManualOrder: state.nextManualOrder + 1 };
+}
+
+// Quitting with reindexes in flight needs a second press. Reindexes keep running server-side either way.
+function requestQuit(state: AppState): ["quit" | "confirm", AppState] {
+  const inFlight = state.entries.filter(isInFlight).length;
+  if (inFlight === 0 || state.quitRequested) {
+    return ["quit", state];
+  }
+  const notice = `${inFlight} reindex${inFlight === 1 ? "" : "es"} still in progress server-side; press q again to quit`;
+  return ["confirm", { ...state, notice, quitRequested: true }];
+}
+
+function cancelQuit(state: AppState): AppState {
+  return state.quitRequested ? { ...state, notice: "", quitRequested: false } : state;
+}
+
+// --- Presentation -----------------------------------------------------------
+
+const SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+const PHASE_MARKS = { done: "✓", error: "✗", skipped: "–" } as const;
+const spinnerFrame = (now: number) => SPINNER[Math.floor(now / 100) % SPINNER.length];
 
 function formatDuration(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
-  if (h > 0) return `${h}h${String(m).padStart(2, "0")}m`;
-  if (m > 0) return `${m}m${String(s % 60).padStart(2, "0")}s`;
+  if (h > 0) {
+    return `${h}h${String(m).padStart(2, "0")}m`;
+  }
+  if (m > 0) {
+    return `${m}m${String(s % 60).padStart(2, "0")}s`;
+  }
   return `${s}s`;
 }
 
-function describeState(state: ReindexState, now: number): string {
+function describeQueued(
+  entry: Entry,
+  entries: ReadonlyArray<Entry>,
+  maxPerInstance: number,
+): string {
+  const inFlight = entries.filter((e) => e.instance === entry.instance && isInFlight(e));
+  const label =
+    entry.state.kind === "queued" && entry.state.manualOrder !== undefined
+      ? "queued (next)"
+      : "queued";
+  if (inFlight.some((e) => tableKey(e) === tableKey(entry))) {
+    return `${label}, table busy`;
+  }
+  if (inFlight.length >= maxPerInstance) {
+    return `${label}, instance at ${inFlight.length}/${maxPerInstance}`;
+  }
+  return label;
+}
+
+function describeState(entry: Entry, entries: ReadonlyArray<Entry>, now: number): string {
+  const state = entry.state;
   switch (state.kind) {
     case "queued":
-      return "queued";
+      return describeQueued(entry, entries, MAX_REINDEXES_PER_INSTANCE);
     case "starting":
       return "starting…";
     case "running":
@@ -170,511 +435,805 @@ function reportResult(state: ReindexState): string {
 }
 
 function truncate(value: string, width: number): string {
-  if (value.length <= width) return value.padEnd(width);
+  if (value.length <= width) {
+    return value.padEnd(width);
+  }
   return `${value.slice(0, Math.max(0, width - 1))}…`;
 }
 
 const MIN_COLUMN_WIDTH = 8;
 
-// Shrinks the widest `shrinkable` column until a row fits `maxLineWidth`. The last column is never truncated.
-function formatTable(
-  header: string[],
-  rows: string[][],
-  { maxLineWidth = Infinity, shrinkable = [] }: { maxLineWidth?: number; shrinkable?: number[] } = {},
-): string[] {
-  const widths = header.map((h, i) => Math.max(h.length, ...rows.map((r) => r[i].length)));
-  const lineWidth = () => widths.reduce((sum, w) => sum + w, 0) + 2 * (widths.length - 1);
-  while (lineWidth() > maxLineWidth) {
-    const widest = shrinkable.filter((i) => widths[i] > MIN_COLUMN_WIDTH).sort((a, b) => widths[b] - widths[a])[0];
-    if (widest === undefined) break;
-    widths[widest]--;
-  }
-  const line = (cols: string[]) =>
-    cols.map((c, i) => (i === cols.length - 1 ? c : truncate(c, widths[i]))).join("  ");
-  return [line(header), ...rows.map(line)];
+interface FormattedTable {
+  readonly header: string;
+  readonly lines: ReadonlyArray<string>;
 }
 
-function isAuthError(message: string): boolean {
-  return message.includes("amplmkt auth login");
+// Shrinks the widest `shrinkable` column until a row fits `maxLineWidth`. The last column is never truncated.
+function formatTable(
+  header: ReadonlyArray<string>,
+  rows: ReadonlyArray<ReadonlyArray<string>>,
+  {
+    maxLineWidth = Infinity,
+    shrinkable = [],
+  }: { maxLineWidth?: number; shrinkable?: ReadonlyArray<number> } = {},
+): FormattedTable {
+  const widths = header.map((h, i) => Math.max(h.length, ...rows.map((r) => r[i]?.length ?? 0)));
+  const width = (i: number) => widths[i] ?? 0;
+  const lineWidth = () => widths.reduce((sum, w) => sum + w, 0) + 2 * (widths.length - 1);
+  while (lineWidth() > maxLineWidth) {
+    const [widest] = shrinkable
+      .filter((i) => width(i) > MIN_COLUMN_WIDTH)
+      .toSorted((a, b) => width(b) - width(a));
+    if (widest === undefined) {
+      break;
+    }
+    widths[widest] = width(widest) - 1;
+  }
+  const line = (cols: ReadonlyArray<string>) =>
+    cols.map((c, i) => (i === cols.length - 1 ? c : truncate(c, width(i)))).join("  ");
+  return { header: line(header), lines: rows.map(line) };
+}
+
+function formatTableText(
+  header: ReadonlyArray<string>,
+  rows: ReadonlyArray<ReadonlyArray<string>>,
+): string {
+  const table = formatTable(header, rows);
+  return [table.header, ...table.lines].join("\n");
+}
+
+const sortedEntries = (state: AppState) =>
+  state.entries.toSorted(
+    (a, b) => a.instance.localeCompare(b.instance) || a.database.localeCompare(b.database),
+  );
+
+const isScanning = (state: AppState) =>
+  Object.values(state.phases).some((p) => p.mark === "active");
+
+function headerLine(state: AppState, now: number): string {
+  const spinner = spinnerFrame(now);
+  const count = (kind: ReindexState["kind"]) =>
+    state.entries.filter((e) => e.state.kind === kind).length;
+  const scanning = Object.values(state.phases).filter((p) => p.mark === "active").length;
+  const { done, total } = state.databaseScans;
+  const scanStatus = state.startupStep
+    ? `${spinner} ${state.startupStep}`
+    : scanning > 0
+      ? `${spinner} scanning ${scanning}/${state.instances.length} instances, ${done}/${total} databases done`
+      : "scan done";
+  return [
+    state.dryRun ? "btree-reindex-amplmkt (dry run)" : "btree-reindex-amplmkt",
+    scanStatus,
+    `${state.entries.length} candidates`,
+    `queued ${count("queued")}`,
+    `running ${count("starting") + count("running")}`,
+    `succeeded ${count("succeeded")}`,
+    `failed ${count("failed")}`,
+    `start failed ${count("start_failed")}`,
+  ].join(" · ");
+}
+
+const KEY_HELP =
+  "↑/↓ move · s start selected next · r retry selected failed start · R retry all failed starts · q quit";
+
+// Warnings replace the key help so they are never cut off at the end of the long header.
+function footerLine(state: AppState): { text: string; warning: boolean } {
+  const warnings = [
+    state.authFailing ? "amplmkt session expired: run `amplmkt auth login`" : "",
+    state.notice,
+  ].filter(Boolean);
+  return warnings.length > 0
+    ? { text: `⚠ ${warnings.join(" · ")}`, warning: true }
+    : { text: KEY_HELP, warning: false };
+}
+
+function emptyStateText(state: AppState, now: number): string {
+  const spinner = spinnerFrame(now);
+  if (state.startupStep) {
+    return `\n  ${spinner} ${state.startupStep}`;
+  }
+  if (!isScanning(state)) {
+    return "\n  No reindex candidates found.";
+  }
+  return (
+    `\n  ${spinner} Looking for bloated btree indexes. No candidates yet.\n\n` +
+    "  The candidate query can take several minutes on large databases.\n" +
+    `  Candidates appear here as each database finishes${state.dryRun ? "" : ", and their reindexes start right away"}.\n` +
+    "  Per-instance progress is shown below."
+  );
+}
+
+function entryTable(state: AppState, now: number, maxLineWidth: number) {
+  const view = sortedEntries(state);
+  const { header, lines } = formatTable(
+    ["INSTANCE", "DATABASE", "TABLE", "INDEX", "BLOAT", "STATUS"],
+    view.map((e) => [
+      e.instance,
+      e.database,
+      e.table,
+      e.index,
+      `${e.bloatSize} ${e.bloatPct}%`,
+      describeState(e, state.entries, now),
+    ]),
+    { maxLineWidth, shrinkable: [0, 1, 2, 3] },
+  );
+  return { header, rows: view.map((e, i) => ({ key: e.key, line: lines[i] ?? "" })) };
+}
+
+function instanceLines(state: AppState, now: number): string {
+  const nameWidth = Math.max(0, ...state.instances.map((i) => i.length));
+  return state.instances
+    .flatMap((instance) => {
+      const phase = state.phases[instance];
+      if (!phase) {
+        return [];
+      }
+      const mark = phase.mark === "active" ? spinnerFrame(now) : PHASE_MARKS[phase.mark];
+      const found = state.entries.filter((e) => e.instance === instance).length;
+      const elapsed = phase.mark === "active" ? ` ${formatDuration(now - phase.since)}` : "";
+      return `${mark} ${instance.padEnd(nameWidth)}  ${phase.label}${elapsed}${found > 0 ? ` · ${found} found` : ""}`;
+    })
+    .join("\n");
+}
+
+function describeEntry(e: Entry): string {
+  const s = e.state;
+  const id = "id" in s ? `reindex id ${s.id}` : "";
+  const error =
+    s.kind === "start_failed"
+      ? s.error
+      : s.kind === "running" && s.pollError
+        ? `status check: ${s.pollError}`
+        : "";
+  return [
+    `${e.instance}/${e.database}  ${e.schema}.${e.table}  ${e.index}`,
+    [`size ${e.realSize}`, `bloat ${e.bloatSize} (${e.bloatPct}%)`, id].filter(Boolean).join(" · "),
+    error,
+  ].join("\n");
+}
+
+function formatReport(state: AppState): string {
+  const rows = sortedEntries(state).map((e) => {
+    const s = e.state;
+    return [
+      e.instance,
+      e.database,
+      e.schema,
+      e.table,
+      e.index,
+      e.realSize,
+      `${e.bloatSize} (${e.bloatPct}%)`,
+      "id" in s ? s.id : "",
+      reportResult(s),
+    ];
+  });
+  const table =
+    rows.length > 0
+      ? formatTableText(
+          [
+            "INSTANCE",
+            "DATABASE",
+            "SCHEMA",
+            "TABLE",
+            "INDEX",
+            "SIZE BEFORE",
+            "BLOAT BEFORE",
+            "REINDEX ID",
+            "RESULT",
+          ],
+          rows,
+        )
+      : "No reindex candidates found.";
+  const problems = state.problems.map((p) => `  ${p.where}: ${p.message}`).join("\n");
+  return problems ? `${table}\n\nProblems:\n${problems}` : table;
 }
 
 // ---------------------------------------------------------------------------
 // Imperative shell
 // ---------------------------------------------------------------------------
 
-type RunResult = { code: number; stdout: string; stderr: string };
+class AmplmktError extends Schema.TaggedError<AmplmktError, { readonly brand: unique symbol }>()(
+  "AmplmktError",
+  {
+    message: Schema.String,
+  },
+) {}
 
-const children = new Set<ReturnType<typeof Bun.spawn>>();
+class FatalError extends Schema.TaggedError<FatalError, { readonly brand: unique symbol }>()(
+  "FatalError",
+  {
+    message: Schema.String,
+  },
+) {}
 
-async function run(args: string[], env: Record<string, string> = {}): Promise<RunResult> {
-  const proc = Bun.spawn([AMPLMKT, ...args], {
-    stdin: "ignore",
-    stdout: "pipe",
-    stderr: "pipe",
-    env: { ...process.env, ...env },
-  });
-  children.add(proc);
-  try {
-    const [stdout, stderr, code] = await Promise.all([
-      new Response(proc.stdout).text(),
-      new Response(proc.stderr).text(),
-      proc.exited,
-    ]);
-    return { code, stdout, stderr };
-  } finally {
-    children.delete(proc);
-  }
-}
+const AuthStatus = Schema.Struct({ active: Schema.Boolean });
+const Instances = Schema.Array(Schema.Struct({ kind: Schema.String, name: Schema.String }));
+const StartedReindex = Schema.Struct({ id: Schema.String, status: Schema.String });
+const ReindexStatus = Schema.Struct({ status: Schema.String });
+const decodeErrorPayload = Schema.decodeUnknownOption(
+  Schema.fromJsonString(Schema.Struct({ error: Schema.String })),
+);
 
-function errorMessage(result: RunResult): string {
-  for (const output of [result.stdout, result.stderr]) {
-    try {
-      const parsed = JSON.parse(output);
-      if (typeof parsed?.error === "string") return parsed.error;
-    } catch {}
-  }
-  return (result.stderr.trim() || result.stdout.trim() || `exit code ${result.code}`).split("\n").slice(-3).join(" ");
-}
-
-async function amplmktJson<T>(args: string[]): Promise<T> {
-  const result = await run([...args, "--format", "json"]);
-  if (result.code !== 0) throw new Error(errorMessage(result));
-  return JSON.parse(result.stdout) as T;
-}
-
-async function psql(instance: string, database: string | undefined, psqlArgs: string[]): Promise<string> {
-  const target = database ? ["--instance", instance, "--database", database] : ["--instance", instance];
-  // AMPLMKT_CLI_PSQL_BIN forces psql, which the flags below require.
-  const result = await run(
-    [
-      "db", "connect", ...target, "--role", "readonly", "--",
-      "-X", "-A", "-t", "-q", "-F", "\t", "-v", "ON_ERROR_STOP=1",
-      // amplmkt overrides application_name from PGOPTIONS, so set it in the session.
-      "-c", "set application_name = 'btree-reindex-amplmkt-goncalo'",
-      ...psqlArgs,
-    ],
-    { AMPLMKT_CLI_PSQL_BIN: "psql" },
-  );
-  if (result.code !== 0) throw new Error(errorMessage(result));
-  return result.stdout;
-}
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-const messageOf = (error: unknown) => (error instanceof Error ? error.message : String(error));
-
-function parseArgs(argv: string[]): { dryRun: boolean; pollIntervalMs: number } {
-  let dryRun = false;
-  let pollIntervalMs = 30_000;
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    if (arg === "-h" || arg === "--help") {
-      console.log(`Find bloated btree indexes on production PostgreSQL primaries and reindex them.
-
-Usage: btree-reindex-amplmkt [--dry-run] [--poll-interval <seconds>]
-
-Options:
-  --dry-run                  Find candidates without reindexing
-  --poll-interval <seconds>  Time between reindex status checks (default 30)
-  -h, --help                 Show this help
-
-Keys: ↑/↓ move, s start selected next (within the concurrency limit), r retry selected failed start,
-      R retry all failed starts, q quit.`);
-      process.exit(0);
-    } else if (arg === "--dry-run") {
-      dryRun = true;
-    } else if (arg === "--poll-interval") {
-      pollIntervalMs = Number(argv[++i]) * 1000;
-      if (!(pollIntervalMs > 0)) {
-        console.error("Error: --poll-interval must be a positive number of seconds");
-        process.exit(1);
-      }
-    } else {
-      console.error(`Unknown argument: ${arg}`);
-      process.exit(1);
-    }
-  }
-  return { dryRun, pollIntervalMs };
-}
-
-async function main() {
-  const { dryRun, pollIntervalMs } = parseArgs(process.argv.slice(2));
-
-  if (!(await Bun.file(CANDIDATES_SQL).exists())) {
-    console.error(`Error: ${CANDIDATES_SQL} not found`);
-    process.exit(1);
-  }
-
-  let instances: string[] = [];
-  let startupStep: string | undefined = "Checking amplmkt session…";
-  const entries: Entry[] = [];
-  const problems: Problem[] = [];
-  const phases = new Map<string, Phase>();
-  const databaseScans = { total: 0, done: 0 };
-  let authFailing = false;
-  let notice = "";
-  let quitRequested = false;
-
-  // --- TUI ---------------------------------------------------------------
-
-  // Terminal default and ANSI palette colors, so the TUI follows the terminal's light or dark theme.
-  const fg = RGBA.defaultForeground();
-  const bg = RGBA.defaultBackground();
-  const border = { border: true, borderColor: RGBA.fromIndex(8), titleColor: fg };
-  const text = { fg, bg };
-  const muted = { ...text, attributes: TextAttributes.DIM };
-
-  const renderer = await createCliRenderer({ exitOnCtrlC: false, backgroundColor: bg });
-  const root = new BoxRenderable(renderer, { flexDirection: "column", width: "100%", height: "100%" });
-  const header = new TextRenderable(renderer, { ...text, content: "", height: 1, attributes: TextAttributes.BOLD });
-  const columns = new TextRenderable(renderer, { ...muted, content: "", height: 1 });
-  const emptyState = new TextRenderable(renderer, { ...muted, content: "", flexGrow: 1 });
-  const list = new SelectRenderable(renderer, {
-    flexGrow: 1,
-    showDescription: false,
-    showScrollIndicator: true,
-    options: [],
-    backgroundColor: bg,
-    textColor: fg,
-    focusedBackgroundColor: bg,
-    focusedTextColor: fg,
-    selectedTextColor: fg,
-  });
-  const details = new BoxRenderable(renderer, { ...border, height: 5, title: "Selected" });
-  const detailsText = new TextRenderable(renderer, { ...text, content: "" });
-  details.add(detailsText);
-  const bottom = new BoxRenderable(renderer, { flexDirection: "row", height: 3 });
-  const instancesBox = new BoxRenderable(renderer, { ...border, flexGrow: 2, flexBasis: 0, title: "Instances" });
-  const instancesText = new TextRenderable(renderer, { ...text, content: "", wrapMode: "none" });
-  instancesBox.add(instancesText);
-  const problemsBox = new BoxRenderable(renderer, { ...border, flexGrow: 1, flexBasis: 0, title: "Problems" });
-  const problemsText = new TextRenderable(renderer, { ...text, fg: RGBA.fromIndex(1), content: "", wrapMode: "none" });
-  problemsBox.add(problemsText);
-  bottom.add(instancesBox);
-  bottom.add(problemsBox);
-  const footer = new TextRenderable(renderer, {
-    ...muted,
-    content: "↑/↓ move · s start selected next · r retry selected failed start · R retry all failed starts · q quit",
-    height: 1,
-  });
-  for (const child of [header, columns, emptyState, list, details, bottom, footer]) root.add(child);
-  renderer.root.add(root);
-  list.focus();
-
-  const sortedEntries = () =>
-    entries.toSorted((a, b) => a.instance.localeCompare(b.instance) || a.database.localeCompare(b.database));
-
-  // The terminal default foreground cannot serve as a background, so pick the highlight from the reported theme.
-  const selectionColors = { light: "#cfe0f7", dark: "#3a4a5c" };
-  await renderer.waitForThemeMode(300);
-
-  function render() {
-    const now = Date.now();
-    list.selectedBackgroundColor = selectionColors[renderer.themeMode ?? "dark"];
-    const counts = Map.groupBy(entries, (e) => e.state.kind);
-    const count = (kind: ReindexState["kind"]) => counts.get(kind)?.length ?? 0;
-    const spinner = SPINNER[Math.floor(now / 100) % SPINNER.length];
-    const scanning = [...phases.values()].filter((p) => p.mark === "active").length;
-    const scanStatus = startupStep
-      ? `${spinner} ${startupStep}`
-      : scanning > 0
-        ? `${spinner} scanning ${scanning}/${instances.length} instances, ${databaseScans.done}/${databaseScans.total} databases done`
-        : "scan done";
-    header.content = [
-      dryRun ? "btree-reindex-amplmkt (dry run)" : "btree-reindex-amplmkt",
-      scanStatus,
-      `${entries.length} candidates`,
-      `queued ${count("queued")}`,
-      `running ${count("starting") + count("running")}`,
-      `succeeded ${count("succeeded")}`,
-      `failed ${count("failed")}`,
-      `start failed ${count("start_failed")}`,
-      authFailing ? "⚠ amplmkt session expired: run `amplmkt auth login`" : "",
-      notice,
-    ].filter(Boolean).join(" · ");
-
-    const view = sortedEntries();
-    const selectedKey = list.getSelectedOption()?.value as string | undefined;
-    const lines = formatTable(
-      ["INSTANCE", "DATABASE", "TABLE", "INDEX", "BLOAT", "STATUS"],
-      view.map((e) => [e.instance, e.database, e.table, e.index, `${e.bloatSize} ${e.bloatPct}%`, e.state.kind === "queued" ? describeQueued(e, entries, MAX_REINDEXES_PER_INSTANCE) : describeState(e.state, now)]),
-      // The list draws a 3-column selection indicator and a 1-column scroll indicator.
-      { maxLineWidth: renderer.width - 4, shrinkable: [0, 1, 2, 3] },
+const decodeJsonOutput = <S extends Schema.Codec<unknown, unknown>>(schema: S) => {
+  const decode = Schema.decodeUnknownEffect(Schema.fromJsonString(schema));
+  return (output: string) =>
+    decode(output).pipe(
+      Effect.mapError(
+        (error) => new AmplmktError({ message: `unexpected amplmkt output: ${error.message}` }),
+      ),
     );
-    // SelectRenderable indents each option by 3 columns for its selection indicator.
-    columns.content = `   ${lines[0]}`;
-    list.options = view.map((e, i) => ({ name: lines[i + 1], description: "", value: e.key }));
-    const selectedIndex = view.findIndex((e) => e.key === selectedKey);
-    if (selectedIndex >= 0 && selectedIndex !== list.getSelectedIndex()) list.setSelectedIndex(selectedIndex);
+};
 
-    emptyState.visible = view.length === 0;
-    list.visible = view.length > 0;
-    emptyState.content = startupStep
-      ? `\n  ${spinner} ${startupStep}`
-      : scanning > 0
-        ? `\n  ${spinner} Looking for bloated btree indexes. No candidates yet.\n\n` +
-          "  The candidate query can take several minutes on large databases.\n" +
-          `  Candidates appear here as each database finishes${dryRun ? "" : ", and their reindexes start right away"}.\n` +
-          "  Per-instance progress is shown below."
-        : "\n  No reindex candidates found.";
+interface CommandResult {
+  readonly code: number;
+  readonly stderr: string;
+  readonly stdout: string;
+}
 
-    renderDetails();
-    const nameWidth = Math.max(0, ...instances.map((i) => i.length));
-    instancesText.content = instances
-      .map((i) => {
-        const phase = phases.get(i)!;
-        const mark = phase.mark === "active" ? spinner : PHASE_MARKS[phase.mark];
-        const found = entries.filter((e) => e.instance === i).length;
-        const elapsed = phase.mark === "active" ? ` ${formatDuration(now - phase.since)}` : "";
-        return `${mark} ${i.padEnd(nameWidth)}  ${phase.label}${elapsed}${found > 0 ? ` · ${found} found` : ""}`;
-      })
-      .join("\n");
-    problemsText.content = problems.map((p) => `${p.where}: ${p.message}`).join("\n");
-    renderer.requestRender();
-  }
-
-  function renderDetails() {
-    const selected = entries.find((e) => e.key === list.getSelectedOption()?.value);
-    detailsText.content = selected ? describeEntry(selected) : "";
-    renderer.requestRender();
-  }
-
-  function describeEntry(e: Entry): string {
-    const s = e.state;
-    const id = "id" in s ? `reindex id ${s.id}` : "";
-    const error = s.kind === "start_failed" ? s.error : s.kind === "running" && s.pollError ? `status check: ${s.pollError}` : "";
-    return [
-      `${e.instance}/${e.database}  ${e.schema}.${e.table}  ${e.index}`,
-      [`size ${e.realSize}`, `bloat ${e.bloatSize} (${e.bloatPct}%)`, id].filter(Boolean).join(" · "),
-      error,
-    ].join("\n");
-  }
-
-  // --- Reindexing ---------------------------------------------------------
-
-  function noteAmplmktResult(error?: string) {
-    authFailing = error !== undefined && isAuthError(error);
-  }
-
-  function schedule() {
-    if (dryRun || quitRequested) return;
-    for (const entry of pickReindexesToStart(entries, MAX_REINDEXES_PER_INSTANCE)) void startReindex(entry);
-  }
-
-  function applyServerStatus(entry: Entry, id: string, status: string, startedAt: number) {
-    if (status === "succeeded" || status === "failed") {
-      entry.state = { kind: status, id, startedAt, finishedAt: Date.now() };
-    } else {
-      entry.state = { kind: "running", id, serverStatus: status, startedAt };
+// amplmkt prints `{"error": ...}` for --format json failures; fall back to the tail of the raw output.
+function errorMessage(result: CommandResult): string {
+  for (const output of [result.stdout, result.stderr]) {
+    const payload = decodeErrorPayload(output);
+    if (payload._tag === "Some") {
+      return payload.value.error;
     }
   }
+  return (result.stderr.trim() || result.stdout.trim() || `exit code ${result.code}`)
+    .split("\n")
+    .slice(-3)
+    .join(" ");
+}
 
-  async function startReindex(entry: Entry) {
-    entry.state = { kind: "starting" };
-    render();
-    try {
-      const reindex = await amplmktJson<{ id: string; status: string }>([
-        "db", "reindex",
-        "--instance", entry.instance,
-        "--database", entry.database,
-        "--schema", entry.schema,
-        "--index", entry.index,
-      ]);
-      noteAmplmktResult();
-      applyServerStatus(entry, reindex.id, reindex.status, Date.now());
-      void watchReindex(entry);
-    } catch (error) {
-      noteAmplmktResult(messageOf(error));
-      entry.state = { kind: "start_failed", error: messageOf(error) };
-    }
-    render();
-    schedule();
+interface ReindexTarget {
+  readonly database: string;
+  readonly index: string;
+  readonly instance: string;
+  readonly schema: string;
+}
+
+class Amplmkt extends Context.Service<
+  Amplmkt,
+  {
+    readonly isLoggedIn: Effect.Effect<boolean>;
+    readonly listInstances: Effect.Effect<
+      ReadonlyArray<{ readonly kind: string; readonly name: string }>,
+      AmplmktError
+    >;
+    psql(
+      instance: string,
+      database: string | undefined,
+      args: ReadonlyArray<string>,
+    ): Effect.Effect<string, AmplmktError>;
+    reindexStatus(id: string): Effect.Effect<string, AmplmktError>;
+    startReindex(target: ReindexTarget): Effect.Effect<typeof StartedReindex.Type, AmplmktError>;
   }
+>()("btree-reindex-amplmkt/Amplmkt") {
+  static readonly layer = Layer.effect(
+    Amplmkt,
+    Effect.gen(function* () {
+      const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
+      // Override for testing against a fake amplmkt.
+      const bin = yield* Config.String("AMPLMKT_BIN").pipe(Config.withDefault("amplmkt"));
 
-  // Polls instead of `amplmkt db reindex watch` so transient status errors (such as an expired
-  // session) only pause tracking. The instance slot stays taken until the outcome is known.
-  async function watchReindex(entry: Entry) {
-    while (entry.state.kind === "running") {
-      await sleep(pollIntervalMs);
-      const { id, startedAt } = entry.state;
-      try {
-        const { status } = await amplmktJson<{ status: string }>(["db", "reindex", "status", "--id", id]);
-        noteAmplmktResult();
-        applyServerStatus(entry, id, status, startedAt);
-      } catch (error) {
-        noteAmplmktResult(messageOf(error));
-        entry.state = { ...entry.state, pollError: messageOf(error) };
-      }
-      render();
-    }
-    schedule();
-  }
-
-  function retry(targets: Entry[]) {
-    for (const entry of targets) {
-      if (entry.state.kind === "start_failed") entry.state = { kind: "queued" };
-    }
-    render();
-    schedule();
-  }
-
-  // Moves the entry to the front of its instance's queue; the scheduler still enforces the limits.
-  let manualOrder = 0;
-  function startNext(entry: Entry) {
-    if (dryRun || (entry.state.kind !== "queued" && entry.state.kind !== "start_failed")) return;
-    entry.state = { kind: "queued", manualOrder: manualOrder++ };
-    render();
-    schedule();
-  }
-
-  // --- Discovery -----------------------------------------------------------
-
-  function setPhase(instance: string, label: string, mark: Phase["mark"] = "active") {
-    phases.set(instance, { label, mark, since: Date.now() });
-    render();
-  }
-
-  function addProblem(where: string, message: string) {
-    noteAmplmktResult(message);
-    problems.push({ where, message });
-    render();
-  }
-
-  async function discoverDatabase(instance: string, database: string) {
-    const candidates = parseCandidates(await psql(instance, database, ["-f", CANDIDATES_SQL]));
-    if (candidates.length === 0) return;
-    // The candidate query does not return schemas, so resolve them separately.
-    const schemas = parseSchemaLookup(await psql(instance, database, ["-c", schemaLookupSql(candidates)]));
-    for (const c of candidates) {
-      const matches = schemas.get(`${c.table}\t${c.index}`) ?? [];
-      if (matches.length !== 1) {
-        const reason = matches.length === 0 ? "schema not found" : `ambiguous schema (${matches.join(", ")})`;
-        addProblem(`${instance}/${database}`, `skipped ${c.table}.${c.index}: ${reason}`);
-        continue;
-      }
-      entries.push({
-        key: `${instance}\t${database}\t${matches[0]}\t${c.index}`,
-        instance,
-        database,
-        schema: matches[0],
-        ...c,
-        state: { kind: "queued" },
-      });
-    }
-    render();
-    schedule();
-  }
-
-  async function discoverInstance(instance: string) {
-    setPhase(instance, "checking");
-    let databases: string[];
-    try {
-      const [inRecovery, ...names] = nonEmptyLines(
-        await psql(instance, undefined, ["-c", "select pg_is_in_recovery()", "-c", LIST_DATABASES_SQL]),
+      const run = Effect.fnUntraced(
+        function* (args: ReadonlyArray<string>, env: Record<string, string> = {}) {
+          const handle = yield* spawner.spawn(
+            ChildProcess.make(bin, args, { env, extendEnv: true, stdin: "ignore" }),
+          );
+          const [stdout, stderr, code] = yield* Effect.all(
+            [
+              Stream.mkString(Stream.decodeText(handle.stdout)),
+              Stream.mkString(Stream.decodeText(handle.stderr)),
+              handle.exitCode,
+            ],
+            { concurrency: "unbounded" },
+          );
+          return { code: Number(code), stderr, stdout } satisfies CommandResult;
+        },
+        Effect.scoped,
+        Effect.mapError(
+          (cause) => new AmplmktError({ message: `could not run ${bin}: ${cause.message}` }),
+        ),
       );
-      if (inRecovery === "t") return setPhase(instance, "skipped (replica)", "skipped");
-      databases = names;
-    } catch (error) {
-      addProblem(instance, messageOf(error));
-      return setPhase(instance, "could not connect", "error");
-    }
-    databaseScans.total += databases.length;
-    for (const [i, database] of databases.entries()) {
-      setPhase(instance, `scanning ${database} (${i + 1}/${databases.length})`);
-      try {
-        await discoverDatabase(instance, database);
-      } catch (error) {
-        addProblem(`${instance}/${database}`, messageOf(error));
-      }
-      databaseScans.done++;
-    }
-    setPhase(instance, `scanned ${databases.length} db${databases.length === 1 ? "" : "s"}`, "done");
+
+      const runOrFail = Effect.fnUntraced(function* (
+        args: ReadonlyArray<string>,
+        env?: Record<string, string>,
+      ) {
+        const result = yield* run(args, env);
+        if (result.code !== 0) {
+          return yield* new AmplmktError({ message: errorMessage(result) });
+        }
+        return result.stdout;
+      });
+
+      const runJson = <S extends Schema.Codec<unknown, unknown>>(schema: S) => {
+        const decode = decodeJsonOutput(schema);
+        return (args: ReadonlyArray<string>) =>
+          runOrFail([...args, "--format", "json"]).pipe(Effect.flatMap(decode));
+      };
+
+      const isLoggedIn = runJson(AuthStatus)(["auth", "status"]).pipe(
+        Effect.map((status) => status.active),
+        Effect.orElseSucceed(() => false),
+      );
+
+      const listInstances = runJson(Instances)(["db", "list", "--env", "production"]);
+
+      const psql = Effect.fn("Amplmkt.psql")(function* (
+        instance: string,
+        database: string | undefined,
+        args: ReadonlyArray<string>,
+      ) {
+        const target = database
+          ? ["--instance", instance, "--database", database]
+          : ["--instance", instance];
+        return yield* runOrFail(
+          [
+            "db",
+            "connect",
+            ...target,
+            "--role",
+            "readonly",
+            "--",
+            "-X",
+            "-A",
+            "-t",
+            "-q",
+            "-F",
+            "\t",
+            "-v",
+            "ON_ERROR_STOP=1",
+            // amplmkt overrides application_name from PGOPTIONS, so set it in the session.
+            "-c",
+            "set application_name = 'btree-reindex-amplmkt-goncalo'",
+            ...args,
+          ],
+          // Forces psql, which the flags above require.
+          { AMPLMKT_CLI_PSQL_BIN: "psql" },
+        );
+      });
+
+      const startReindex = Effect.fn("Amplmkt.startReindex")(function* (target: ReindexTarget) {
+        return yield* runJson(StartedReindex)([
+          "db",
+          "reindex",
+          "--instance",
+          target.instance,
+          "--database",
+          target.database,
+          "--schema",
+          target.schema,
+          "--index",
+          target.index,
+        ]);
+      });
+
+      const reindexStatus = Effect.fn("Amplmkt.reindexStatus")(function* (id: string) {
+        const { status } = yield* runJson(ReindexStatus)(["db", "reindex", "status", "--id", id]);
+        return status;
+      });
+
+      return Amplmkt.of({ isLoggedIn, listInstances, psql, reindexStatus, startReindex });
+    }),
+  );
+}
+
+interface KeyPress {
+  readonly ctrl: boolean;
+  readonly name: string;
+  readonly selectedKey: string | undefined;
+  readonly shift: boolean;
+}
+
+class Tui extends Context.Service<
+  Tui,
+  {
+    readonly keys: Stream.Stream<KeyPress>;
+    render(state: AppState, now: number): Effect.Effect<void>;
   }
+>()("btree-reindex-amplmkt/Tui") {
+  static readonly layer = Layer.effect(
+    Tui,
+    Effect.gen(function* () {
+      // Terminal default and ANSI palette colors, so the TUI follows the terminal's light or dark theme.
+      const fg = RGBA.defaultForeground();
+      const bg = RGBA.defaultBackground();
+      const border = { border: true, borderColor: RGBA.fromIndex(8), titleColor: fg };
+      const text = { bg, fg };
+      const muted = { ...text, attributes: TextAttributes.DIM };
+      // The terminal default foreground cannot serve as a background, so pick the highlight from the reported theme.
+      const selectionColors = { dark: "#3a4a5c", light: "#cfe0f7" };
 
-  // --- Lifecycle -------------------------------------------------------------
+      const renderer = yield* Effect.acquireRelease(
+        Effect.promise(() => createCliRenderer({ backgroundColor: bg, exitOnCtrlC: false })),
+        (renderer) =>
+          Effect.promise(() => {
+            renderer.destroy();
+            return renderer.closed;
+          }),
+      );
 
-  async function quit() {
-    const inFlight = entries.filter(isInFlight).length;
-    if (inFlight > 0 && !quitRequested) {
-      quitRequested = true;
-      notice = `${inFlight} reindex${inFlight === 1 ? "" : "es"} still in progress server-side; press q again to quit`;
-      render();
+      const root = new BoxRenderable(renderer, {
+        flexDirection: "column",
+        height: "100%",
+        width: "100%",
+      });
+      const header = new TextRenderable(renderer, {
+        ...text,
+        attributes: TextAttributes.BOLD,
+        content: "",
+        height: 1,
+      });
+      const columns = new TextRenderable(renderer, { ...muted, content: "", height: 1 });
+      const emptyState = new TextRenderable(renderer, { ...muted, content: "", flexGrow: 1 });
+      const list = new SelectRenderable(renderer, {
+        backgroundColor: bg,
+        flexGrow: 1,
+        focusedBackgroundColor: bg,
+        focusedTextColor: fg,
+        options: [],
+        selectedTextColor: fg,
+        showDescription: false,
+        showScrollIndicator: true,
+        textColor: fg,
+      });
+      const details = new BoxRenderable(renderer, { ...border, height: 5, title: "Selected" });
+      const detailsText = new TextRenderable(renderer, { ...text, content: "" });
+      details.add(detailsText);
+      const bottom = new BoxRenderable(renderer, { flexDirection: "row", height: 3 });
+      const instancesBox = new BoxRenderable(renderer, {
+        ...border,
+        flexBasis: 0,
+        flexGrow: 2,
+        title: "Instances",
+      });
+      const instancesText = new TextRenderable(renderer, {
+        ...text,
+        content: "",
+        wrapMode: "none",
+      });
+      instancesBox.add(instancesText);
+      const problemsBox = new BoxRenderable(renderer, {
+        ...border,
+        flexBasis: 0,
+        flexGrow: 1,
+        title: "Problems",
+      });
+      const problemsText = new TextRenderable(renderer, {
+        ...text,
+        content: "",
+        fg: RGBA.fromIndex(1),
+        wrapMode: "none",
+      });
+      problemsBox.add(problemsText);
+      bottom.add(instancesBox);
+      bottom.add(problemsBox);
+      const footer = new TextRenderable(renderer, { ...text, content: "", height: 1 });
+      for (const child of [header, columns, emptyState, list, details, bottom, footer]) {
+        root.add(child);
+      }
+      renderer.root.add(root);
+
+      yield* Effect.promise(() => renderer.waitForThemeMode(300));
+
+      const selectedKey = () => {
+        const value: unknown = list.getSelectedOption()?.value;
+        return Predicate.isString(value) ? value : undefined;
+      };
+      let entriesByKey = new Map<string, Entry>();
+      const renderDetails = () => {
+        const selected = entriesByKey.get(selectedKey() ?? "");
+        detailsText.content = selected ? describeEntry(selected) : "";
+        renderer.requestRender();
+      };
+      // SelectRenderable emits selectionChanged from setSelectedIndex too, so only the details pane reacts to it.
+      list.on("selectionChanged", renderDetails);
+
+      const render = (state: AppState, now: number) =>
+        Effect.sync(() => {
+          list.selectedBackgroundColor = selectionColors[renderer.themeMode ?? "dark"];
+          header.content = headerLine(state, now);
+          const footerContent = footerLine(state);
+          footer.content = footerContent.text;
+          footer.fg = footerContent.warning ? RGBA.fromIndex(1) : fg;
+          footer.attributes = footerContent.warning ? TextAttributes.BOLD : TextAttributes.DIM;
+
+          const previouslySelected = selectedKey();
+          // The list draws a 3-column selection indicator and a 1-column scroll indicator.
+          const table = entryTable(state, now, renderer.width - 4);
+          columns.content = `   ${table.header}`;
+          list.options = table.rows.map((row) => ({
+            description: "",
+            name: row.line,
+            value: row.key,
+          }));
+          const selectedIndex = table.rows.findIndex((row) => row.key === previouslySelected);
+          if (selectedIndex >= 0 && selectedIndex !== list.getSelectedIndex()) {
+            list.setSelectedIndex(selectedIndex);
+          }
+
+          emptyState.visible = table.rows.length === 0;
+          list.visible = table.rows.length > 0;
+          // Hiding the list drops its focus, so take it back once rows appear.
+          if (list.visible && !list.focused) {
+            list.focus();
+          }
+          emptyState.content = emptyStateText(state, now);
+          bottom.height = Math.min(14, Math.max(state.instances.length, 1) + 2);
+          instancesText.content = instanceLines(state, now);
+          problemsText.content = state.problems.map((p) => `${p.where}: ${p.message}`).join("\n");
+          entriesByKey = new Map(state.entries.map((e) => [e.key, e]));
+          renderDetails();
+        });
+
+      const keys = Stream.callback<KeyPress>((queue) => {
+        const onKey = (key: KeyEvent) =>
+          Queue.offerUnsafe(queue, {
+            ctrl: key.ctrl,
+            name: key.name,
+            selectedKey: selectedKey(),
+            shift: key.shift,
+          });
+        return Effect.acquireRelease(
+          Effect.sync(() => renderer.keyInput.on("keypress", onKey)),
+          () => Effect.sync(() => renderer.keyInput.off("keypress", onKey)),
+        );
+      });
+
+      return Tui.of({ keys, render });
+    }),
+  );
+}
+
+// Runs the TUI until the user quits and returns the final state for the report.
+const runTui = Effect.fn("runTui")(function* (options: {
+  readonly dryRun: boolean;
+  readonly pollInterval: Duration.Duration;
+}) {
+  const amplmkt = yield* Amplmkt;
+  const tui = yield* Tui;
+  const state = yield* Ref.make(initialState(options.dryRun));
+  const stopped = yield* Deferred.make<void, FatalError>();
+  const reindexes = yield* FiberSet.make<void>();
+
+  const update = (f: (state: AppState, now: number) => AppState) =>
+    Effect.flatMap(Clock.currentTimeMillis, (now) => Ref.update(state, (s) => f(s, now)));
+
+  const schedule: Effect.Effect<void> = Effect.suspend(() =>
+    Effect.gen(function* () {
+      const claimed = yield* Ref.modify(state, (s) =>
+        claimReindexes(s, MAX_REINDEXES_PER_INSTANCE),
+      );
+      for (const entry of claimed) {
+        yield* FiberSet.run(reindexes, runReindex(entry));
+      }
+    }),
+  );
+
+  // Polls instead of `amplmkt db reindex watch` so transient status errors (such as an expired session) only pause
+  // tracking. The instance slot stays taken until the outcome is known.
+  const pollUntilFinished = Effect.fnUntraced(function* (
+    key: string,
+    id: string,
+    startedAt: number,
+  ) {
+    const pollOnce = amplmkt.reindexStatus(id).pipe(
+      Effect.matchEffect({
+        onFailure: (error) =>
+          update((s) =>
+            noteAmplmktResult(
+              updateEntry(s, key, (e) => ({
+                ...e,
+                state: { ...e.state, pollError: error.message },
+              })),
+              error.message,
+            ),
+          ),
+        onSuccess: (status) =>
+          update((s, now) =>
+            noteAmplmktResult(
+              updateEntry(s, key, (e) => applyServerStatus(e, id, status, startedAt, now)),
+            ),
+          ),
+      }),
+      Effect.andThen(Ref.get(state)),
+      Effect.map((s) => s.entries.find((e) => e.key === key)?.state.kind !== "running"),
+    );
+    yield* pollOnce.pipe(
+      Effect.delay(options.pollInterval),
+      Effect.repeat({ until: (finished) => finished }),
+    );
+  });
+
+  const runReindex = Effect.fnUntraced(function* (entry: Entry) {
+    const startedAt = yield* Clock.currentTimeMillis;
+    yield* amplmkt.startReindex(entry).pipe(
+      Effect.matchEffect({
+        onFailure: (error) =>
+          update((s) =>
+            noteAmplmktResult(
+              updateEntry(s, entry.key, (e) => ({
+                ...e,
+                state: { error: error.message, kind: "start_failed" },
+              })),
+              error.message,
+            ),
+          ),
+        onSuccess: (started) =>
+          update((s, now) =>
+            noteAmplmktResult(
+              updateEntry(s, entry.key, (e) =>
+                applyServerStatus(e, started.id, started.status, startedAt, now),
+              ),
+            ),
+          ).pipe(Effect.andThen(pollUntilFinished(entry.key, started.id, startedAt))),
+      }),
+    );
+    yield* schedule;
+  });
+
+  const discoverDatabase = Effect.fn("discoverDatabase")(function* (
+    instance: string,
+    database: string,
+  ) {
+    const candidates = parseCandidates(
+      yield* amplmkt.psql(instance, database, ["-f", CANDIDATES_SQL]),
+    );
+    if (candidates.length === 0) {
       return;
     }
-    clearInterval(ticker);
-    for (const child of children) child.kill();
-    renderer.destroy();
-    await renderer.closed;
-    printReport();
-    process.exit(0);
-  }
-
-  function printReport() {
-    const rows = sortedEntries().map((e) => {
-      const s = e.state;
-      return [e.instance, e.database, e.schema, e.table, e.index, e.realSize, `${e.bloatSize} (${e.bloatPct}%)`, "id" in s ? s.id : "", reportResult(s)];
-    });
-    if (rows.length > 0) {
-      console.log(
-        formatTable(["INSTANCE", "DATABASE", "SCHEMA", "TABLE", "INDEX", "SIZE BEFORE", "BLOAT BEFORE", "REINDEX ID", "RESULT"], rows).join("\n"),
-      );
-    } else {
-      console.log("No reindex candidates found.");
-    }
-    if (problems.length > 0) {
-      console.log("\nProblems:");
-      for (const p of problems) console.log(`  ${p.where}: ${p.message}`);
-    }
-  }
-
-  renderer.keyInput.on("keypress", (key: KeyEvent) => {
-    if (key.name === "q" || (key.ctrl && key.name === "c")) {
-      void quit();
-    } else if (key.name === "R" || (key.name === "r" && key.shift)) {
-      retry(entries);
-    } else if (key.name === "s") {
-      const selected = entries.find((e) => e.key === list.getSelectedOption()?.value);
-      if (selected) startNext(selected);
-    } else if (key.name === "r") {
-      const selected = entries.find((e) => e.key === list.getSelectedOption()?.value);
-      if (selected) retry([selected]);
-    } else if (quitRequested && entries.filter(isInFlight).length > 0) {
-      quitRequested = false;
-      notice = "";
-      render();
-      schedule();
-    }
-  });
-  list.on("selectionChanged", renderDetails);
-
-  async function abort(message: string): Promise<never> {
-    clearInterval(ticker);
-    renderer.destroy();
-    await renderer.closed;
-    console.error(message);
-    process.exit(1);
-  }
-
-  const ticker = setInterval(render, 100);
-  render();
-
-  const auth = await amplmktJson<{ active?: boolean }>(["auth", "status"]).catch(() => null);
-  if (!auth?.active) await abort("No active amplmkt session. Run `amplmkt auth login` and try again.");
-
-  startupStep = "Listing production instances…";
-  render();
-  try {
-    instances = selectPrimaryInstances(
-      await amplmktJson<{ name: string; kind: string }[]>(["db", "list", "--env", "production"]),
+    // The candidate query does not return schemas, so resolve them separately.
+    const schemas = parseSchemaLookup(
+      yield* amplmkt.psql(instance, database, ["-c", schemaLookupSql(candidates)]),
     );
-  } catch (error) {
-    await abort(`Could not list production instances: ${messageOf(error)}`);
-  }
-  for (const instance of instances) phases.set(instance, { label: "waiting", mark: "active", since: Date.now() });
-  bottom.height = Math.min(14, Math.max(instances.length, 1) + 2);
-  startupStep = undefined;
-  render();
+    yield* update((s) => addCandidates(s, instance, database, candidates, schemas));
+    yield* schedule;
+  });
 
-  await Promise.all(instances.map(discoverInstance));
-}
+  const discoverInstance = Effect.fn("discoverInstance")(function* (instance: string) {
+    yield* update((s, now) => setPhase(s, instance, "checking", "active", now));
+    const check = yield* amplmkt
+      .psql(instance, undefined, ["-c", "select pg_is_in_recovery()", "-c", LIST_DATABASES_SQL])
+      .pipe(
+        Effect.map(parseInstanceCheck),
+        Effect.catch((error) =>
+          update((s, now) =>
+            setPhase(
+              addProblem(s, instance, error.message),
+              instance,
+              "could not connect",
+              "error",
+              now,
+            ),
+          ).pipe(Effect.as(undefined)),
+        ),
+      );
+    if (check === undefined) {
+      return;
+    }
+    if (check.kind === "replica") {
+      return yield* update((s, now) => setPhase(s, instance, "skipped (replica)", "skipped", now));
+    }
 
-await main();
+    const { databases } = check;
+    yield* update((s) => countDatabaseScans(s, { total: databases.length }));
+    for (const [i, database] of databases.entries()) {
+      yield* update((s, now) =>
+        setPhase(s, instance, `scanning ${database} (${i + 1}/${databases.length})`, "active", now),
+      );
+      yield* discoverDatabase(instance, database).pipe(
+        Effect.catch((error) =>
+          update((s) => addProblem(s, `${instance}/${database}`, error.message)),
+        ),
+      );
+      yield* update((s) => countDatabaseScans(s, { done: 1 }));
+    }
+    yield* update((s, now) =>
+      setPhase(
+        s,
+        instance,
+        `scanned ${databases.length} db${databases.length === 1 ? "" : "s"}`,
+        "done",
+        now,
+      ),
+    );
+  });
+
+  const startup = Effect.gen(function* () {
+    if (!(yield* amplmkt.isLoggedIn)) {
+      return yield* new FatalError({
+        message: "No active amplmkt session. Run `amplmkt auth login` and try again.",
+      });
+    }
+    yield* update((s) => ({ ...s, startupStep: "Listing production instances…" }));
+    const instances = selectPrimaryInstances(
+      yield* amplmkt.listInstances.pipe(
+        Effect.mapError(
+          (error) =>
+            new FatalError({ message: `Could not list production instances: ${error.message}` }),
+        ),
+      ),
+    );
+    yield* update((s, now) => startScanning(s, instances, now));
+    yield* Effect.forEach(instances, discoverInstance, { concurrency: "unbounded", discard: true });
+  });
+
+  const handleKey = Effect.fnUntraced(function* (key: KeyPress) {
+    const { selectedKey } = key;
+    if (key.name === "q" || (key.ctrl && key.name === "c")) {
+      const decision = yield* Ref.modify(state, requestQuit);
+      if (decision === "quit") {
+        yield* Deferred.succeed(stopped, undefined);
+      }
+      return;
+    }
+    if (key.name === "R" || (key.name === "r" && key.shift)) {
+      yield* update((s) => retryFailedStarts(s, new Set(s.entries.map((e) => e.key))));
+    } else if (key.name === "r" && selectedKey !== undefined) {
+      yield* update((s) => retryFailedStarts(s, new Set([selectedKey])));
+    } else if (key.name === "s" && selectedKey !== undefined) {
+      yield* update((s) => startNext(s, selectedKey));
+    } else {
+      yield* update(cancelQuit);
+    }
+    yield* schedule;
+  });
+
+  const renderOnce = Effect.flatMap(
+    Effect.all([Ref.get(state), Clock.currentTimeMillis]),
+    ([s, now]) => tui.render(s, now),
+  );
+  yield* Effect.forkScoped(Effect.repeat(renderOnce, Schedule.spaced("100 millis")));
+  yield* Effect.forkScoped(Stream.runForEach(tui.keys, handleKey));
+  yield* Effect.forkScoped(startup.pipe(Effect.catch((error) => Deferred.fail(stopped, error))));
+
+  yield* Deferred.await(stopped);
+  return yield* Ref.get(state);
+});
+
+const main = Effect.fn("main")(
+  function* (options: { readonly dryRun: boolean; readonly pollInterval: number }) {
+    const fs = yield* FileSystem.FileSystem;
+    const hasQuery = yield* fs.exists(CANDIDATES_SQL).pipe(Effect.orElseSucceed(() => false));
+    if (!hasQuery) {
+      return yield* new FatalError({ message: `${CANDIDATES_SQL} not found` });
+    }
+
+    // The Tui layer is released, restoring the terminal, before the report is printed.
+    const finalState = yield* runTui({
+      dryRun: options.dryRun,
+      pollInterval: Duration.seconds(options.pollInterval),
+    }).pipe(Effect.scoped, Effect.provide(Tui.layer));
+    yield* Console.log(formatReport(finalState));
+  },
+  Effect.tapError((error) => Console.error(error.message)),
+);
+
+const command = Command.make(
+  "btree-reindex-amplmkt",
+  {
+    dryRun: Flag.Boolean("dry-run").pipe(
+      Flag.withDescription("Find candidates without reindexing"),
+      Flag.withDefault(false),
+    ),
+    pollInterval: Flag.Int("poll-interval").pipe(
+      Flag.withDescription("Seconds between reindex status checks"),
+      Flag.withSchema(Schema.Int.pipe(Schema.check(Schema.isGreaterThan(0)))),
+      Flag.withDefault(30),
+    ),
+  },
+  main,
+).pipe(
+  Command.withDescription(
+    "Find bloated btree indexes on production PostgreSQL primaries and reindex them. " +
+      "Keys: ↑/↓ move, s start selected next (within the concurrency limit), r retry selected failed start, " +
+      "R retry all failed starts, q quit.",
+  ),
+);
+
+command.pipe(
+  Command.run({ version: "1.0.0" }),
+  Effect.provide(Amplmkt.layer.pipe(Layer.provideMerge(BunServices.layer))),
+  (program) => BunRuntime.runMain(program, { disableErrorReporting: true }),
+);
