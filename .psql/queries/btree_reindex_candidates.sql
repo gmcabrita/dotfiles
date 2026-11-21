@@ -49,59 +49,43 @@ idx_data as (
         and ci.relpages * c.bs > c.min_index_size
 ),
 
-ic as (
-    select
-        idxname,
-        reltuples,
-        relpages,
-        tbloid,
-        idxoid,
-        fillfactor,
-        indkey,
-        ia.attnum as attpos
-    -- Joining the index's own pg_attribute rows instead of calling
-    -- generate_series(1, indnatts) keeps row estimates sane. The SRF is
-    -- estimated at 1000 rows per index, which inflates the plan cost enough to
-    -- trigger JIT compilation that takes longer than the query itself.
-    from idx_data
-    join pg_catalog.pg_attribute ia
-        on
-            ia.attrelid = idx_data.idxoid
-            and ia.attnum between 1 and idx_data.indnatts
-),
-
 index_columns as (
     select
         ct.relname as tblname,
         ct.relnamespace,
-        ic.idxname,
-        ic.attpos,
-        ic.indkey,
-        ic.indkey[ic.attpos],
-        ic.reltuples,
-        ic.relpages,
-        ic.tbloid,
-        ic.idxoid,
-        ic.fillfactor,
-        coalesce(a1.attnum, a2.attnum) as attnum,
-        coalesce(a1.attname, a2.attname) as attname,
-        coalesce(a1.atttypid, a2.atttypid) as atttypid,
+        idx.idxname,
+        idx.reltuples,
+        idx.relpages,
+        idx.idxoid,
+        idx.fillfactor,
+        -- CASE instead of COALESCE keeps the pg_stats predicates below
+        -- pushable into the view's catalog index lookups.
         case
-            when a1.attnum is null
-                then ic.idxname
+            when ta.attnum is null
+                then ia.attname
+            else ta.attname
+        end as attname,
+        coalesce(ta.atttypid, ia.atttypid) as atttypid,
+        case
+            when ta.attnum is null
+                then idx.idxname
             else ct.relname
         end as attrelname
-    from ic
-    join pg_catalog.pg_class ct on ct.oid = ic.tbloid
-    left join pg_catalog.pg_attribute a1
+    from idx_data idx
+    -- The index's own pg_attribute rows enumerate its columns, so expression
+    -- columns (indkey = 0) fall back to them. generate_series(1, indnatts)
+    -- would be estimated at 1000 rows per index and inflate the plan cost
+    -- enough to trigger JIT. The table attribute is still needed because
+    -- index column names go stale after RENAME COLUMN.
+    join pg_catalog.pg_attribute ia
         on
-            ic.indkey[ic.attpos] <> 0
-            and a1.attrelid = ic.tbloid
-            and a1.attnum = ic.indkey[ic.attpos]
-    left join pg_catalog.pg_attribute a2 on
-        ic.indkey[ic.attpos] = 0
-        and a2.attrelid = ic.idxoid
-        and a2.attnum = ic.attpos
+            ia.attrelid = idx.idxoid
+            and ia.attnum between 1 and idx.indnatts
+    join pg_catalog.pg_class ct on ct.oid = idx.tbloid
+    left join pg_catalog.pg_attribute ta
+        on
+            ta.attrelid = idx.tbloid
+            and ta.attnum = idx.indkey[ia.attnum]
 ),
 
 rows_data_stats as (
@@ -146,9 +130,8 @@ rows_data_stats as (
             n.oid = i.relnamespace
             and n.nspname <> 'pg_catalog'
     -- A plain join lets the planner scan the whole pg_stats view, which runs
-    -- has_column_privilege() for every column in the database. LATERAL with
-    -- OFFSET 0 (which blocks subquery pull-up) forces indexed lookups for only
-    -- the columns of indexes that passed the size filter.
+    -- has_column_privilege() for every column in the database. OFFSET 0 blocks
+    -- subquery pull-up, so pg_stats is looked up once per candidate column.
     cross join lateral (
         select s.null_frac, s.avg_width
         from pg_catalog.pg_stats s
@@ -156,6 +139,9 @@ rows_data_stats as (
             s.schemaname = n.nspname
             and s.tablename = i.attrelname
             and s.attname = i.attname
+            -- An inheritance parent also has stats covering its children, but
+            -- its indexes hold only its own rows.
+            and not s.inherited
         offset 0
     ) s
     group by 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
