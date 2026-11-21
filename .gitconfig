@@ -79,24 +79,6 @@
   # Quick switch
   sw = switch
 
-  # Quick worktree
-  w = worktree
-  wt = worktree
-  wa = worktree add
-  wad = worktree add
-  wl = worktree list
-  wlo = worktree lock
-  wlk = worktree lock
-  wm = worktree move
-  wp = worktree prune
-  wr = worktree remove
-  wre = worktree repair
-  wrp = worktree repair
-  wu = worktree unlock
-  wulk = worktree unlock
-  wun = worktree unlock
-  wunlk = worktree unlock
-
   maincheckout = "!f() { if [ -n \"$(git status --porcelain)\" ]; then echo \"Error: You have uncommitted changes, discard or stash them first.\"; exit 1; fi; git checkout $(git symbolic-ref refs/remotes/origin/HEAD | sed \"s@^refs/remotes/origin/@@\") && git checkout -b \"$1\"; }; f"
   mainco = maincheckout
   mco = maincheckout
