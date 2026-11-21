@@ -242,6 +242,12 @@ ERL_AFLAGS="-kernel shell_history enabled" \
   RUBY_CONFIGURE_OPTS="--with-gmp --with-jemalloc" \
   mise install
 
+# Register mise's Java with macOS (/usr/libexec/java_home, GUI apps).
+# Links the `latest` alias so the registration follows upgrades.
+mkdir -p "$HOME/Library/Java/JavaVirtualMachines/mise-latest.jdk"
+ln -sfn "$HOME/.local/share/mise/installs/java/latest/Contents" \
+  "$HOME/Library/Java/JavaVirtualMachines/mise-latest.jdk/Contents"
+
 rustup component add rust-analyzer rust-src clippy rustfmt rust-docs llvm-tools
 mise reshim
 mix local.hex --force
