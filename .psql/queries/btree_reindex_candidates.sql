@@ -58,8 +58,16 @@ ic as (
         idxoid,
         fillfactor,
         indkey,
-        pg_catalog.generate_series(1, indnatts) as attpos
+        ia.attnum as attpos
+    -- Joining the index's own pg_attribute rows instead of calling
+    -- generate_series(1, indnatts) keeps row estimates sane. The SRF is
+    -- estimated at 1000 rows per index, which inflates the plan cost enough to
+    -- trigger JIT compilation that takes longer than the query itself.
     from idx_data
+    join pg_catalog.pg_attribute ia
+        on
+            ia.attrelid = idx_data.idxoid
+            and ia.attnum between 1 and idx_data.indnatts
 ),
 
 index_columns as (
@@ -137,11 +145,19 @@ rows_data_stats as (
         on
             n.oid = i.relnamespace
             and n.nspname <> 'pg_catalog'
-    join pg_catalog.pg_stats s
-        on
+    -- A plain join lets the planner scan the whole pg_stats view, which runs
+    -- has_column_privilege() for every column in the database. LATERAL with
+    -- OFFSET 0 (which blocks subquery pull-up) forces indexed lookups for only
+    -- the columns of indexes that passed the size filter.
+    cross join lateral (
+        select s.null_frac, s.avg_width
+        from pg_catalog.pg_stats s
+        where
             s.schemaname = n.nspname
             and s.tablename = i.attrelname
             and s.attname = i.attname
+        offset 0
+    ) s
     group by 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
 ),
 
