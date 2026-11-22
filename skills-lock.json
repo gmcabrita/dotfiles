@@ -8,13 +8,6 @@
       "computedHash": "241993fe8465bd04f7ed582387b5f0d7ef1795355907c588ad553a8e98a88386",
       "commit": "8ffecc1d3d088727f8d84baf4dde0224aab2e8ad"
     },
-    "benchmark-checklist": {
-      "source": "cursor/plugins",
-      "sourceType": "github",
-      "skillPath": "pstack/skills/benchmark-checklist/SKILL.md",
-      "computedHash": "adc8a48e433402b97a9b6f9393496ee0c02ae437cfc1aba709411c56fd6fb778",
-      "commit": "2f87c854fe3e2fcda44ca86b46ede35aad3c46b7"
-    },
     "fix-merge-conflicts": {
       "source": "cursor/plugins",
       "sourceType": "github",
@@ -77,27 +70,6 @@
       "skillPath": "cursor-team-kit/skills/thermo-nuclear-code-quality-review/SKILL.md",
       "computedHash": "705eb32106f0fec9c9e9b4afccb6156f17f6e8829368e54cd5b53f10e4374340",
       "commit": "bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7"
-    },
-    "weekly-review": {
-      "source": "cursor/plugins",
-      "sourceType": "github",
-      "skillPath": "cursor-team-kit/skills/weekly-review/SKILL.md",
-      "computedHash": "e19f126aa3096264224c7d792edb23d994123020063aa24c5234d79350d04e6f",
-      "commit": "bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7"
-    },
-    "what-did-i-get-done": {
-      "source": "cursor/plugins",
-      "sourceType": "github",
-      "skillPath": "cursor-team-kit/skills/what-did-i-get-done/SKILL.md",
-      "computedHash": "d4c421903b43074f6d5f75e7055a06c2476735b2bb691285e3217504cd038627",
-      "commit": "bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7"
-    },
-    "write-discoverable-code": {
-      "source": "modem-dev/skills",
-      "sourceType": "github",
-      "skillPath": "write-discoverable-code/SKILL.md",
-      "computedHash": "67dba2ebb8990a59e30d56f6602e754465c4ce6ee781ccd0265f4d81112a9343",
-      "commit": "edcdedb38a545f67c065f4084b3627517f0d79cf"
     }
   }
 }
