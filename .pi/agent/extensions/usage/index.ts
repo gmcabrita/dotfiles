@@ -4,9 +4,10 @@
  *
  * Subscription providers (anthropic, openai-codex, openai-codex-lb, opencode-go) render
  * percent bars per rate limit window. Pay-as-you-go providers (openrouter,
- * deepseek, abliteration) render dollar balances. Without an argument, only providers of
- * the session's scoped models (`enabledModels` / `--models`) are queried;
- * `/usage <provider>` queries that provider regardless of scope. Providers
+ * deepseek, abliteration) render dollar balances. Without an argument, subscription
+ * providers are limited to the session's scoped models (`enabledModels` / `--models`)
+ * while prepaid providers are always queried; `/usage <provider>` queries that provider
+ * regardless of scope. Providers
  * without stored auth are skipped; opencode (Zen) has no usage API and is not listed.
  */
 
@@ -38,6 +39,8 @@ const USAGE_PROVIDERS: UsageProvider[] = [
   deepSeekUsageProvider,
   abliterationUsageProvider,
 ];
+
+const OVERLAY_MAX_HEIGHT_PERCENT = 80;
 
 async function resolveAuth(ctx: ExtensionContext, providerId: string): Promise<ProviderAuth | undefined> {
   const result = await ctx.modelRegistry.getProviderAuth(providerId);
@@ -73,7 +76,8 @@ export function selectProviders(
 ): UsageProvider[] | undefined {
   const wanted = args.trim().toLowerCase();
   if (wanted === "") {
-    return scoped.size === 0 ? providers : providers.filter((provider) => scoped.has(provider.id));
+    if (scoped.size === 0) return providers;
+    return providers.filter((provider) => provider.billing === "prepaid" || scoped.has(provider.id));
   }
   const matches = providers.filter((provider) => provider.id === wanted);
   return matches.length > 0 ? matches : undefined;
@@ -91,6 +95,20 @@ function frameLines(lines: string[], width: number, theme: Theme): string[] {
     return border("│") + truncated + " ".repeat(Math.max(0, innerWidth - visibleWidth(truncated))) + border("│");
   });
   return [border(`┌${"─".repeat(innerWidth)}┐`), ...framed, border(`└${"─".repeat(innerWidth)}┘`)];
+}
+
+export interface Viewport {
+  visible: string[];
+  /** Offset clamped to the scrollable range. */
+  offset: number;
+  maxOffset: number;
+}
+
+export function scrollViewport(lines: string[], offset: number, height: number): Viewport {
+  const rows = Math.max(1, height);
+  const maxOffset = Math.max(0, lines.length - rows);
+  const clamped = Math.min(maxOffset, Math.max(0, offset));
+  return { visible: lines.slice(clamped, clamped + rows), offset: clamped, maxOffset };
 }
 
 function themeStyle(theme: Theme): UsageStyle {
@@ -126,6 +144,8 @@ export default function usageExtension(pi: ExtensionAPI) {
 
       let lines: string[] = [];
       let loading = true;
+      let scrollOffset = 0;
+      let bodyHeight = 1;
       // Set when the overlay closes so an in-flight refresh does not touch the TUI.
       let closed = false;
 
@@ -145,13 +165,26 @@ export default function usageExtension(pi: ExtensionAPI) {
           const rerender = () => tui.requestRender();
           void load(rerender, theme);
 
+          const scrollBy = (delta: number) => {
+            scrollOffset += delta;
+            rerender();
+          };
+
           const component: Component = {
             invalidate: () => {},
             render: (width) => {
               const header = [theme.bold(" Usage"), ""];
               const body = (loading ? [theme.fg("dim", "Loading…")] : lines).map((line) => ` ${line}`);
-              const footer = theme.fg("dim", " r refresh · q/esc close");
-              return frameLines([...header, ...body, "", footer], width, theme);
+              const maxRows = Math.floor((tui.terminal.rows * OVERLAY_MAX_HEIGHT_PERCENT) / 100);
+              // Header, blank line before the footer, footer, and the two border rows.
+              bodyHeight = Math.max(1, maxRows - header.length - 4);
+              const viewport = scrollViewport(body, scrollOffset, bodyHeight);
+              scrollOffset = viewport.offset;
+              const position = viewport.maxOffset > 0
+                ? ` · ↑↓/pgup/pgdn scroll ${viewport.offset + 1}–${viewport.offset + viewport.visible.length} of ${body.length}`
+                : "";
+              const footer = theme.fg("dim", ` r refresh · q/esc close${position}`);
+              return frameLines([...header, ...viewport.visible, "", footer], width, theme);
             },
             handleInput: (data) => {
               if (keybindings.matches(data, "tui.select.cancel") || data.toLowerCase() === "q") {
@@ -159,6 +192,10 @@ export default function usageExtension(pi: ExtensionAPI) {
                 done();
                 return;
               }
+              if (keybindings.matches(data, "tui.select.up") || data === "k") return scrollBy(-1);
+              if (keybindings.matches(data, "tui.select.down") || data === "j") return scrollBy(1);
+              if (keybindings.matches(data, "tui.select.pageUp")) return scrollBy(-bodyHeight);
+              if (keybindings.matches(data, "tui.select.pageDown")) return scrollBy(bodyHeight);
               if (data.toLowerCase() === "r" && !loading) {
                 void load(rerender, theme);
               }
@@ -168,7 +205,7 @@ export default function usageExtension(pi: ExtensionAPI) {
         },
         {
           overlay: true,
-          overlayOptions: { width: "80%", maxHeight: "80%", anchor: "center" },
+          overlayOptions: { width: "80%", maxHeight: `${OVERLAY_MAX_HEIGHT_PERCENT}%`, anchor: "center" },
         },
       );
     },

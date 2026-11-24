@@ -45,6 +45,8 @@ export interface UsageProvider {
   /** pi provider id, e.g. "anthropic". Used for auth lookup and `/usage <id>` filtering. */
   id: string;
   label: string;
+  /** Prepaid balances are listed by a bare `/usage` even when no scoped model uses the provider. */
+  billing: "subscription" | "prepaid";
   fetch(auth: ProviderAuth): Promise<ProviderUsage>;
 }
 

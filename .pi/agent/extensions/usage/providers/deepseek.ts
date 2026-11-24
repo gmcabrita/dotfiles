@@ -26,6 +26,7 @@ export function parseDeepSeekUsage(body: DeepSeekBalanceResponse): ProviderUsage
 export const deepSeekUsageProvider: UsageProvider = {
   id: "deepseek",
   label: "DeepSeek",
+  billing: "prepaid",
   async fetch(auth) {
     const body = await getJson<DeepSeekBalanceResponse>(DEEPSEEK_BALANCE_ENDPOINT, {
       Authorization: `Bearer ${auth.token}`,

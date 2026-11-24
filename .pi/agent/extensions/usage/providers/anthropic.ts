@@ -77,6 +77,7 @@ export function parseAnthropicUsage(body: AnthropicUsageResponse): ProviderUsage
 export const anthropicUsageProvider: UsageProvider = {
   id: "anthropic",
   label: "Anthropic (Claude)",
+  billing: "subscription",
   async fetch(auth) {
     if (auth.source !== "OAuth") {
       throw new Error("OAuth login required: run `pi auth login anthropic`.");

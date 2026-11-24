@@ -68,6 +68,7 @@ export function extractChatGptAccountId(token: string): string {
 export const openAICodexUsageProvider: UsageProvider = {
   id: "openai-codex",
   label: "OpenAI Codex (ChatGPT)",
+  billing: "subscription",
   async fetch(auth) {
     if (auth.source !== "OAuth") {
       throw new Error("OAuth login required: run `pi auth login openai-codex`.");

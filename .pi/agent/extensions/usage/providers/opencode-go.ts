@@ -46,6 +46,7 @@ export function parseOpenCodeGoUsage(body: OpenCodeGoUsageResponse): ProviderUsa
 export const openCodeGoUsageProvider: UsageProvider = {
   id: "opencode-go",
   label: "OpenCode Go",
+  billing: "subscription",
   async fetch(auth) {
     const body = await getJson<OpenCodeGoUsageResponse>(OPENCODE_GO_USAGE_ENDPOINT, {
       Authorization: `Bearer ${auth.token}`,

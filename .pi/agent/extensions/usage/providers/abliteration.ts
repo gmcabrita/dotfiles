@@ -14,6 +14,7 @@ export const ABLITERATION_CREDITS_ENDPOINT = "https://api.abliteration.ai/v1/cre
 export const abliterationUsageProvider: UsageProvider = {
   id: "abliteration",
   label: "abliteration.ai",
+  billing: "prepaid",
   async fetch(auth) {
     const credits = await getJson<OpenRouterCreditsResponse>(ABLITERATION_CREDITS_ENDPOINT, {
       Authorization: `Bearer ${auth.token}`,

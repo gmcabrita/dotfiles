@@ -70,6 +70,7 @@ export function parseCodexLbUsage(body: CodexLbUsageResponse): ProviderUsage {
 export const openAICodexLbUsageProvider: UsageProvider = {
   id: "openai-codex-lb",
   label: "OpenAI Codex LB",
+  billing: "subscription",
   async fetch(auth) {
     const body = await getJson<CodexLbUsageResponse>(resolveCodexLbUsageUrl(), {
       Authorization: `Bearer ${auth.token}`,

@@ -17,6 +17,7 @@ export function parseOpenRouterUsage(credits: OpenRouterCreditsResponse): Provid
 export const openRouterUsageProvider: UsageProvider = {
   id: "openrouter",
   label: "OpenRouter",
+  billing: "prepaid",
   async fetch(auth) {
     const credits = await getJson<OpenRouterCreditsResponse>(OPENROUTER_CREDITS_ENDPOINT, {
       Authorization: `Bearer ${auth.token}`,

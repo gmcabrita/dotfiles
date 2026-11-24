@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { formatProviderUsage, formatTimeUntil, formatUsageReport, progressBar, type ProviderResult } from "./model.ts";
+import { formatProviderUsage, formatTimeUntil, formatUsageReport, progressBar, type ProviderResult, type UsageProvider } from "./model.ts";
 import { type AnthropicUsageResponse, parseAnthropicUsage } from "./providers/anthropic.ts";
 import { parseDeepSeekUsage } from "./providers/deepseek.ts";
 import { extractChatGptAccountId, parseOpenAICodexUsage } from "./providers/openai-codex.ts";
 import { parseCodexLbUsage, resolveCodexLbUsageUrl } from "./providers/openai-codex-lb.ts";
 import { parseOpenCodeGoUsage } from "./providers/opencode-go.ts";
 import { parseOpenRouterUsage } from "./providers/openrouter.ts";
-import { scopedProviderIds, selectProviders } from "./index.ts";
+import { scopedProviderIds, scrollViewport, selectProviders } from "./index.ts";
 
 const now = new Date("2026-09-14T18:54:00Z");
 
@@ -158,25 +158,40 @@ describe("parseDeepSeekUsage", () => {
 
 describe("selectProviders", () => {
   const noop = async () => ({ rows: [], notes: [] });
-  const providers = [
-    { id: "anthropic", label: "A", fetch: noop },
-    { id: "openrouter", label: "O", fetch: noop },
-    { id: "deepseek", label: "D", fetch: noop },
+  const providers: UsageProvider[] = [
+    { id: "anthropic", label: "A", billing: "subscription", fetch: noop },
+    { id: "openai-codex", label: "C", billing: "subscription", fetch: noop },
+    { id: "openrouter", label: "O", billing: "prepaid", fetch: noop },
+    { id: "deepseek", label: "D", billing: "prepaid", fetch: noop },
   ];
 
-  it("limits to providers of scoped models when no argument is given", () => {
+  it("limits subscriptions to scoped providers but always includes prepaid balances", () => {
     const scoped = scopedProviderIds([{ model: { provider: "anthropic" } }, { model: { provider: "opencode" } }]);
-    assert.deepEqual(selectProviders(providers, "", scoped)?.map((p) => p.id), ["anthropic"]);
+    assert.deepEqual(selectProviders(providers, "", scoped)?.map((p) => p.id), ["anthropic", "openrouter", "deepseek"]);
   });
 
   it("returns all providers when no scoping is configured", () => {
-    assert.equal(selectProviders(providers, "", new Set())?.length, 3);
+    assert.equal(selectProviders(providers, "", new Set())?.length, 4);
   });
 
   it("an explicit provider bypasses the scope filter", () => {
     const scoped = new Set(["anthropic"]);
     assert.deepEqual(selectProviders(providers, " DeepSeek ", scoped)?.map((p) => p.id), ["deepseek"]);
     assert.equal(selectProviders(providers, "nope", scoped), undefined);
+  });
+});
+
+describe("scrollViewport", () => {
+  const lines = ["a", "b", "c", "d", "e"];
+
+  it("shows everything without scrolling when the lines fit", () => {
+    assert.deepEqual(scrollViewport(lines, 3, 10), { visible: lines, offset: 0, maxOffset: 0 });
+  });
+
+  it("windows the lines and clamps the offset to the scrollable range", () => {
+    assert.deepEqual(scrollViewport(lines, 1, 2), { visible: ["b", "c"], offset: 1, maxOffset: 3 });
+    assert.deepEqual(scrollViewport(lines, 99, 2), { visible: ["d", "e"], offset: 3, maxOffset: 3 });
+    assert.deepEqual(scrollViewport(lines, -4, 2), { visible: ["a", "b"], offset: 0, maxOffset: 3 });
   });
 });
 
@@ -215,7 +230,7 @@ describe("formatting", () => {
   });
 
   it("renders a report with provider headers and errors", () => {
-    const provider = { id: "x", label: "X", fetch: async () => ({ rows: [], notes: [] }) };
+    const provider: UsageProvider = { id: "x", label: "X", billing: "prepaid", fetch: async () => ({ rows: [], notes: [] }) };
     const results: ProviderResult[] = [
       { provider, status: "ok", usage: { rows: [], notes: [] } },
       { provider: { ...provider, label: "Y" }, status: "error", message: "boom" },
