@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
-# Remove agent worktrees under /tmp/worktrees/<repo>/<name> that have not been
-# touched within gc.worktreePruneExpire. The Mac rarely reboots, so /tmp alone
-# never clears them. Branches and commits stay in the main repository, but
+# Remove agent worktrees under ~/Developer/worktrees/<repo>/<name> that have
+# not been touched within gc.worktreePruneExpire. Branches and commits stay in the main repository, but
 # uncommitted and untracked files are deleted. Lock a worktree to keep it.
 #
 # Usage: git-prune-tmp-worktrees [--dry-run]
 set -euo pipefail
 
-root="${GIT_TMP_WORKTREES_ROOT:-/tmp/worktrees}"
+root="${GIT_TMP_WORKTREES_ROOT:-$HOME/Developer/worktrees}"
 dry_run=0
 [[ "${1:-}" == "--dry-run" ]] && dry_run=1
 
