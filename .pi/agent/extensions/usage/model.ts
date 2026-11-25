@@ -41,14 +41,28 @@ export interface ProviderAuth {
   source: string | undefined;
 }
 
-export interface UsageProvider {
+interface UsageProviderInfo {
   /** pi provider id, e.g. "anthropic". Used for auth lookup and `/usage <id>` filtering. */
   id: string;
   label: string;
   /** Prepaid balances are listed by a bare `/usage` even when no scoped model uses the provider. */
   billing: "subscription" | "prepaid";
+  /** Other provider ids whose scoped models bill this provider, e.g. virtual models that route to it. */
+  scopedVia?: readonly string[];
+}
+
+/** Authenticates with the credentials pi stores for `id`; skipped when there are none. */
+export interface ApiUsageProvider extends UsageProviderInfo {
   fetch(auth: ProviderAuth): Promise<ProviderUsage>;
 }
+
+/** Reads usage through the user's logged-in browser, so pi never holds the session. */
+export interface BrowserUsageProvider extends UsageProviderInfo {
+  browserSession: true;
+  fetch(): Promise<ProviderUsage>;
+}
+
+export type UsageProvider = ApiUsageProvider | BrowserUsageProvider;
 
 export function severityFromPercent(percent: number): UsageSeverity {
   if (percent >= 90) return "critical";
@@ -163,7 +177,8 @@ export function formatProviderUsage(
 /** Result of one provider fetch, ready for rendering. */
 export type ProviderResult =
   | { provider: UsageProvider; status: "ok"; usage: ProviderUsage }
-  | { provider: UsageProvider; status: "error"; message: string };
+  | { provider: UsageProvider; status: "error"; message: string }
+  | { provider: UsageProvider; status: "loading" };
 
 /** Render all provider sections separated by blank lines. */
 export function formatUsageReport(
@@ -176,6 +191,10 @@ export function formatUsageReport(
   results.forEach((result, index) => {
     if (index > 0) lines.push("");
     lines.push(style.bold(result.provider.label));
+    if (result.status === "loading") {
+      lines.push(style.dim("Loading…"));
+      return;
+    }
     if (result.status === "error") {
       lines.push(style.severity("critical", result.message));
       return;

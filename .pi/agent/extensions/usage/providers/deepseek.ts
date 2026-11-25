@@ -1,6 +1,6 @@
 /** DeepSeek prepaid balance via `GET /user/balance`. */
 
-import { balanceRow, type ProviderUsage, type UsageProvider } from "../model.ts";
+import { balanceRow, type ProviderUsage, type ApiUsageProvider } from "../model.ts";
 import { getJson } from "./http.ts";
 
 export const DEEPSEEK_BALANCE_ENDPOINT = "https://api.deepseek.com/user/balance";
@@ -23,7 +23,7 @@ export function parseDeepSeekUsage(body: DeepSeekBalanceResponse): ProviderUsage
   return { rows, notes };
 }
 
-export const deepSeekUsageProvider: UsageProvider = {
+export const deepSeekUsageProvider: ApiUsageProvider = {
   id: "deepseek",
   label: "DeepSeek",
   billing: "prepaid",

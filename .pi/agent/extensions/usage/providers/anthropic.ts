@@ -3,7 +3,7 @@
  * /usage screen reads. Requires OAuth credentials; API keys are rejected.
  */
 
-import { limitRow, parseDate, type ProviderUsage, type UsageProvider, type UsageSeverity } from "../model.ts";
+import { limitRow, parseDate, type ProviderUsage, type ApiUsageProvider, type UsageSeverity } from "../model.ts";
 import { getJson } from "./http.ts";
 
 export const ANTHROPIC_USAGE_ENDPOINT = "https://api.anthropic.com/api/oauth/usage";
@@ -74,10 +74,12 @@ export function parseAnthropicUsage(body: AnthropicUsageResponse): ProviderUsage
   return { rows, notes };
 }
 
-export const anthropicUsageProvider: UsageProvider = {
+export const anthropicUsageProvider: ApiUsageProvider = {
   id: "anthropic",
   label: "Anthropic (Claude)",
   billing: "subscription",
+  // claude-fallback's claude/* virtual models route to the anthropic subscription.
+  scopedVia: ["claude"],
   async fetch(auth) {
     if (auth.source !== "OAuth") {
       throw new Error("OAuth login required: run `pi auth login anthropic`.");

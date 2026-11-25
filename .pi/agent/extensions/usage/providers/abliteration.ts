@@ -5,13 +5,13 @@
  * Spec: https://api.abliteration.ai/openapi.json (operationId getCredits).
  */
 
-import type { UsageProvider } from "../model.ts";
+import type { ApiUsageProvider } from "../model.ts";
 import { getJson } from "./http.ts";
 import { type OpenRouterCreditsResponse, parseOpenRouterUsage } from "./openrouter.ts";
 
 export const ABLITERATION_CREDITS_ENDPOINT = "https://api.abliteration.ai/v1/credits";
 
-export const abliterationUsageProvider: UsageProvider = {
+export const abliterationUsageProvider: ApiUsageProvider = {
   id: "abliteration",
   label: "abliteration.ai",
   billing: "prepaid",

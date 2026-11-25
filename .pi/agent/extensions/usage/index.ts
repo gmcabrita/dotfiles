@@ -3,8 +3,9 @@
  * provider that exposes a usage API.
  *
  * Subscription providers (anthropic, openai-codex, openai-codex-lb, opencode-go) render
- * percent bars per rate limit window. Pay-as-you-go providers (openrouter,
- * deepseek, abliteration) render dollar balances. Without an argument, subscription
+ * percent bars per rate limit window. Pay-as-you-go providers (anthropic-console,
+ * openrouter, deepseek, abliteration) render dollar balances. anthropic-console
+ * reads Claude Console credits through the logged-in browser via `browse`. Without an argument, subscription
  * providers are limited to the session's scoped models (`enabledModels` / `--models`)
  * while prepaid providers are always queried; `/usage <provider>` queries that provider
  * regardless of scope. Providers
@@ -18,12 +19,14 @@ import {
   formatUsageReport,
   type ProviderAuth,
   type ProviderResult,
+  type ProviderUsage,
   type UsageProvider,
   type UsageSeverity,
   type UsageStyle,
 } from "./model.ts";
 import { abliterationUsageProvider } from "./providers/abliteration.ts";
 import { anthropicUsageProvider } from "./providers/anthropic.ts";
+import { anthropicConsoleUsageProvider } from "./providers/anthropic-console.ts";
 import { deepSeekUsageProvider } from "./providers/deepseek.ts";
 import { openAICodexUsageProvider } from "./providers/openai-codex.ts";
 import { openAICodexLbUsageProvider } from "./providers/openai-codex-lb.ts";
@@ -32,6 +35,7 @@ import { openRouterUsageProvider } from "./providers/openrouter.ts";
 
 const USAGE_PROVIDERS: UsageProvider[] = [
   anthropicUsageProvider,
+  anthropicConsoleUsageProvider,
   openAICodexUsageProvider,
   openAICodexLbUsageProvider,
   openCodeGoUsageProvider,
@@ -48,20 +52,52 @@ async function resolveAuth(ctx: ExtensionContext, providerId: string): Promise<P
   return token ? { token, source: result?.source } : undefined;
 }
 
-/** Fetch every provider with stored auth in parallel. Errors stay per provider. */
-async function collectUsage(ctx: ExtensionContext, providers: UsageProvider[]): Promise<ProviderResult[]> {
-  const results = await Promise.all(
-    providers.map(async (provider): Promise<ProviderResult | undefined> => {
-      const auth = await resolveAuth(ctx, provider.id);
-      if (!auth) return undefined;
-      try {
-        return { provider, status: "ok", usage: await provider.fetch(auth) };
-      } catch (err) {
-        return { provider, status: "error", message: err instanceof Error ? err.message : String(err) };
-      }
+/** Usage endpoints rate-limit repeated /usage calls (Anthropic's OAuth endpoint does); errors are not cached. */
+const USAGE_CACHE_TTL_MS = 5 * 60_000;
+const usageCache = new Map<string, { usage: ProviderUsage; fetchedAt: number }>();
+
+async function fetchUncachedUsage(ctx: ExtensionContext, provider: UsageProvider): Promise<ProviderUsage | undefined> {
+  if ("browserSession" in provider) return provider.fetch();
+  const auth = await resolveAuth(ctx, provider.id);
+  return auth ? provider.fetch(auth) : undefined;
+}
+
+async function fetchUsage(ctx: ExtensionContext, provider: UsageProvider): Promise<ProviderUsage | undefined> {
+  const cached = usageCache.get(provider.id);
+  if (cached && Date.now() - cached.fetchedAt < USAGE_CACHE_TTL_MS) return cached.usage;
+  const usage = await fetchUncachedUsage(ctx, provider);
+  if (usage) usageCache.set(provider.id, { usage, fetchedAt: Date.now() });
+  return usage;
+}
+
+async function fetchResult(ctx: ExtensionContext, provider: UsageProvider): Promise<ProviderResult | undefined> {
+  try {
+    const usage = await fetchUsage(ctx, provider);
+    return usage ? { provider, status: "ok", usage } : undefined;
+  } catch (err) {
+    return { provider, status: "error", message: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/**
+ * Fetch every provider with stored auth or a browser session in parallel. Errors stay per provider.
+ * `onProgress` receives the results in provider order after each fetch, with unfinished ones as "loading".
+ */
+async function collectUsage(
+  ctx: ExtensionContext,
+  providers: UsageProvider[],
+  onProgress?: (results: ProviderResult[]) => void,
+): Promise<ProviderResult[]> {
+  const slots: (ProviderResult | undefined)[] = providers.map((provider) => ({ provider, status: "loading" }));
+  const snapshot = () => slots.filter((result): result is ProviderResult => result !== undefined);
+  onProgress?.(snapshot());
+  await Promise.all(
+    providers.map(async (provider, index) => {
+      slots[index] = await fetchResult(ctx, provider);
+      onProgress?.(snapshot());
     }),
   );
-  return results.filter((result): result is ProviderResult => result !== undefined);
+  return snapshot();
 }
 
 /** Provider ids of the session's scoped models; empty means no scoping configured. */
@@ -77,7 +113,12 @@ export function selectProviders(
   const wanted = args.trim().toLowerCase();
   if (wanted === "") {
     if (scoped.size === 0) return providers;
-    return providers.filter((provider) => provider.billing === "prepaid" || scoped.has(provider.id));
+    return providers.filter(
+      (provider) =>
+        provider.billing === "prepaid" ||
+        scoped.has(provider.id) ||
+        (provider.scopedVia ?? []).some((id) => scoped.has(id)),
+    );
   }
   const matches = providers.filter((provider) => provider.id === wanted);
   return matches.length > 0 ? matches : undefined;
@@ -123,7 +164,7 @@ function themeStyle(theme: Theme): UsageStyle {
 
 export default function usageExtension(pi: ExtensionAPI) {
   pi.registerCommand("usage", {
-    description: "Show remaining quota / balance per provider (anthropic, openai-codex, openai-codex-lb, opencode-go, openrouter, deepseek, abliteration)",
+    description: "Show remaining quota / balance per provider (anthropic, anthropic-console, openai-codex, openai-codex-lb, opencode-go, openrouter, deepseek, abliteration)",
     getArgumentCompletions: (prefix) => {
       const matches = USAGE_PROVIDERS.filter((provider) => provider.id.startsWith(prefix.toLowerCase()));
       return matches.length > 0 ? matches.map((provider) => ({ value: provider.id, label: provider.label })) : null;
@@ -151,13 +192,15 @@ export default function usageExtension(pi: ExtensionAPI) {
 
       const load = async (rerender: () => void, theme: Theme) => {
         loading = true;
-        rerender();
-        const results = await collectUsage(ctx, providers);
-        lines = results.length > 0
-          ? formatUsageReport(results, new Date(), themeStyle(theme))
-          : [theme.fg("dim", "No scoped provider with stored auth supports usage lookup.")];
+        const show = (results: ProviderResult[]) => {
+          lines = results.length > 0 || loading
+            ? formatUsageReport(results, new Date(), themeStyle(theme))
+            : [theme.fg("dim", "No scoped provider with stored auth supports usage lookup.")];
+          if (!closed) rerender();
+        };
+        const results = await collectUsage(ctx, providers, show);
         loading = false;
-        if (!closed) rerender();
+        show(results);
       };
 
       await ctx.ui.custom<void>(
@@ -173,18 +216,17 @@ export default function usageExtension(pi: ExtensionAPI) {
           const component: Component = {
             invalidate: () => {},
             render: (width) => {
-              const header = [theme.bold(" Usage"), ""];
-              const body = (loading ? [theme.fg("dim", "Loading…")] : lines).map((line) => ` ${line}`);
+              const body = lines.map((line) => ` ${line}`);
               const maxRows = Math.floor((tui.terminal.rows * OVERLAY_MAX_HEIGHT_PERCENT) / 100);
-              // Header, blank line before the footer, footer, and the two border rows.
-              bodyHeight = Math.max(1, maxRows - header.length - 4);
+              // Blank line before the footer, footer, and the two border rows.
+              bodyHeight = Math.max(1, maxRows - 4);
               const viewport = scrollViewport(body, scrollOffset, bodyHeight);
               scrollOffset = viewport.offset;
               const position = viewport.maxOffset > 0
                 ? ` · ↑↓/pgup/pgdn scroll ${viewport.offset + 1}–${viewport.offset + viewport.visible.length} of ${body.length}`
                 : "";
               const footer = theme.fg("dim", ` r refresh · q/esc close${position}`);
-              return frameLines([...header, ...viewport.visible, "", footer], width, theme);
+              return frameLines([...viewport.visible, "", footer], width, theme);
             },
             handleInput: (data) => {
               if (keybindings.matches(data, "tui.select.cancel") || data.toLowerCase() === "q") {

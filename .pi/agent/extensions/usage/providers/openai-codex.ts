@@ -4,7 +4,7 @@
  * is taken from the access token's JWT claims like pi's Codex adapter does.
  */
 
-import { limitRow, parseDate, type ProviderUsage, type UsageProvider } from "../model.ts";
+import { limitRow, parseDate, type ProviderUsage, type ApiUsageProvider } from "../model.ts";
 import { getJson } from "./http.ts";
 
 export const OPENAI_CODEX_USAGE_ENDPOINT = "https://chatgpt.com/backend-api/wham/usage";
@@ -65,7 +65,7 @@ export function extractChatGptAccountId(token: string): string {
   return claims.chatgpt_account_id;
 }
 
-export const openAICodexUsageProvider: UsageProvider = {
+export const openAICodexUsageProvider: ApiUsageProvider = {
   id: "openai-codex",
   label: "OpenAI Codex (ChatGPT)",
   billing: "subscription",

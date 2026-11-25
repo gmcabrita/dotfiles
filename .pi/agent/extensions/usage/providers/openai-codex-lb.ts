@@ -5,7 +5,7 @@
  */
 
 import { BASE_URL_ENV, DEFAULT_BASE_URL } from "../../openai-codex-lb/index.ts";
-import { limitRow, parseDate, type ProviderUsage, type UsageProvider } from "../model.ts";
+import { limitRow, parseDate, type ProviderUsage, type ApiUsageProvider } from "../model.ts";
 import { getJson } from "./http.ts";
 
 interface CodexLbLimit {
@@ -67,7 +67,7 @@ export function parseCodexLbUsage(body: CodexLbUsageResponse): ProviderUsage {
   return { rows, notes: [] };
 }
 
-export const openAICodexLbUsageProvider: UsageProvider = {
+export const openAICodexLbUsageProvider: ApiUsageProvider = {
   id: "openai-codex-lb",
   label: "OpenAI Codex LB",
   billing: "subscription",

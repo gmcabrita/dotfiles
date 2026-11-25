@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { formatProviderUsage, formatTimeUntil, formatUsageReport, progressBar, type ProviderResult, type UsageProvider } from "./model.ts";
 import { type AnthropicUsageResponse, parseAnthropicUsage } from "./providers/anthropic.ts";
+import { findApiOrganization, parseConsoleCredits } from "./providers/anthropic-console.ts";
 import { parseDeepSeekUsage } from "./providers/deepseek.ts";
 import { extractChatGptAccountId, parseOpenAICodexUsage } from "./providers/openai-codex.ts";
 import { parseCodexLbUsage, resolveCodexLbUsageUrl } from "./providers/openai-codex-lb.ts";
@@ -146,6 +147,52 @@ describe("parseOpenCodeGoUsage", () => {
   });
 });
 
+describe("Claude Console credits", () => {
+  const ok = (body: unknown) => ({ status: 200, body: JSON.stringify(body) });
+
+  it("picks the organization with API access", () => {
+    const organizations = ok([
+      { uuid: "chat-org", capabilities: ["chat", "claude_max"] },
+      { uuid: "api-org", capabilities: ["api", "api_individual"] },
+    ]);
+    assert.equal(findApiOrganization(organizations), "api-org");
+  });
+
+  it("reports a logged-out session with the login link", () => {
+    assert.throws(() => findApiOrganization({ status: 403, body: "" }), /Logged out.*platform\.claude\.com\/login/);
+    assert.throws(() => parseConsoleCredits({ status: 401, body: "" }), /Logged out/);
+  });
+
+  it("shows each credit grant with its total and expiry", () => {
+    const usage = parseConsoleCredits(
+      ok({
+        amount: 9993,
+        currency: "USD",
+        tranches: [],
+        promo_tranches: [
+          {
+            name: "API credit (Max)",
+            currency: "USD",
+            remaining_amount_minor_units: 9992,
+            granted_amount_minor_units: 10000,
+            expires_at: "2026-12-15T12:00:00Z",
+          },
+        ],
+      }),
+    );
+    assert.deepEqual(usage.rows, [
+      { kind: "balance", label: "API credit (Max)", remaining: 99.92, total: 100, currency: "USD" },
+    ]);
+    assert.equal(usage.notes.length, 1);
+    assert.match(usage.notes[0], /^API credit \(Max\) expires .*Dec.*15/);
+  });
+
+  it("falls back to the total balance without grants", () => {
+    const usage = parseConsoleCredits(ok({ amount: 500, currency: "USD", tranches: [], promo_tranches: null }));
+    assert.deepEqual(usage.rows, [{ kind: "balance", label: "Balance (USD)", remaining: 5, total: null, currency: "USD" }]);
+  });
+});
+
 describe("parseDeepSeekUsage", () => {
   it("reports one balance row per currency", () => {
     const usage = parseDeepSeekUsage({
@@ -159,7 +206,7 @@ describe("parseDeepSeekUsage", () => {
 describe("selectProviders", () => {
   const noop = async () => ({ rows: [], notes: [] });
   const providers: UsageProvider[] = [
-    { id: "anthropic", label: "A", billing: "subscription", fetch: noop },
+    { id: "anthropic", label: "A", billing: "subscription", scopedVia: ["claude"], fetch: noop },
     { id: "openai-codex", label: "C", billing: "subscription", fetch: noop },
     { id: "openrouter", label: "O", billing: "prepaid", fetch: noop },
     { id: "deepseek", label: "D", billing: "prepaid", fetch: noop },
@@ -167,6 +214,11 @@ describe("selectProviders", () => {
 
   it("limits subscriptions to scoped providers but always includes prepaid balances", () => {
     const scoped = scopedProviderIds([{ model: { provider: "anthropic" } }, { model: { provider: "opencode" } }]);
+    assert.deepEqual(selectProviders(providers, "", scoped)?.map((p) => p.id), ["anthropic", "openrouter", "deepseek"]);
+  });
+
+  it("includes a subscription scoped through a virtual model provider", () => {
+    const scoped = scopedProviderIds([{ model: { provider: "claude" } }]);
     assert.deepEqual(selectProviders(providers, "", scoped)?.map((p) => p.id), ["anthropic", "openrouter", "deepseek"]);
   });
 
@@ -229,12 +281,21 @@ describe("formatting", () => {
     assert.equal(lines[3], "note");
   });
 
+  const provider: UsageProvider = { id: "x", label: "X", billing: "prepaid", fetch: async () => ({ rows: [], notes: [] }) };
+
   it("renders a report with provider headers and errors", () => {
-    const provider: UsageProvider = { id: "x", label: "X", billing: "prepaid", fetch: async () => ({ rows: [], notes: [] }) };
     const results: ProviderResult[] = [
       { provider, status: "ok", usage: { rows: [], notes: [] } },
       { provider: { ...provider, label: "Y" }, status: "error", message: "boom" },
     ];
     assert.deepEqual(formatUsageReport(results, now), ["X", "No usage data reported.", "", "Y", "boom"]);
+  });
+
+  it("marks providers still fetching as loading", () => {
+    const results: ProviderResult[] = [
+      { provider, status: "ok", usage: { rows: [], notes: [] } },
+      { provider: { ...provider, label: "Y" }, status: "loading" },
+    ];
+    assert.deepEqual(formatUsageReport(results, now), ["X", "No usage data reported.", "", "Y", "Loading…"]);
   });
 });

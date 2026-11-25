@@ -5,7 +5,7 @@
  * Returns 403 EntitlementError when the key's workspace has no Go plan.
  */
 
-import { limitRow, parseDate, type ProviderUsage, type UsageProvider } from "../model.ts";
+import { limitRow, parseDate, type ProviderUsage, type ApiUsageProvider } from "../model.ts";
 import { getJson } from "./http.ts";
 
 export const OPENCODE_GO_USAGE_ENDPOINT = "https://opencode.ai/zen/go/v1/usage";
@@ -43,7 +43,7 @@ export function parseOpenCodeGoUsage(body: OpenCodeGoUsageResponse): ProviderUsa
   return { rows, notes };
 }
 
-export const openCodeGoUsageProvider: UsageProvider = {
+export const openCodeGoUsageProvider: ApiUsageProvider = {
   id: "opencode-go",
   label: "OpenCode Go",
   billing: "subscription",
