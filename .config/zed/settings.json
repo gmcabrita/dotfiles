@@ -7,6 +7,15 @@
 // custom settings, run the `open default settings` command
 // from the command palette or from `Zed` application menu.
 {
+  "title_bar": {
+    "show_branch_status_icon": false,
+    "show": "always",
+  },
+  "status_bar": {
+    "cursor_position_button": true,
+    "active_encoding_button": "enabled",
+    "active_language_button": true,
+  },
   "cursor_animation": {
     "enabled": true,
   },
