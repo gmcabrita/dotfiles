@@ -7,7 +7,8 @@
  *   (`/plannotator-review $worktree`);
  * - when no worktree is known, `$worktree` shows in red in the editor and
  *   Enter refuses to submit it;
- * - the `worktree` shell variable in agent bash calls and user `!` commands.
+ * - the `worktree` shell variable in agent bash calls and user `!` commands;
+ * - editor autocomplete: `$wo<Tab>` replaces the token with the current path.
  *
  * Starts at the worktree containing the session cwd. A bash call that changes
  * directory and ends inside a git worktree (`cd ../feat-x && ...`) moves
@@ -18,7 +19,7 @@
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { CustomEditor, createLocalBashOperations, isToolCallEventType } from "@earendil-works/pi-coding-agent";
-import { Container, Key, matchesKey, Spacer, Text } from "@earendil-works/pi-tui";
+import { type AutocompleteProvider, Container, Key, matchesKey, Spacer, Text } from "@earendil-works/pi-tui";
 import { execFileSync } from "node:child_process";
 import { readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -32,6 +33,7 @@ function displayPath(path: string): string {
 }
 const VARIABLE_RE = /\$\{worktree\}|\$worktree\b/g;
 const TWIG_NEW_RE = /\bgit\b[^\n;&|]*\btwig\s+new\b/;
+const PARTIAL_VARIABLE_RE = /(?:^|[\s"'`(])\$([A-Za-z_]*)$/;
 
 function gitOutput(cwd: string, args: string[]): string | undefined {
   try {
@@ -73,6 +75,34 @@ function replaceVariable<T>(content: T, value: string): T {
   ) as T;
 }
 
+function completionProvider(current: AutocompleteProvider, getWorktree: () => string | undefined): AutocompleteProvider {
+  return {
+    triggerCharacters: [...new Set([...(current.triggerCharacters ?? []), "$"])],
+
+    async getSuggestions(lines, cursorLine, cursorCol, options) {
+      const name = (lines[cursorLine] ?? "").slice(0, cursorCol).match(PARTIAL_VARIABLE_RE)?.[1];
+      const path = getWorktree();
+      if (name === undefined || !"worktree".startsWith(name) || !path) {
+        return current.getSuggestions(lines, cursorLine, cursorCol, options);
+      }
+      return { prefix: `$${name}`, items: [{ value: path, label: "$worktree", description: displayPath(path) }] };
+    },
+
+    applyCompletion(lines, cursorLine, cursorCol, item, prefix) {
+      if (item.label !== "$worktree") return current.applyCompletion(lines, cursorLine, cursorCol, item, prefix);
+      const line = lines[cursorLine] ?? "";
+      const start = cursorCol - prefix.length;
+      const newLines = [...lines];
+      newLines[cursorLine] = line.slice(0, start) + item.value + line.slice(cursorCol);
+      return { lines: newLines, cursorLine, cursorCol: start + item.value.length };
+    },
+
+    shouldTriggerFileCompletion(lines, cursorLine, cursorCol) {
+      return current.shouldTriggerFileCompletion?.(lines, cursorLine, cursorCol) ?? true;
+    },
+  };
+}
+
 export default function (pi: ExtensionAPI) {
   let worktree: string | undefined;
   const pendingCalls = new Map<string, { pwdFile: string; worktreesBefore?: Set<string> }>();
@@ -111,6 +141,7 @@ export default function (pi: ExtensionAPI) {
   pi.on("session_start", (_event, ctx) => {
     restore(ctx);
     if (ctx.mode !== "tui") return;
+    ctx.ui.addAutocompleteProvider((current) => completionProvider(current, () => worktree));
 
     // Keep any editor another extension installed rather than replacing it.
     if (ctx.ui.getEditorComponent()) return;
