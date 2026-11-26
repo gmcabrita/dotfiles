@@ -40,15 +40,22 @@ Three additional built-in tools are available but off by default:
 
 ```sh
 # Enforced read-only repository investigation
---tools read,grep,find,ls
+--tools read,grep,find,ls --no-mcp
 
 # Investigation that may run tests or other commands; bash can modify files
---tools read,bash,grep,find,ls
+--tools read,bash,grep,find,ls,codemode
+
+# Read-only investigation that needs one MCP server
+--tools read,grep,find,ls,codemode,'mcp__pganalyze__*'
 
 # Implementation work: omit --tools to use the defaults
 ```
 
+MCP tools are reachable only through `codemode`. Without `--tools`, Pi enables `codemode` automatically when MCP servers are configured. With a plain-name allowlist, include `codemode` when the child needs MCP tools or batched tool calls. Otherwise, pass `--no-mcp` so the child neither connects to MCP servers nor warns that they are unreachable. `codemode` reaches every MCP tool, including tools that write, unless the allowlist also names `mcp__<server>__*` patterns. Omit it from enforced read-only children or restrict it that way.
+
 ## Isolation flags
+
+- `--no-mcp` - Disable MCP servers for the child. Use with `--tools` allowlists that omit `codemode`.
 
 - `--no-extensions` - Disable normal extension discovery. Use for an independent run that should not inherit unrelated extension behavior or extension-provided tools. The subagent control bridge is still explicitly loaded.
 - `--no-skills` - Hide installed skills from the child. Use for tightly specified tasks that should rely only on the supplied prompt and files.

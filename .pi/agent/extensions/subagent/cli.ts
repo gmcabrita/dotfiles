@@ -41,7 +41,7 @@ function fail(message: string): never {
 function usage(): never {
 	fail(`Usage:
   subagent spawn [--name <name>] [--group <label>] [--provider <provider>] [--model <model>] [--thinking <level>]
-    [--cwd <dir>] [--tools <names>] [--no-extensions] [--no-skills]
+    [--cwd <dir>] [--tools <names>] [--no-mcp] [--no-extensions] [--no-skills]
     [--no-prompt-templates] [--no-context-files] (--prompt <text> | --file <path>)...
   subagent status <handle>
   subagent rename <handle> <name>
@@ -102,6 +102,7 @@ function spawnSubagent(args: string[]): void {
 	let thinking = process.env.PI_REASONING_LEVEL || "medium";
 	let cwd = process.cwd();
 	let tools: string | undefined;
+	let noMcp = false;
 	let noExtensions = false;
 	let noSkills = false;
 	let noPromptTemplates = false;
@@ -139,6 +140,9 @@ function spawnSubagent(args: string[]): void {
 			case "--tools":
 				tools = valueAfter(args, i, arg);
 				i++;
+				break;
+			case "--no-mcp":
+				noMcp = true;
 				break;
 			case "--no-extensions":
 				noExtensions = true;
@@ -182,6 +186,7 @@ function spawnSubagent(args: string[]): void {
 
 	const launchArgs: string[] = [];
 	if (tools) launchArgs.push("--tools", tools);
+	if (noMcp) launchArgs.push("--no-mcp");
 	if (noExtensions) launchArgs.push("--no-extensions", "--extension", join(import.meta.dirname, "index.ts"));
 	if (noSkills) launchArgs.push("--no-skills");
 	if (noPromptTemplates) launchArgs.push("--no-prompt-templates");
