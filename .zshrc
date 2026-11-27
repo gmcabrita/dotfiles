@@ -646,4 +646,8 @@ function rst() {
   ree
 }
 
+function xnoads() {
+  DEVICECTL_CHILD_DISALLOW_PROMOTED_CONTENT=1 xcrun devicectl device process launch -d "$(devicectl list devices --filter "Name CONTAINS 'iPhone'" --quiet --json-output - | jq -r '.result.devices[].properties.hardware.udid')" com.atebits.Tweetie2
+}
+
 [[ $ZPROF == 1 ]] && zprof
