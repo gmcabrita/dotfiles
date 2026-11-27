@@ -95,6 +95,7 @@
   - `gh auth refresh -h github.com -s admin:public_key,admin:ssh_signing_key`
   - `gh ssh-key add ~/.ssh/id_ed25519.pub --title "$(hostname -s)" --type authentication`
   - `gh ssh-key add ~/.ssh/id_ed25519.pub --title "$(hostname -s) signing" --type signing`
+  - `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`
 - Slack
 - Discord
 - WhatsApp
